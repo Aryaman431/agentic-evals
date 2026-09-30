@@ -417,6 +417,19 @@ The evaluation could be extended with:
 
 ## Running the Project
 
+### Install
+
+From the repository root (where `pyproject.toml` lives), install the package in
+editable mode with the `voice` extra:
+
+```bash
+python -m pip install -e ".[voice]"
+```
+
+This also installs the dashboard backend dependencies (`fastapi>=0.115` and
+`uvicorn>=0.30`) that `server.py` uses to serve the Evaluation API, so run it
+before starting the API.
+
 From the `voice-agent-evals` directory:
 
 ### Run the agent

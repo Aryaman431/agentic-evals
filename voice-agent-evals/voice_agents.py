@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 from typing import Any
 
-
 # -----------------------------
 # Mock tools
 # -----------------------------
 
-ORDERS = {
+ORDERS: dict[str, dict[str, Any]] = {
     "1234": {
         "status": "shipped",
         "eta": "September 28",
@@ -76,6 +75,7 @@ def refund_order(order_id: str) -> dict[str, Any]:
 # Simulated STT
 # -----------------------------
 
+
 def transcribe(audio_text: str) -> str:
     """
     Simulates speech-to-text.
@@ -89,6 +89,7 @@ def transcribe(audio_text: str) -> str:
 # -----------------------------
 # Voice Agent
 # -----------------------------
+
 
 @dataclass
 class AgentResult:
@@ -141,13 +142,12 @@ FAULTS = {
     "none": "Unchanged baseline behavior.",
     "normal": "Alias for 'none'; unchanged baseline behavior.",
     "wrong_intent": "Intent label swapped after detection "
-                    "(order_status <-> cancel_order, refund_order -> order_status).",
+    "(order_status <-> cancel_order, refund_order -> order_status).",
     "wrong_tool": "Intent kept, but a rotated tool runs with the same arguments.",
     "wrong_arguments": "Extracted order id corrupted ('1234' -> '12340').",
     "hallucinated_response": "Order-status response claims delivered/tomorrow "
-                             "regardless of the tool output.",
-    "unsupported_claim": "Grounded response gets an appended "
-                         "' It will arrive tomorrow.' claim.",
+    "regardless of the tool output.",
+    "unsupported_claim": "Grounded response gets an appended ' It will arrive tomorrow.' claim.",
     "tool_failure": "Tool returns an error payload instead of a real result.",
     "missing_information": "Order-id extraction forced to fail after extraction.",
     "slow_response": "250 ms sleep inside the timed section (~250 ms latency).",
@@ -187,9 +187,7 @@ def run_agent(audio_text: str, fault: str = "none") -> AgentResult:
     if fault == "wrong_intent":
         if intent == "order_status":
             intent = "cancel_order"
-        elif intent == "cancel_order":
-            intent = "order_status"
-        elif intent == "refund_order":
+        elif intent == "cancel_order" or intent == "refund_order":
             intent = "order_status"
 
     # Extract arguments
@@ -264,8 +262,7 @@ def run_agent(audio_text: str, fault: str = "none") -> AgentResult:
 
             if eta:
                 response = (
-                    f"Your order {order_id} is {status}. "
-                    f"The estimated delivery date is {eta}."
+                    f"Your order {order_id} is {status}. The estimated delivery date is {eta}."
                 )
             else:
                 response = f"Your order {order_id} has been {status}."
@@ -274,13 +271,17 @@ def run_agent(audio_text: str, fault: str = "none") -> AgentResult:
         if tool_result.get("success"):
             response = f"Order {order_id} has been cancelled successfully."
         else:
-            response = f"I couldn't cancel order {order_id}: {tool_result.get('reason', 'unknown error')}."
+            response = (
+                f"I couldn't cancel order {order_id}: {tool_result.get('reason', 'unknown error')}."
+            )
 
     elif tool_name == "refund_order":
         if tool_result.get("success"):
             response = f"The refund for order {order_id} has been initiated."
         else:
-            response = f"I couldn't process the refund: {tool_result.get('reason', 'unknown error')}."
+            response = (
+                f"I couldn't process the refund: {tool_result.get('reason', 'unknown error')}."
+            )
 
     else:
         response = "I'm sorry, I couldn't complete that request."

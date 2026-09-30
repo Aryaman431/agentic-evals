@@ -5,10 +5,10 @@ from typing import Any
 
 from pydantic import BaseModel
 
-
 # -----------------------------
 # Scenario model
 # -----------------------------
+
 
 class Scenario(BaseModel):
     id: str
@@ -48,14 +48,54 @@ RULE_ORDER: list[str] = [key for key, _ in RULE_KEYS]
 # (key, label, description, detected_by)
 FAULT_MODES: list[tuple[str, str, str, str]] = [
     ("normal", "Normal", "Baseline agent behavior.", "\u2014"),
-    ("wrong_intent", "Wrong Intent", "Intent classifier forced to an incorrect label.", "Intent Accuracy"),
-    ("wrong_tool", "Wrong Tool", "Agent executes a different tool than the intent requires.", "Tool Selection"),
-    ("wrong_arguments", "Wrong Arguments", "Order id corrupted before the tool call.", "Tool Arguments"),
-    ("hallucinated_response", "Hallucinated Response", "Response claims delivered/tomorrow while tool says shipped/September 28.", "Groundedness"),
-    ("unsupported_claim", "Unsupported Claim", "Correct response with an appended unsupported claim ('tomorrow').", "Groundedness"),
-    ("tool_failure", "Tool Failure", "Tool returns an error payload; task cannot complete.", "Response Quality"),
-    ("missing_information", "Missing Information", "Order-id extraction fails; agent must ask for the order number.", "Reliability / Response Quality"),
-    ("slow_response", "Slow Response", "Real 250 ms delay injected; scenario latency budget 100 ms.", "Latency"),
+    (
+        "wrong_intent",
+        "Wrong Intent",
+        "Intent classifier forced to an incorrect label.",
+        "Intent Accuracy",
+    ),
+    (
+        "wrong_tool",
+        "Wrong Tool",
+        "Agent executes a different tool than the intent requires.",
+        "Tool Selection",
+    ),
+    (
+        "wrong_arguments",
+        "Wrong Arguments",
+        "Order id corrupted before the tool call.",
+        "Tool Arguments",
+    ),
+    (
+        "hallucinated_response",
+        "Hallucinated Response",
+        "Response claims delivered/tomorrow while tool says shipped/September 28.",
+        "Groundedness",
+    ),
+    (
+        "unsupported_claim",
+        "Unsupported Claim",
+        "Correct response with an appended unsupported claim ('tomorrow').",
+        "Groundedness",
+    ),
+    (
+        "tool_failure",
+        "Tool Failure",
+        "Tool returns an error payload; task cannot complete.",
+        "Response Quality",
+    ),
+    (
+        "missing_information",
+        "Missing Information",
+        "Order-id extraction fails; agent must ask for the order number.",
+        "Reliability / Response Quality",
+    ),
+    (
+        "slow_response",
+        "Slow Response",
+        "Real 250 ms delay injected; scenario latency budget 100 ms.",
+        "Latency",
+    ),
 ]
 
 # "none" is the runtime alias for "normal" (run_agent's default).
@@ -66,6 +106,7 @@ FAULT_LABELS: dict[str, str] = {key: label for key, label, *_ in FAULT_MODES}
 # -----------------------------
 # Preset scenarios
 # -----------------------------
+
 
 def _rules(**overrides: bool) -> dict[str, bool]:
     """All rules enabled except reliability, then apply per-scenario overrides."""

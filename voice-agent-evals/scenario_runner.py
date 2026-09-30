@@ -3,20 +3,21 @@
 import json
 from typing import Any
 
+from evaluators import build_registry
+from scenarios import RULE_LABELS, RULE_ORDER, Scenario
+from voice_agents import AgentResult, extract_order_id, run_agent
+
 from agentic_evals import (
+    CaseEvaluation,
     EvalSpan,
     EvalTrace,
     EvaluationSample,
     EvaluatorConfig,
+    Score,
     TestCase,
     TestSuite,
     evaluate_suite,
 )
-
-from evaluators import build_registry
-from scenarios import RULE_LABELS, RULE_ORDER, Scenario
-from voice_agents import extract_order_id, run_agent
-
 
 # -----------------------------
 # Score name -> rule key mapping
@@ -48,6 +49,7 @@ def score_to_rule(name: str) -> str | None:
 # -----------------------------
 # Satisfiability / category
 # -----------------------------
+
 
 def _satisfiability(scenario: Scenario) -> tuple[list[str], dict[str, str]]:
     """Rules enabled in the scenario that can actually be evaluated."""
@@ -118,6 +120,7 @@ def _category(scenario: Scenario) -> str:
 # Case construction
 # -----------------------------
 
+
 def _build_case(scenario: Scenario, enabled: list[str]) -> TestCase:
     """Translate an evaluated scenario into a single agentic-evals TestCase."""
     evaluators = [
@@ -126,7 +129,9 @@ def _build_case(scenario: Scenario, enabled: list[str]) -> TestCase:
         if key in _EVALUATOR_FOR_RULE
     ]
     expected_contains = scenario.expected_response_criteria if "response_quality" in enabled else []
-    required_tools = [scenario.expected_tool] if "tool_selection" in enabled and scenario.expected_tool else []
+    required_tools = (
+        [scenario.expected_tool] if "tool_selection" in enabled and scenario.expected_tool else []
+    )
     max_latency_ms = scenario.max_latency_ms if "latency" in enabled else None
 
     if not evaluators and not expected_contains and not required_tools and max_latency_ms is None:
@@ -139,8 +144,7 @@ def _build_case(scenario: Scenario, enabled: list[str]) -> TestCase:
         "expected_arguments": scenario.expected_arguments,
         "category": _category(scenario),
         "order_id_missing": (
-            extract_order_id(scenario.input) is None
-            or scenario.fault == "missing_information"
+            extract_order_id(scenario.input) is None or scenario.fault == "missing_information"
         ),
     }
 
@@ -160,9 +164,12 @@ def _build_case(scenario: Scenario, enabled: list[str]) -> TestCase:
 # Result serialization
 # -----------------------------
 
-def _metrics(case_eval, enabled: list[str], skipped: dict[str, str]) -> list[dict[str, Any]]:
+
+def _metrics(
+    case_eval: CaseEvaluation, enabled: list[str], skipped: dict[str, str]
+) -> list[dict[str, Any]]:
     """Aggregate case scores into one entry per rule key, in display order."""
-    by_rule: dict[str, list] = {}
+    by_rule: dict[str, list[Score]] = {}
     for score in case_eval.scores:
         key = score_to_rule(score.name)
         if key is not None:
@@ -173,60 +180,84 @@ def _metrics(case_eval, enabled: list[str], skipped: dict[str, str]) -> list[dic
         label = RULE_LABELS[key]
 
         if key in skipped:
-            metrics.append({
-                "key": key,
-                "name": label,
-                "status": "skipped",
-                "reason": skipped[key],
-                "value": None,
-                "passed": None,
-                "explanation": None,
-            })
+            metrics.append(
+                {
+                    "key": key,
+                    "name": label,
+                    "status": "skipped",
+                    "reason": skipped[key],
+                    "value": None,
+                    "passed": None,
+                    "explanation": None,
+                }
+            )
         elif key not in enabled:
             continue  # disabled rules are omitted entirely
         else:
             scores = by_rule.get(key, [])
             if not scores:
-                metrics.append({
-                    "key": key,
-                    "name": label,
-                    "status": "skipped",
-                    "reason": "Evaluator produced no score.",
-                    "value": None,
-                    "passed": None,
-                    "explanation": None,
-                })
+                metrics.append(
+                    {
+                        "key": key,
+                        "name": label,
+                        "status": "skipped",
+                        "reason": "Evaluator produced no score.",
+                        "value": None,
+                        "passed": None,
+                        "explanation": None,
+                    }
+                )
             else:
                 values = [score.value for score in scores]
                 passed = all(score.passed for score in scores)
                 failing = next((score for score in scores if not score.passed), None)
                 explanation = failing.explanation if failing else scores[0].explanation
-                metrics.append({
-                    "key": key,
-                    "name": label,
-                    "status": "passed" if passed else "failed",
-                    "reason": None,
-                    "value": sum(values) / len(values),
-                    "passed": passed,
-                    "explanation": explanation,
-                })
+                metrics.append(
+                    {
+                        "key": key,
+                        "name": label,
+                        "status": "passed" if passed else "failed",
+                        "reason": None,
+                        "value": sum(values) / len(values),
+                        "passed": passed,
+                        "explanation": explanation,
+                    }
+                )
     return metrics
 
 
 def _step_status(metric: dict[str, Any] | None) -> str:
     """Step status derived from a metric ('ok' when absent, skipped, or N/A)."""
     if metric and metric.get("status") in ("passed", "failed"):
-        return metric["status"]
+        return str(metric["status"])
     return "ok"
 
 
-def _steps(scenario: Scenario, result, metrics: list[dict[str, Any]], passed: bool, score: float) -> list[dict[str, Any]]:
+def _steps(
+    scenario: Scenario,
+    result: AgentResult,
+    metrics: list[dict[str, Any]],
+    passed: bool,
+    score: float,
+) -> list[dict[str, Any]]:
     """Pipeline steps built only from actual agent/evaluation data."""
     by_key = {metric["key"]: metric for metric in metrics}
 
     return [
-        {"key": "input", "label": "INPUT", "title": "User input", "content": scenario.input, "status": "ok"},
-        {"key": "transcript", "label": "TRANSCRIPT", "title": "Speech to text", "content": result.transcript, "status": "ok"},
+        {
+            "key": "input",
+            "label": "INPUT",
+            "title": "User input",
+            "content": scenario.input,
+            "status": "ok",
+        },
+        {
+            "key": "transcript",
+            "label": "TRANSCRIPT",
+            "title": "Speech to text",
+            "content": result.transcript,
+            "status": "ok",
+        },
         {
             "key": "intent",
             "label": "INTENT",
@@ -256,7 +287,13 @@ def _steps(scenario: Scenario, result, metrics: list[dict[str, Any]], passed: bo
             "content": result.tool_result,
             "status": "ok" if result.tool_result is not None else "not executed",
         },
-        {"key": "response", "label": "RESPONSE", "title": "Agent response", "content": result.response, "status": "ok"},
+        {
+            "key": "response",
+            "label": "RESPONSE",
+            "title": "Agent response",
+            "content": result.response,
+            "status": "ok",
+        },
         {
             "key": "evaluation",
             "label": "EVALUATION",
@@ -272,6 +309,7 @@ def _steps(scenario: Scenario, result, metrics: list[dict[str, Any]], passed: bo
 # Public entry point
 # -----------------------------
 
+
 def evaluate_scenario(scenario: Scenario) -> dict[str, Any]:
     """Run one scenario through the agent and evaluators; returns a JSON-safe dict."""
     enabled, skipped = _satisfiability(scenario)
@@ -279,16 +317,20 @@ def evaluate_scenario(scenario: Scenario) -> dict[str, Any]:
     try:
         case = _build_case(scenario, enabled)
     except ValueError as exc:
-        raise ValueError(f"Could not build evaluation case for scenario '{scenario.id}': {exc}") from exc
+        raise ValueError(
+            f"Could not build evaluation case for scenario '{scenario.id}': {exc}"
+        ) from exc
 
     result = run_agent(scenario.input, fault=scenario.fault)
 
     spans = []
     if result.tool_name:
-        spans = [EvalSpan(
-            tool_name=result.tool_name,
-            attributes={"tool_args": result.tool_args, "tool_result": result.tool_result},
-        )]
+        spans = [
+            EvalSpan(
+                tool_name=result.tool_name,
+                attributes={"tool_args": result.tool_args, "tool_result": result.tool_result},
+            )
+        ]
 
     trace = EvalTrace(
         trace_id=f"trace-scenario-{scenario.id}",
@@ -350,7 +392,9 @@ def evaluate_scenario(scenario: Scenario) -> dict[str, Any]:
             "trace_id": trace.trace_id,
             "total_latency_ms": trace.total_latency_ms,
             "metadata": trace.metadata,
-            "spans": [{"tool_name": span.tool_name, "attributes": span.attributes} for span in trace.spans],
+            "spans": [
+                {"tool_name": span.tool_name, "attributes": span.attributes} for span in trace.spans
+            ],
             "steps": _steps(scenario, result, metrics, passed, score),
         },
         "report": report.model_dump(mode="json"),

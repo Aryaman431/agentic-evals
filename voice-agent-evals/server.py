@@ -11,6 +11,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from scenario_runner import evaluate_scenario
+from voice_agents import run_agent
 from scenarios import (
     FAULT_KEYS,
     Scenario,
@@ -56,6 +57,10 @@ class ScenarioUpdate(BaseModel):
     max_latency_ms: float | None = None
 
 
+class ChatRequest(BaseModel):
+    message: str
+
+
 class EvaluateRequest(BaseModel):
     scenario_id: str | None = None
     scenario_name: str | None = None
@@ -78,7 +83,8 @@ app = FastAPI(title="Voice Agent Evaluation API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("EVAL_CORS_ORIGINS", "*").split(","),
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -248,7 +254,28 @@ def evaluate_endpoint(request: EvaluateRequest) -> dict[str, Any]:
     }
     _RUNS.insert(0, run)
 
-    return payload
+
+@app.post("/chat/evaluate")
+def chat_evaluate_endpoint(request: ChatRequest) -> dict[str, Any]:
+    import time
+    start = time.time()
+    result = run_agent(request.message)
+    latency = time.time() - start
+    response, intent, tool, args = result.response, result.intent, result.tool_name, result.tool_args
+    return {
+        "response": response,
+        "intent": intent,
+        "tool": tool,
+        "args": args,
+        "result": result.tool_result,
+        "latency": latency,
+        "evaluation": None,
+    }
+
+
+@app.options("/chat/evaluate")
+def chat_evaluate_options():
+    return {"status": "ok"}
 
 
 @app.get("/runs")

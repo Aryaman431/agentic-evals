@@ -1,8 +1,8 @@
-# Voice Agent Evaluation with Agentic Evals
+# Agentic Evals — Interactive Agent Evaluation Lab
 
 ## Overview
 
-This project demonstrates how **Agentic Evals** can be used to evaluate a simulated voice-based customer support agent.
+This project demonstrates how **Agentic Evals** can be used to evaluate a simulated interactive agent.
 
 The evaluation focuses on:
 
@@ -21,7 +21,7 @@ The voice system is simulated locally so that the evaluation workflow can be tes
 
 ## Problem
 
-Voice customer-support agents must do more than generate a response. They need to correctly understand the user's request, select the appropriate tool, provide the correct information, and recover gracefully when information is missing.
+Interactive agents must do more than generate a response. They need to correctly understand the user's request, select the appropriate tool, provide the correct information, and recover gracefully when information is missing.
 
 This project evaluates these behaviors using a structured test dataset and the **Agentic Evals** evaluation framework.
 

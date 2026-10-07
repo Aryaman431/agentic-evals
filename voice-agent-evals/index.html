@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <meta name="description" content="Voice Agent Evaluation console - Agentic Evals observability and evaluation dashboard for the Voice Support Agent.">
-<title>Voice Agent Evaluation - Agentic Evals</title>
+<title>Agent Evaluation - Agentic Evals</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -831,22 +831,27 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
     <span class="brand-mark" aria-hidden="true"><i data-lucide="waypoints"></i></span>
     <span class="brand-text">
       <span class="brand-name">AGENTIC EVALS</span>
-      <span class="brand-sub">Voice Agent Observatory</span>
+      <span class="brand-sub">Agent Observatory</span>
     </span>
   </div>
 
-  <nav class="nav" aria-label="Sections">
+<nav class="nav" aria-label="Sections">
     <a class="nav-item active" href="#overview" data-target="overview" title="Overview"><i data-lucide="layout-dashboard"></i><span>OVERVIEW</span></a>
-    <a class="nav-item" href="#pipeline" data-target="pipeline" title="Test Runs"><i data-lucide="activity"></i><span>Test Runs</span></a>
+    <a class="nav-item" href="#chat" data-target="chat" title="Chat Playground"><i data-lucide="message-circle"></i><span>Chat Playground</span></a>
+    <a class="nav-item" href="#runs" data-target="pipeline" title="Test Runs"><i data-lucide="activity"></i><span>Test Runs</span></a>
     <a class="nav-item" href="#test-cases" data-target="test-cases" title="Test Cases"><i data-lucide="list-checks"></i><span>Test Cases</span></a>
     <a class="nav-item" href="#metrics" data-target="metrics" title="Metrics"><i data-lucide="target"></i><span>Metrics</span></a>
-    <a class="nav-item" href="#trace" data-target="trace" title="Agent Traces"><i data-lucide="git-branch"></i><span>Agent Traces</span></a>
+    <a class="nav-item" href="#traces" data-target="traces" title="Agent Traces"><i data-lucide="git-branch"></i><span>Agent Traces</span></a>
+    <a class="nav-item" href="#evaluators" data-target="evaluators" title="Evaluators"><i data-lucide="cpu"></i><span>Evaluators</span></a>
     <a class="nav-item" href="#scenarios" data-target="scenarios" title="Scenarios"><i data-lucide="flask-conical"></i><span>SCENARIOS</span></a>
+    <a class="nav-item" href="#packs" data-target="packs" title="Eval Packs"><i data-lucide="package"></i><span>Eval Packs</span></a>
+    <a class="nav-item" href="#gate" data-target="gate" title="Release Gate"><i data-lucide="shield"></i><span>Release Gate</span></a>
+    <a class="nav-item" href="#dataset" data-target="dataset" title="Dataset"><i data-lucide="database"></i><span>Dataset</span></a>
   </nav>
 
   <div class="side-divider" role="presentation"></div>
   <div class="nav-label">PROJECT</div>
-  <div class="project-row" title="Voice Support Agent"><i data-lucide="bot"></i><span>Voice Support Agent</span></div>
+  <div class="project-row" title="Support Agent"><i data-lucide="bot"></i><span>Support Agent</span></div>
   <button class="project-row" id="datasetBtn" type="button" title="Dataset: 10 cases" aria-haspopup="dialog"><i data-lucide="mic"></i><span class="sub" id="datasetBtnLabel">Dataset: 10 cases</span></button>
 
   <div class="side-foot">
@@ -863,7 +868,7 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
 
     <div class="crumbs">
       <div class="breadcrumb">Agentic Evals <i data-lucide="chevron-right" aria-hidden="true"></i> <b>Voice Support Agent</b></div>
-      <h1>Voice Agent Evaluation</h1>
+      <h1>Agent Evaluation</h1>
     </div>
 
     <div class="topbar-right">
@@ -1106,6 +1111,8 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
       <div class="metrics-grid" id="metricsGrid"></div>
     </section>
 
+    <div class="section" id="evaluators"></div>
+
     <!-- ===================== GROUNDEDNESS ===================== -->
     <section class="section" id="groundedness" aria-labelledby="grounded-title">
       <div class="sec-head">
@@ -1154,11 +1161,11 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
       </div>
     </section>
     <!-- ===================== TRACE VIEWER ===================== -->
-    <section class="section" id="trace" aria-labelledby="trace-title">
+    <section class="section" id="traces" aria-labelledby="traces-title">
       <div class="sec-head">
         <div>
           <span class="kicker">Observability</span>
-          <h2 id="trace-title">Agent Trace</h2>
+          <h2 id="traces-title">Agent Trace</h2>
           <p>Step-by-step spans for the order status request. Select a step to expand its payload.</p>
         </div>
         <span class="pill info" id="tracePill">7 STEPS</span>
@@ -1331,6 +1338,8 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
       </div>
     </section>
 
+    <div class="section" id="packs"></div>
+
     <!-- ===================== LATENCY ===================== -->
     <section class="section" id="latency" aria-labelledby="latency-title">
       <div class="sec-head">
@@ -1440,7 +1449,49 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
       </ul>
       <p class="foot-meta">AGENTIC EVALS / VOICE AGENT OBSERVATORY / VOICE SUPPORT AGENT</p>
     </section>
-  </main>
+
+    <!-- ===================== CHAT PLAYGROUND ===================== -->
+    <section class="section" id="chat" aria-labelledby="chat-playground-title">
+      <div class="sec-head">
+        <div>
+          <span class="kicker">Chat Playground</span>
+          <h2 id="chat-playground-title">Support Agent Chat</h2>
+        </div>
+        <div class="pill info" id="chatApiStatus">API OFFLINE</div>
+      </div>
+
+      <div class="panel" style="padding:0px">
+        <div class="trace" id="chatTraceList" style="height:300px;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:var(--r-lg);background:rgba(0,0,0,.35);margin-bottom:12px;color:#cfe4ef;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;">
+          <div style="color:#8b97a3;font-size:12px;margin:8px 0;">Start a conversation by entering a message below.</div>
+        </div>
+      </div>
+
+      <div class="panel" style="padding:0px 10px 10px">
+        <div style="display:flex;gap:8px;align-items:flex-bottom;margin-bottom:8px">
+          <input type="text" id="chatInput" style="flex:1;padding:10px;border-radius:var(--r);border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--text);font-size:12.5px;font-family:var(--mono);outline:none;" placeholder="Type your message...">
+          <button class="btn btn-primary" id="chatSend" style="padding:0px 14px;border-radius:var(--r);font-size:12.5px;font-weight:600;letter-spacing:.01em;">Send</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">
+          Tips: Try "Where is my order 1234?" or "Cancel order 5678."
+        </div>
+      </div>
+</section>
+  <section class="section" id="dataset" aria-labelledby="dataset-title">
+    <div class="sec-head">
+      <div>
+        <span class="kicker">Dataset</span>
+        <h2 id="dataset-title">Test Cases Dataset</h2>
+      </div>
+      <div class="pill info">10 test cases</div>
+    </div>
+    <div class="summary">
+      <p>Dataset containing 10 test cases for the Support Agent.</p>
+      <a href="#" class="secondary-btn">Manage Dataset</a>
+    </div>
+  </section>
+
+  <div class="section" id="gate"></div>
+</main>
 </div>
 <!-- ===================== TEST CASE DRAWER ===================== -->
 <div class="backdrop" id="drawerBackdrop"></div>
@@ -1490,7 +1541,7 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
     <span class="mono">10 / 10</span>
     <span>passed</span>
     <span class="dim">/</span>
-    <span>Voice Support Agent</span>
+    <span>Support Agent</span>
     <span class="dim">/</span>
     <span class="mono">Just now</span>
   </div>
@@ -2579,6 +2630,7 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
   var rpStatusText = $('#rpStatusText');
   var rpContent = $('#rpContent');
   var apiStatusEl = $('#apiStatus');
+  var chatApiStatus = $('#chatApiStatus');
   var apiErrorEl = $('#apiError');
   var labRunCountEl = $('#labRunCount');
   var scModal = $('#scenarioModal');
@@ -2642,7 +2694,17 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
     return n;
   }
 
-  function showApiError() { if (apiErrorEl) apiErrorEl.hidden = false; }
+  function checkApiHealth() {
+    return apiGet('/health').then(function (data) {
+      // Determine status from API response, not hardcoded "ONLINE"/"OFFLINE"
+      var online = !!(data && data.status === 'ok');
+      setApiStatus(online);
+      return online;
+    })['catch'](function () {
+      setApiStatus(false);
+      return false;
+    });
+  }
   function hideApiError() { if (apiErrorEl) apiErrorEl.hidden = true; }
 
   function setApiStatus(online) {
@@ -2650,6 +2712,25 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
     apiStatusEl.className = 'pill ' + (online ? 'pass' : 'neutral');
     apiStatusEl.setAttribute('data-state', online ? 'on' : 'off');
     apiStatusEl.textContent = online ? 'API ONLINE' : 'API OFFLINE';
+    
+    // Update chat API status pill
+    if (chatApiStatus) {
+      chatApiStatus.className = 'pill ' + (online ? 'info' : 'fail');
+      chatApiStatus.setAttribute('data-state', online ? 'on' : 'off');
+      chatApiStatus.textContent = online ? 'API ONLINE' : 'API OFFLINE';
+    }
+    
+    // Update status text in sidebar foot
+    var statusTexts = document.querySelectorAll('.status-text');
+    statusTexts.forEach(function (el) {
+      el.textContent = online ? 'API ONLINE' : 'API OFFLINE';
+    });
+    
+    // Update topbar badge text
+    var badgeText = $('#topbarBadgeText');
+    if (badgeText) {
+      badgeText.textContent = online ? 'PASSING' : 'OFFLINE';
+    }
   }
 
   function renderLabPills() {
@@ -3910,9 +3991,9 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
          right after a page reload. */
       updateLatestEvaluation();
 
-      var online = hOk || scOk || runsOk || stOk;
-      setApiStatus(online);
+      checkApiHealth().then(function (online) {
       if (!online || !scOk) showApiError(); else hideApiError();
+    });
 
       renderFaultChips();
       renderScenarios();
@@ -3972,10 +4053,58 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
     });
   }
 
+  /* ---------------------------- CHAT SEND HANDLER ---------------------------- */
+
+  var chatSend = $('#chatSend');
+  var chatInput = $('#chatInput');
+  var chatTraceList = $('#chatTraceList');
+
+  if (chatSend && chatInput && chatTraceList && chatApiStatus) {
+    chatSend.addEventListener('click', function () {
+      var message = chatInput.value.trim();
+      if (!message) return;
+
+      // Show API status as online
+      chatApiStatus.className = 'pill info';
+      chatApiStatus.setAttribute('data-state', 'on');
+      chatApiStatus.textContent = 'API ONLINE';
+
+apiPost('/chat/evaluate', { message: message }).then(function (data) {
+        var responseText = data.response || data.answer || JSON.stringify(data);
+        var evaluationText = (data.evaluation !== undefined && data.evaluation !== null) ? 'Evaluation: ' + data.evaluation : 'Evaluation unavailable';
+        var newEntry = '<div class="trace-step open">' +
+          '<button class="trace-head" type="button" aria-expanded="true" aria-controls="chat-body-' + Date.now() + '">' +
+          '<span class="trace-time">' + nowTime() + '</span>' +
+          '<span class="step-chip eval">EVAL</span>' +
+          '<span class="trace-title">Agent</span>' +
+          '<i class="chev" data-lucide="chevron-down" aria-hidden="true"></i>' +
+          '</button>' +
+          '<div class="trace-body" id="chat-body-' + Date.now() + '">' +
+          '<div class="trace-content">' + esc(responseText) + '</div>' +
+          '<div class="muted">' + evaluationText + '</div>' +
+          '</div>' +
+        '</div>';
+        chatTraceList.innerHTML += newEntry;
+
+        // Clear the input
+        chatInput.value = '';
+
+        refreshIcons();
+      })['catch'](function (err) {
+        var msg = (err && err.message) ? err.message : 'unknown error';
+        chatTraceList.innerHTML += '<div class="muted">Error: ' + msg + '</div>';
+        chatApiStatus.className = 'pill fail';
+        chatApiStatus.setAttribute('data-state', 'off');
+        chatApiStatus.textContent = 'API OFFLINE';
+      });
+    });
+  }
+
   /* ---------------------------- BOOT ---------------------------- */
 
   /* Read-only debug/test handle onto the live state object (no behavior). */
   window.__EVAL_STATE__ = state;
+  window.checkApiHealth = checkApiHealth;
 
   initLab();
 })();
@@ -3983,6 +4112,12 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
 
 
 
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    window.checkApiHealth();
+  });
+</script>
 
 </body>
 </html>

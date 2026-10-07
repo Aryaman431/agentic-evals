@@ -87,7 +87,7 @@ def transcribe(audio_text: str) -> str:
 
 
 # -----------------------------
-# Voice Agent
+# Customer-Support Agent
 # -----------------------------
 
 

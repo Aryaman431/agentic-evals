@@ -1,12 +1,12 @@
 # Render blueprint for the Agentic Evals API service.
 # The backend uses in-memory state, so a single instance is required.
+
 services:
   - type: web
     name: agentic-evals-api
     runtime: python
-    workingDirectory: voice-agent-evals
     buildCommand: uv sync --extra voice --frozen
-    startCommand: uv run uvicorn server:app --host 0.0.0.0 --port $PORT
+    startCommand: cd voice-agent-evals && uv run uvicorn server:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     numInstances: 1
     envVars:

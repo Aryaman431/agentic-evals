@@ -253,6 +253,7 @@ def evaluate_endpoint(request: EvaluateRequest) -> dict[str, Any]:
         "evaluation": payload,
     }
     _RUNS.insert(0, run)
+    return payload
 
 
 @app.post("/chat/evaluate")

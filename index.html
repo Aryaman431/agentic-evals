@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ============================================================
+     URL CONFIGURATION — single source of truth for card hrefs.
+     All three CTAs are RELATIVE links to project frontends in this
+     repository (same origin, so no target="_blank" / rel on them).
+     To re-point a card, edit the matching href in the <article>
+     below and give each CTA a unique aria-label.
+     ------------------------------------------------------------
+     uc-01 · Chatbot Evaluation
+       href: Chatbot-eval/index.html
+       Status: VERIFIED on disk 2026-10-22
+       Frontend: static file; loads config.js and calls an Evaluation
+       API at http://127.0.0.1:8001 — without the backend
+       (Chatbot-eval/server.py) it shows an "Evaluation API
+       unreachable" banner, but the page is viewable statically.
+     uc-02 · Voice Agent Evaluation
+       href: voice-agent-evals/index.html
+       Status: VERIFIED on disk 2026-10-22
+       Frontend: static file, same pattern as uc-01; backend is
+       voice-agent-evals/server.py (port 8001) for live eval calls.
+     uc-03 · From Production Trace to Release Decision
+       href: Production%20trace%20to%20release%20decision/index.html
+             (folder name contains spaces — URL-encoded; literal
+             folder on disk: "Production trace to release decision")
+       Status: VERIFIED on disk 2026-10-22
+       Frontend: fully self-contained single file (inline CSS/JS,
+       simulated data client-side). Optional backend: app.py
+       (Supabase-backed) when configured.
+     ============================================================ -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="DeepAgentLabs Use Case Hub — three engineering case studies on chatbot evaluation, voice-agent testing, and turning a production trace into a release decision.">
+<title>DeepAgentLabs · Use Case Hub</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#use-cases">Skip to use cases</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <p class="brand">
+      <span class="brand-name">DeepAgentLabs</span>
+      <span class="brand-sep" aria-hidden="true">/</span>
+      <span class="brand-sub">Use Case Hub</span>
+    </p>
+    <nav class="site-nav" aria-label="Primary">
+      <ul class="nav-list nav-list--wide">
+        <li><a class="nav-link" href="#uc-01">01 Chatbot</a></li>
+        <li><a class="nav-link" href="#uc-02">02 Voice</a></li>
+        <li><a class="nav-link" href="#uc-03">03 Trace → Release</a></li>
+        <li>
+          <a class="nav-link nav-link--ext"
+             href="https://github.com/Aryaman431/agentic-evals"
+             target="_blank"
+             rel="noopener noreferrer"
+             aria-label="agentic-evals on GitHub — opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+        </li>
+      </ul>
+      <details class="nav-disclosure">
+        <summary class="nav-summary">Menu<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <ul class="nav-list nav-list--drawer">
+          <li><a href="#uc-01">01 Chatbot Evaluation</a></li>
+          <li><a href="#uc-02">02 Voice Agent Evaluation</a></li>
+          <li><a href="#uc-03">03 From Production Trace to Release Decision</a></li>
+          <li>
+            <a href="https://github.com/Aryaman431/agentic-evals"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="agentic-evals on GitHub — opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+          </li>
+        </ul>
+      </details>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="wrap hero-grid">
+
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">§00</span>DeepAgentLabs / Use cases</p>
+        <h1 id="hero-heading">Evaluating AI agents takes <em class="serif-em">more than</em> a <em class="serif-em serif-em--strong">successful response</em>.</h1>
+        <p class="hero-lede">Three engineering case studies explore chatbot evaluation, voice-agent testing, and the journey from a production trace to a release decision.</p>
+        <p class="hero-actions"><a class="btn" href="#use-cases">Explore the use cases<svg class="arrow arrow--dr" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 2 L8 8 M8 3.5 V8 H3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a></p>
+      </div>
+
+      <figure class="hero-visual">
+        <span class="coord coord--tl" aria-hidden="true">0,0</span>
+        <span class="coord coord--tr" aria-hidden="true">620</span>
+        <span class="coord coord--bl" aria-hidden="true">430</span>
+        <span class="coord coord--br" aria-hidden="true">DL/UCH</span>
+
+        <svg class="diagram" viewBox="0 0 620 430" role="img" aria-labelledby="hero-svg-title hero-svg-desc" focusable="false">
+          <title id="hero-svg-title">Evaluation architecture schematic</title>
+          <desc id="hero-svg-desc">Three surfaces — chatbot evaluation, voice-agent testing, and trace-driven release — connect through a central evaluation layer that emits an illustrative evaluation event.</desc>
+
+          <!-- stage 01 · chatbot -->
+          <rect class="d-panel" x="20" y="40" width="152" height="56" rx="3"/>
+          <text class="d-lbl d-lbl-mint" x="32" y="60">01</text>
+          <text class="d-sans" x="32" y="78" font-size="12">CHATBOT</text>
+          <text class="d-lbl" x="32" y="92">EVALUATE</text>
+          <circle class="d-dot-lime" cx="160" cy="52" r="3"/>
+
+          <!-- stage 02 · voice -->
+          <rect class="d-panel" x="20" y="312" width="152" height="56" rx="3"/>
+          <text class="d-lbl d-lbl-mint" x="32" y="332">02</text>
+          <text class="d-sans" x="32" y="350" font-size="12">VOICE AGENT</text>
+          <text class="d-lbl" x="32" y="364">TEST</text>
+          <circle class="d-dot-lime" cx="160" cy="324" r="3"/>
+
+          <!-- stage 03 · trace -->
+          <rect class="d-panel" x="448" y="176" width="152" height="56" rx="3"/>
+          <text class="d-lbl d-lbl-mint" x="460" y="196">03</text>
+          <text class="d-sans" x="460" y="214" font-size="12">TRACE</text>
+          <text class="d-lbl" x="460" y="228">RELEASE</text>
+          <circle class="d-dot-lime" cx="588" cy="188" r="3"/>
+
+          <!-- central evaluation layer -->
+          <rect class="d-panel" x="224" y="176" width="172" height="68" rx="3"/>
+          <text class="d-sans" x="310" y="206" font-size="13" text-anchor="middle">EVALUATION LAYER</text>
+          <text class="d-lbl" x="310" y="226" text-anchor="middle">scoring → gates</text>
+
+          <!-- edges into the hub -->
+          <path class="d-edge" d="M172 68 H196 V196 H224"/>
+          <path class="d-edge" d="M172 340 H196 V224 H224"/>
+          <path class="d-edge" d="M448 204 H422 V210 H396"/>
+          <circle class="d-junction" cx="196" cy="68" r="2"/>
+          <circle class="d-junction" cx="196" cy="340" r="2"/>
+          <circle class="d-junction" cx="422" cy="204" r="2"/>
+
+          <!-- hub → event -->
+          <path class="d-edge" d="M310 244 V288"/>
+          <circle class="d-dot-lime" cx="310" cy="288" r="3"/>
+
+          <!-- illustrative eval event -->
+          <rect class="d-panel" x="286" y="288" width="314" height="118" rx="3"/>
+          <text class="d-lbl d-lbl-lime" x="298" y="310" style="font-size:8px">EVAL EVENT · ILLUSTRATIVE</text>
+          <text class="d-lbl" x="298" y="336">case</text>
+          <text class="d-lbl d-lbl-b" x="386" y="336">refund-status</text>
+          <text class="d-lbl" x="298" y="356">required</text>
+          <text class="d-lbl d-lbl-b" x="386" y="356">lookup_refund</text>
+          <text class="d-lbl" x="298" y="376">forbidden</text>
+          <text class="d-lbl d-lbl-b" x="386" y="376">delete_order</text>
+          <text class="d-lbl" x="298" y="396">budget</text>
+          <text class="d-lbl d-lbl-b" x="386" y="396">≤ 2000 ms</text>
+        </svg>
+
+        <figcaption class="fig-caption">Fig. 00 — one evaluation layer, three surfaces (schematic)</figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <section id="use-cases" class="use-cases" aria-labelledby="use-cases-heading">
+    <div class="wrap">
+
+      <header class="section-head">
+        <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">§01</span>Evaluation in practice</p>
+        <h2 id="use-cases-heading">Three builds, one evaluation stack</h2>
+        <p class="section-intro">Each case pairs a working system with the machinery that judges it — scoring suites, voice test harnesses, and trace-driven release gates.</p>
+      </header>
+
+      <div class="case-grid">
+
+        <article class="case case--01" id="uc-01">
+          <div class="case-head">
+            <span class="case-index" aria-hidden="true">01</span>
+            <p class="case-cat">01 · Evaluation Engine</p>
+          </div>
+          <h3 class="case-title">Chatbot Evaluation</h3>
+
+          <figure class="case-visual">
+            <svg class="diagram" viewBox="0 0 340 200" role="img" aria-labelledby="uc01-svg-title uc01-svg-desc" focusable="false">
+              <title id="uc01-svg-title">Chatbot evaluation case schematic</title>
+              <desc id="uc01-svg-desc">A user asks about a refund; the evaluated reply is assessed against a required tool, a forbidden tool, a precision expectation, and a latency budget.</desc>
+
+              <text class="d-lbl" x="8" y="14">USER</text>
+              <rect class="d-panel-alt" x="8" y="20" width="186" height="32" rx="3"/>
+              <text class="d-sans" x="18" y="40" font-size="11">Did my refund go through?</text>
+
+              <text class="d-lbl" x="8" y="70">AGENT · EVALUATED</text>
+              <rect class="d-panel" x="8" y="76" width="240" height="38" rx="3"/>
+              <circle class="d-dot-lime" cx="238" cy="88" r="2.5"/>
+              <text class="d-sans" x="18" y="100" font-size="11">Your refund is on its way!</text>
+              <path class="d-dash" d="M18 106 H170"/>
+
+              <path class="d-edge" d="M8 130 H332"/>
+
+              <rect class="d-panel-alt" x="8" y="142" width="74" height="36" rx="2"/>
+              <text class="d-lbl" x="16" y="158" style="font-size:7px">REQUIRED</text>
+              <text class="d-lbl d-lbl-b" x="16" y="174" style="font-size:8.5px">lookup_refund</text>
+              <circle class="d-dot-lime" cx="74" cy="151" r="2"/>
+
+              <rect class="d-panel-alt" x="92" y="142" width="74" height="36" rx="2"/>
+              <text class="d-lbl" x="100" y="158" style="font-size:7px">FORBIDDEN</text>
+              <text class="d-lbl" x="100" y="174" style="font-size:8.5px">delete_order</text>
+
+              <rect class="d-panel-alt" x="176" y="142" width="74" height="36" rx="2"/>
+              <text class="d-lbl" x="184" y="158" style="font-size:7px">PRECISION</text>
+              <text class="d-lbl d-lbl-b" x="184" y="174" style="font-size:8.5px">≥ 1.0</text>
+
+              <rect class="d-panel-alt" x="260" y="142" width="74" height="36" rx="2"/>
+              <text class="d-lbl" x="268" y="158" style="font-size:7px">BUDGET</text>
+              <text class="d-lbl d-lbl-b" x="268" y="174" style="font-size:8.5px">≤ 2000 ms</text>
+            </svg>
+            <figcaption class="fig-caption">Fig. 01 — one case, four constraints (schematic)</figcaption>
+          </figure>
+
+          <p class="case-body">
+            Every agent team eventually asks the same question: did the model actually
+            do the right thing? <code>agentic-evals</code> is a standalone,
+            framework-agnostic scoring engine for LLM and agent outputs, published on
+            PyPI with a full pytest suite under <code>tests/</code>. Its canonical
+            chatbot evaluation is the <code>support-answers</code> suite: a
+            <code>refund-status</code> case that requires tool
+            <code>lookup_refund</code>, forbids <code>delete_order</code>, enforces a
+            <code>tool_call_precision</code> threshold of 1.0 and a 2000 ms latency
+            budget, and scores a reply like "Your refund is on its way!"
+            against a trace span. Suites run through <code>evaluate_suite</code> into a
+            JSON <code>EvaluationReport</code> and pass rate, then
+            <code>GateConfig</code>/<code>evaluate_gate</code> turns that into a release
+            gate that can <code>raise SystemExit</code> in CI.
+          </p>
+
+          <div class="case-learn">
+            <h4>You'll learn</h4>
+            <ul>
+              <li>How one <code>refund-status</code> case turns required and forbidden tools, a precision threshold, and a latency budget into a pass/fail result</li>
+              <li>When to use deterministic text scorers, trace-aware tool checks, JSON-Schema contracts, or LLM-judge rubrics — and what the three built-in packs cover</li>
+              <li>How a JSON <code>EvaluationReport</code> and pass rate become a release gate, and how <code>agentic-evals run</code> discovers eval files and collapses them into one CI exit code</li>
+            </ul>
+          </div>
+
+          <p class="case-run">Frontend: <code>Chatbot-eval/index.html</code> — opens standalone; the Evaluation API needs <code>python Chatbot-eval/server.py</code> (port 8001).</p>
+
+          <p class="case-cta-row">
+            <a class="case-cta"
+               href="Chatbot-eval/index.html"
+               aria-label="Open use case 01: Chatbot Evaluation project">Open the project<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+          </p>
+        </article>
+
+        <article class="case case--02" id="uc-02">
+          <div class="case-head">
+            <span class="case-index" aria-hidden="true">02</span>
+            <p class="case-cat">02 · Voice Agents</p>
+          </div>
+          <h3 class="case-title">Voice Agent Evaluation</h3>
+
+          <figure class="case-visual">
+            <svg class="diagram" viewBox="0 0 340 200" role="img" aria-labelledby="uc02-svg-title uc02-svg-desc" focusable="false">
+              <title id="uc02-svg-title">Voice agent evaluation case schematic</title>
+              <desc id="uc02-svg-desc">A five-stage pipeline — speech, transcription, reasoning, tools, response — paired with a fault-injection catalog of wrong tool, bad arguments, hallucination, and slow reply, proving each evaluator fires.</desc>
+
+              <!-- stage boxes -->
+              <rect class="d-panel" x="8" y="36" width="56" height="64" rx="3"/>
+              <rect class="d-panel" x="75" y="36" width="56" height="64" rx="3"/>
+              <rect class="d-panel" x="142" y="36" width="56" height="64" rx="3"/>
+              <rect class="d-panel" x="209" y="36" width="56" height="64" rx="3"/>
+              <rect class="d-panel" x="276" y="36" width="56" height="64" rx="3"/>
+
+              <!-- stage indexes -->
+              <text class="d-lbl d-lbl-mint" x="16" y="52">01</text>
+              <text class="d-lbl d-lbl-mint" x="83" y="52">02</text>
+              <text class="d-lbl d-lbl-mint" x="150" y="52">03</text>
+              <text class="d-lbl d-lbl-mint" x="217" y="52">04</text>
+              <text class="d-lbl d-lbl-mint" x="284" y="52">05</text>
+
+              <!-- stage names -->
+              <text class="d-lbl" x="36" y="116" style="font-size:8px" text-anchor="middle">SPEECH</text>
+              <text class="d-lbl" x="103" y="116" style="font-size:7.5px" text-anchor="middle">TRANSCRIPTION</text>
+              <text class="d-lbl" x="170" y="116" style="font-size:8px" text-anchor="middle">REASONING</text>
+              <text class="d-lbl" x="237" y="116" style="font-size:8px" text-anchor="middle">TOOLS</text>
+              <text class="d-lbl" x="304" y="116" style="font-size:8px" text-anchor="middle">RESPONSE</text>
+
+              <!-- speech waveform -->
+              <path class="d-dash" d="M16 62 V78"/>
+              <path class="d-dash" d="M22 54 V86"/>
+              <path class="d-dash" d="M28 58 V82"/>
+              <path class="d-dash" d="M34 50 V90"/>
+              <path class="d-dash" d="M40 62 V78"/>
+
+              <!-- transcript excerpt -->
+              <text class="d-lbl" x="83" y="70" style="font-size:7px">where is</text>
+              <text class="d-lbl" x="83" y="82" style="font-size:7px">order 4172</text>
+
+              <!-- tool call chip -->
+              <rect class="d-panel-alt" x="217" y="64" width="40" height="16" rx="2"/>
+              <text class="d-lbl" x="225" y="88" style="font-size:7px">tool</text>
+
+              <!-- chevron edges -->
+              <path class="d-edge" d="M66 64 L71 68 L66 72"/>
+              <path class="d-edge" d="M133 64 L138 68 L133 72"/>
+              <path class="d-edge" d="M200 64 L205 68 L200 72"/>
+              <path class="d-edge" d="M267 64 L272 68 L267 72"/>
+
+              <circle class="d-dot-lime" cx="324" cy="44" r="2.5"/>
+
+              <!-- fault injection band -->
+              <path class="d-edge" d="M8 148 H332"/>
+              <text class="d-lbl d-lbl-lime" x="8" y="164">FAULT INJECTION</text>
+
+              <rect class="d-tick" x="8" y="175" width="5" height="5"/>
+              <text class="d-lbl" x="18" y="180" style="font-size:7px">WRONG TOOL</text>
+              <rect class="d-tick" x="92" y="175" width="5" height="5"/>
+              <text class="d-lbl" x="102" y="180" style="font-size:7px">BAD ARGS</text>
+              <rect class="d-tick" x="168" y="175" width="5" height="5"/>
+              <text class="d-lbl" x="178" y="180" style="font-size:7px">HALLUCINATION</text>
+              <rect class="d-tick" x="262" y="175" width="5" height="5"/>
+              <text class="d-lbl" x="272" y="180" style="font-size:7px">SLOW REPLY</text>
+            </svg>
+            <figcaption class="fig-caption">Fig. 02 — speech to response, with fault injection (schematic)</figcaption>
+          </figure>
+
+          <p class="case-body">
+            Voice agents fail in ways text demos never reveal. This use case builds a
+            simulated voice customer-support agent — deterministic intent detection,
+            order-ID extraction, tool selection, response — then evaluates it against
+            the ten-case dataset in <code>dataset.py</code>: STT basics and accents,
+            intents for status, cancel, and refund, tool selection and arguments, task
+            completion, <code>missing-order</code> (ask for the order ID, never guess),
+            and <code>unknown-intent</code> (decline without calling a tool).
+            <code>run_evals.py</code> converts these into an <code>agentic-evals</code>
+            <code>TestSuite</code> and prints a scorecard — 10/10 PASS — with a FastAPI
+            Evaluation API behind an in-dashboard Scenario Lab and fault-injection
+            catalog. <code>render.yaml</code> targets a hosted deployment; STT is
+            simulated and latency is local.
+          </p>
+
+          <div class="case-learn">
+            <h4>You'll learn</h4>
+            <ul>
+              <li>The eight evaluation rules that judge a voice-support agent, from transcript accuracy to groundedness</li>
+              <li>How fault injection — wrong tool, corrupted arguments, hallucinated claims, slow reply — proves each evaluator actually catches its fault</li>
+              <li>Which reported numbers are trustworthy: pass rates are real, but STT is simulated and local latency is not production latency</li>
+            </ul>
+          </div>
+
+          <p class="case-run">Frontend: <code>voice-agent-evals/index.html</code> — opens standalone; live eval calls need <code>python voice-agent-evals/server.py</code> (port 8001).</p>
+
+          <p class="case-cta-row">
+            <a class="case-cta"
+               href="voice-agent-evals/index.html"
+               aria-label="Open use case 02: Voice Agent Evaluation project">Open the project<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+          </p>
+        </article>
+
+        <article class="case case--03" id="uc-03">
+          <div class="case-head">
+            <span class="case-index" aria-hidden="true">03</span>
+            <p class="case-cat">03 · Production to Release</p>
+          </div>
+          <h3 class="case-title">From Production Trace to Release Decision</h3>
+
+          <figure class="case-visual">
+            <svg class="diagram" viewBox="0 0 340 200" role="img" aria-labelledby="uc03-svg-title uc03-svg-desc" focusable="false">
+              <title id="uc03-svg-title">Trace-to-release case schematic</title>
+              <desc id="uc03-svg-desc">A five-stage production trace timeline feeds a baseline-versus-replay metric comparison with threshold markers, resolving to ready, not ready, or needs review.</desc>
+
+              <!-- band 1 · production trace -->
+              <text class="d-lbl d-lbl-mint" x="8" y="16">PRODUCTION TRACE</text>
+              <path class="d-edge" d="M12 42 H328"/>
+              <circle class="d-junction" cx="28" cy="42" r="3"/>
+              <circle class="d-junction" cx="100" cy="42" r="3"/>
+              <circle class="d-junction" cx="172" cy="42" r="3"/>
+              <circle class="d-junction" cx="244" cy="42" r="3"/>
+              <circle class="d-dot-lime" cx="316" cy="42" r="3"/>
+              <text class="d-lbl" x="28" y="32" text-anchor="middle">1</text>
+              <text class="d-lbl" x="100" y="32" text-anchor="middle">2</text>
+              <text class="d-lbl" x="172" y="32" text-anchor="middle">3</text>
+              <text class="d-lbl" x="244" y="32" text-anchor="middle">4</text>
+              <text class="d-lbl" x="316" y="32" text-anchor="middle">5</text>
+
+              <path class="d-edge" d="M8 68 H332"/>
+
+              <!-- band 2 · baseline vs replay -->
+              <text class="d-lbl" x="8" y="82">BASELINE VS REPLAY</text>
+              <text class="d-lbl" x="8" y="106">Δ OVERALL</text>
+              <rect class="d-fill-strong" x="90" y="102" width="110" height="6"/>
+              <rect class="d-dot-mint" x="90" y="102" width="128" height="6"/>
+              <rect class="d-dot-lime" x="218" y="101" width="2" height="8"/>
+              <text class="d-lbl" x="8" y="126">SAFETY</text>
+              <rect class="d-fill-strong" x="90" y="122" width="110" height="6"/>
+              <rect class="d-dot-mint" x="90" y="122" width="96" height="6"/>
+              <rect class="d-dot-lime" x="198" y="121" width="2" height="8"/>
+
+              <path class="d-edge" d="M8 140 H332"/>
+
+              <!-- band 3 · verdict -->
+              <text class="d-lbl" x="8" y="158">VERDICT</text>
+              <rect class="d-panel" x="8" y="164" width="96" height="26" rx="2"/>
+              <circle class="d-dot-lime" cx="20" cy="177" r="2.5"/>
+              <text class="d-lbl d-lbl-lime" x="56" y="180" style="font-size:8px" text-anchor="middle">READY</text>
+              <rect class="d-panel" x="116" y="164" width="96" height="26" rx="2"/>
+              <text class="d-lbl" x="164" y="180" style="font-size:8px" text-anchor="middle">NOT READY</text>
+              <rect class="d-panel" x="224" y="164" width="96" height="26" rx="2"/>
+              <text class="d-lbl" x="272" y="180" style="font-size:8px" text-anchor="middle">NEEDS REVIEW</text>
+            </svg>
+            <figcaption class="fig-caption">Fig. 03 — five stages, four thresholds, three verdicts (schematic)</figcaption>
+          </figure>
+
+          <p class="case-body">
+            Shipping an agent change on gut feel is a liability. This console walks a
+            financial-assistant production trace — an unusual expense of about $2,847 —
+            through five stages: production trace, AI Ops Spec export, baseline
+            evaluation, simulated replay, and release decision. Verdicts of READY, NOT
+            READY, or NEEDS REVIEW are computed in real code from documented
+            thresholds: an overall delta of at least +2.0, worst-metric regression no
+            worse than −3.0, post-replay safety of at least 80, and post-replay overall
+            of at least 78. Capture, spec, evaluation, and replay are marked simulated;
+            Supabase persistence and API operations are genuinely functional when
+            configured.
+          </p>
+
+          <div class="case-learn">
+            <h4>You'll learn</h4>
+            <ul>
+              <li>The five stages: production trace, AI Ops Spec export, baseline evaluation, simulated replay, release decision</li>
+              <li>How documented thresholds turn metric deltas into READY, NOT READY, or NEEDS REVIEW</li>
+              <li>How to compare a prompt, model, or coordination change against a saved baseline through replay</li>
+            </ul>
+          </div>
+
+          <p class="case-run">Frontend: <code>Production trace to release decision/index.html</code> — fully self-contained (simulated data). Optional backend: <code>app.py</code> with Supabase when configured.</p>
+
+          <p class="case-cta-row">
+            <a class="case-cta"
+               href="Production%20trace%20to%20release%20decision/index.html"
+               aria-label="Open use case 03: From Production Trace to Release Decision project">Open the project<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+          </p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p class="footer-brand">DeepAgentLabs · Use Case Hub</p>
+    <p class="footer-note">Static hub. Use-case cards open each project's local frontend; GitHub opens in a new tab.</p>
+    <p class="footer-meta" aria-hidden="true">DL / UCH · REV 2026.10</p>
+  </div>
+</footer>
+
+</body>
+</html>

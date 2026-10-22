@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Production Trace to Release Decision · AgenticLens → Agentic-Evals</title>
+<style>
+/* ============================================================
+   DESIGN SYSTEM — Linear/Vercel tier dark console
+   ============================================================ */
+:root {
+  --bg: #0a0e12;
+  --panel: #12181d;
+  --nested: #161d23;
+  --border: rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.12);
+  --text: #e6edf3;
+  --muted: #8b98a5;
+  --faint: #5c6a77;
+  --cyan: #22d3ee;
+  --teal: #14b8a6;
+  --green: #34d399;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --mono: ui-monospace, "Cascadia Code", "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r: 9px;
+  --rs: 6px;
+  --t: 170ms ease;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 13.5px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+/* Shell layout */
+.shell { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: 56px 1fr; height: 100vh; overflow: hidden; }
+
+/* ---------- Sidebar ---------- */
+.sidebar { grid-row: 1 / span 2; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.sb-brand { padding: 16px 16px 14px; border-bottom: 1px solid var(--border); }
+.sb-mark { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; letter-spacing: -0.01em; }
+.sb-logo { width: 22px; height: 22px; border-radius: var(--rs); background: linear-gradient(135deg, var(--cyan), var(--teal)); display: flex; align-items: center; justify-content: center; color: #041016; font-weight: 800; font-size: 12px; flex-shrink: 0; }
+.sb-sub { font-size: 11px; color: var(--faint); margin-top: 2px; padding-left: 30px; }
+.sb-story { font-size: 11px; color: var(--muted); line-height: 1.5; padding: 10px 16px 12px; border-bottom: 1px solid var(--border); }
+.sb-scroll { flex: 1; overflow-y: auto; padding: 14px 12px; }
+.sb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--faint); padding: 0 6px 8px; }
+.sb-item { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: var(--rs); cursor: pointer; transition: background var(--t), color var(--t); color: var(--muted); font-size: 12.5px; border: none; background: none; width: 100%; text-align: left; }
+.sb-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.sb-item.active { background: rgba(34,211,238,0.08); color: var(--text); }
+.sb-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.sb-dot.done { background: var(--green); box-shadow: 0 0 5px rgba(52,211,153,0.6); }
+.sb-dot.active { background: var(--cyan); box-shadow: 0 0 5px rgba(34,211,238,0.6); }
+.sb-dot.todo { background: var(--faint); }
+.sb-num { font-family: var(--mono); font-size: 10px; width: 16px; height: 16px; border-radius: 4px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--muted); }
+.sb-item.active .sb-num { background: rgba(34,211,238,0.15); color: var(--cyan); }
+.sb-item.done .sb-num { background: rgba(52,211,153,0.12); color: var(--green); }
+.sb-scen { display: block; width: 100%; text-align: left; padding: 7px 9px; border-radius: var(--rs); border: none; background: none; cursor: pointer; color: var(--muted); font-size: 12.5px; line-height: 1.35; transition: background var(--t); }
+.sb-scen:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.sb-scen.active { background: rgba(34,211,238,0.08); color: var(--text); }
+.sb-scen small { display: block; font-size: 10px; color: var(--faint); margin-top: 1px; }
+.sb-foot { padding: 10px 14px; border-top: 1px solid var(--border); }
+.sim-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--amber); background: rgba(251,191,36,0.09); border: 1px solid rgba(251,191,36,0.22); border-radius: 20px; padding: 3px 9px; }
+.sim-chip::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); }
+
+/* ---------- Header ---------- */
+.header { display: flex; align-items: center; gap: 12px; padding: 0 18px; border-bottom: 1px solid var(--border); background: rgba(18,24,29,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 10; }
+.hd-name { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+.hd-kicker { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); white-space: nowrap; border-right: 1px solid var(--border); padding-right: 12px; flex-shrink: 0; }
+.hd-id { font-family: var(--mono); font-size: 10.5px; color: var(--faint); background: var(--nested); padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hd-spacer { flex: 1; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; border-radius: 20px; padding: 3px 10px; border: 1px solid var(--border); background: var(--nested); color: var(--muted); white-space: nowrap; }
+.chip::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--faint); }
+.chip.ok { color: var(--green); border-color: rgba(52,211,153,0.25); background: rgba(52,211,153,0.07); }
+.chip.ok::before { background: var(--green); }
+.chip.warn { color: var(--amber); border-color: rgba(251,191,36,0.25); background: rgba(251,191,36,0.07); }
+.chip.warn::before { background: var(--amber); }
+.chip.bad { color: var(--red); border-color: rgba(248,113,113,0.25); background: rgba(248,113,113,0.07); }
+.chip.bad::before { background: var(--red); }
+.chip.lat { color: var(--cyan); border-color: rgba(34,211,238,0.22); background: rgba(34,211,238,0.06); font-family: var(--mono); letter-spacing: 0; text-transform: none; font-weight: 600; }
+.chip.lat::before { background: var(--cyan); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 14px; border-radius: var(--rs); border: none; cursor: pointer; font-weight: 600; font-size: 12.5px; transition: all var(--t); }
+.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.btn.primary { background: var(--cyan); color: #052028; }
+.btn.primary:hover:not(:disabled) { background: #43e0f5; transform: translateY(-1px); }
+.btn.primary:active:not(:disabled) { transform: translateY(0); }
+.btn.ghost { background: transparent; border: 1px solid var(--border-strong); color: var(--muted); }
+.btn.ghost:hover:not(:disabled) { border-color: var(--muted); color: var(--text); background: rgba(255,255,255,0.03); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+.btn.sm { padding: 4px 10px; font-size: 11.5px; }
+
+/* ---------- Main area ---------- */
+.main-col { display: flex; flex-direction: column; overflow: hidden; }
+
+/* Progress steps */
+.steps { display: flex; align-items: center; gap: 4px; padding: 12px 22px; border-bottom: 1px solid var(--border); background: var(--bg); overflow-x: auto; }
+.step { display: flex; align-items: center; gap: 7px; padding: 6px 13px; border-radius: 20px; cursor: pointer; transition: all var(--t); color: var(--faint); font-size: 12px; font-weight: 600; white-space: nowrap; border: 1px solid transparent; background: none; }
+.step:hover { background: rgba(255,255,255,0.04); color: var(--muted); }
+.step.active { background: rgba(34,211,238,0.1); border-color: rgba(34,211,238,0.35); color: var(--cyan); }
+.step.done { color: var(--green); }
+.step.done:hover { background: rgba(52,211,153,0.06); }
+.step-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.7; }
+.step-num { font-family: var(--mono); font-size: 10px; opacity: 0.7; }
+.step-line { width: 18px; height: 1px; background: var(--border-strong); flex-shrink: 0; }
+.step-line.done { background: rgba(52,211,153,0.4); }
+
+/* Stage scroll area */
+.stage-area { flex: 1; overflow-y: auto; padding: 18px 22px 22px; }
+
+/* Bottom bar */
+.botbar { display: flex; align-items: center; gap: 8px; padding: 10px 22px; border-top: 1px solid var(--border); background: var(--panel); }
+.botbar-spacer { flex: 1; }
+
+/* ---------- Shared components ---------- */
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r); }
+.panel-nested { background: var(--nested); border: 1px solid var(--border); border-radius: var(--rs); }
+.stage-title { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.stage-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+.mono { font-family: var(--mono); }
+.section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--faint); margin-bottom: 8px; }
+.pill { display: inline-flex; align-items: center; gap: 4px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; border-radius: 20px; padding: 2px 8px; border: 1px solid var(--border); background: var(--nested); color: var(--muted); white-space: nowrap; }
+.pill::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.pill.green { color: var(--green); border-color: rgba(52,211,153,0.25); background: rgba(52,211,153,0.07); }
+.pill.cyan { color: var(--cyan); border-color: rgba(34,211,238,0.25); background: rgba(34,211,238,0.07); }
+.pill.amber { color: var(--amber); border-color: rgba(251,191,36,0.25); background: rgba(251,191,36,0.07); }
+.pill.red { color: var(--red); border-color: rgba(248,113,113,0.25); background: rgba(248,113,113,0.07); }
+.pill.grey { color: var(--faint); border-color: var(--border); background: var(--nested); }
+.ev-chip { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); white-space: nowrap; }
+.ev-chip.user_request { color: #93c5fd; background: rgba(147,197,253,0.08); border-color: rgba(147,197,253,0.2); }
+.ev-chip.plan { color: #c4b5fd; background: rgba(196,181,253,0.08); border-color: rgba(196,181,253,0.2); }
+.ev-chip.agent_handoff { color: var(--amber); background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.2); }
+.ev-chip.tool_call { color: var(--cyan); background: rgba(34,211,238,0.08); border-color: rgba(34,211,238,0.2); }
+.ev-chip.model_response { color: var(--teal); background: rgba(20,184,166,0.08); border-color: rgba(20,184,166,0.2); }
+.ev-chip.final_response { color: var(--green); background: rgba(52,211,153,0.08); border-color: rgba(52,211,153,0.2); }
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; color: var(--muted); gap: 10px; }
+.empty-state .es-icon { font-size: 26px; opacity: 0.4; }
+.err-state { padding: 16px; border-radius: var(--rs); border: 1px solid rgba(248,113,113,0.3); background: rgba(248,113,113,0.06); color: var(--red); font-size: 12.5px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* JSON highlight */
+.json-pre { font-family: var(--mono); font-size: 11.5px; line-height: 1.55; white-space: pre; overflow-x: auto; padding: 10px 12px; background: var(--nested); border: 1px solid var(--border); border-radius: var(--rs); color: var(--muted); }
+.json-pre .jk { color: var(--cyan); }
+.json-pre .js { color: #86efac; }
+.json-pre .jn { color: var(--amber); }
+.json-pre .jb { color: #c4b5fd; }
+.json-pre .jnul { color: var(--faint); }
+.json-pre .jp { color: var(--faint); }
+
+/* Skeleton */
+.sk { border-radius: var(--rs); background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.spinner { width: 13px; height: 13px; border: 2px solid rgba(0,0,0,0.25); border-top-color: currentColor; border-radius: 50%; animation: spin 0.65s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Toasts */
+.toasts { position: fixed; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
+.toast { background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--rs); padding: 10px 14px; font-size: 12.5px; color: var(--text); box-shadow: 0 6px 20px rgba(0,0,0,0.45); display: flex; align-items: center; gap: 8px; animation: tin 200ms ease; max-width: 340px; }
+.toast.ok { border-color: rgba(52,211,153,0.3); }
+.toast.ok::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+.toast.err { border-color: rgba(248,113,113,0.35); }
+.toast.err::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+.toast.info { border-color: rgba(34,211,238,0.3); }
+.toast.info::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--cyan); flex-shrink: 0; }
+@keyframes tin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ============================================================
+   STAGE 1 — Production Trace
+   ============================================================ */
+.scen-hero { padding: 14px 16px; border-radius: var(--r); border: 1px solid var(--border); background: linear-gradient(135deg, rgba(34,211,238,0.05), transparent 55%), var(--panel); margin-bottom: 14px; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.scen-hero h2 { font-size: 15px; font-weight: 700; }
+.scen-hero p { font-size: 12px; color: var(--muted); margin-top: 3px; max-width: 520px; }
+.trace-layout { display: grid; grid-template-columns: 1fr 40%; gap: 14px; align-items: start; }
+.timeline { position: relative; padding-left: 18px; }
+.timeline::before { content: ''; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 1px; background: linear-gradient(180deg, rgba(34,211,238,0.35), var(--border-strong)); }
+.tl-row { display: grid; grid-template-columns: 30px 88px 128px 1fr 84px 64px 36px; align-items: center; gap: 8px; padding: 9px 10px; border-radius: var(--rs); border: 1px solid transparent; cursor: pointer; transition: background var(--t), border-color var(--t); position: relative; }
+.tl-row:hover { background: rgba(255,255,255,0.035); }
+.tl-row.sel { background: rgba(34,211,238,0.07); border-color: rgba(34,211,238,0.22); }
+.tl-row::before { content: ''; position: absolute; left: -15px; top: 50%; transform: translateY(-50%); width: 9px; height: 9px; border-radius: 50%; background: var(--bg); border: 2px solid var(--faint); z-index: 1; transition: all var(--t); }
+.tl-row.sel::before { border-color: var(--cyan); background: var(--cyan); box-shadow: 0 0 7px rgba(34,211,238,0.5); }
+.tl-row.done::before { border-color: var(--teal); background: var(--teal); }
+.tl-seq { font-family: var(--mono); font-size: 10px; color: var(--faint); background: var(--nested); border: 1px solid var(--border); border-radius: 4px; text-align: center; padding: 2px 0; }
+.tl-ts { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.tl-agent { font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-dur { font-family: var(--mono); font-size: 10.5px; color: var(--muted); text-align: right; }
+.detail-panel { position: sticky; top: 0; max-height: calc(100vh - 220px); overflow-y: auto; padding: 14px 16px; }
+.detail-panel h3 { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+.detail-panel .dp-sub { font-family: var(--mono); font-size: 10.5px; color: var(--faint); margin-bottom: 12px; }
+.dp-section { margin-bottom: 14px; }
+.dp-section .json-pre { max-height: 210px; overflow-y: auto; }
+
+/* ============================================================
+   STAGE 2 — Spec Editor
+   ============================================================ */
+.spec-layout { display: grid; grid-template-columns: 1fr 230px; gap: 14px; align-items: start; }
+.spec-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.spec-editor { position: relative; border: 1px solid var(--border); border-radius: var(--r); background: var(--nested); overflow: hidden; }
+.spec-lines { display: grid; grid-template-columns: 42px 1fr; max-height: calc(100vh - 320px); overflow: auto; }
+.spec-gutter { padding: 12px 8px; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--faint); background: rgba(0,0,0,0.18); border-right: 1px solid var(--border); user-select: none; line-height: 1.55; }
+.spec-code { padding: 12px 14px; font-family: var(--mono); font-size: 11.5px; line-height: 1.55; white-space: pre; overflow-x: auto; color: var(--muted); }
+.meta-cards { display: grid; gap: 8px; }
+.meta-card { padding: 11px 13px; border-radius: var(--rs); border: 1px solid var(--border); background: var(--panel); }
+.meta-card .mc-val { font-family: var(--mono); font-size: 17px; font-weight: 700; color: var(--text); }
+.meta-card .mc-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); margin-top: 2px; }
+.meta-card .mc-txt { font-size: 12px; color: var(--muted); word-break: break-word; }
+
+/* ============================================================
+   STAGE 3 — Baseline scorecards
+   ============================================================ */
+.score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.score-card { padding: 13px 15px; border-radius: var(--r); border: 1px solid var(--border); background: var(--panel); transition: border-color var(--t); }
+.score-card:hover { border-color: var(--border-strong); }
+.sc-lbl { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+.sc-val { font-family: var(--mono); font-size: 26px; font-weight: 700; line-height: 1.1; }
+.sc-bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.06); margin: 8px 0 6px; overflow: hidden; }
+.sc-bar-fill { height: 100%; border-radius: 2px; background: var(--cyan); transition: width 400ms ease, background var(--t); }
+.sc-bar-fill.amber { background: var(--amber); }
+.sc-bar-fill.red { background: var(--red); }
+.sc-desc { font-size: 11px; color: var(--faint); line-height: 1.35; }
+.hero-card { padding: 16px 18px; border-radius: var(--r); border: 1px solid rgba(34,211,238,0.2); background: linear-gradient(135deg, rgba(34,211,238,0.07), transparent 60%), var(--panel); display: flex; align-items: center; gap: 20px; margin-bottom: 14px; flex-wrap: wrap; }
+.hero-score { font-family: var(--mono); font-size: 42px; font-weight: 800; color: var(--cyan); line-height: 1; }
+.hero-meta .hm-status { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+.hero-meta .hm-status.green { color: var(--green); }
+.hero-meta .hm-status.amber { color: var(--amber); }
+.hero-meta .hm-status.red { color: var(--red); }
+.hero-meta .hm-sub { font-size: 11.5px; color: var(--muted); }
+.issues-list { display: flex; flex-direction: column; gap: 7px; }
+.issue-row { padding: 9px 12px; border-radius: var(--rs); background: var(--nested); border-left: 3px solid var(--faint); font-size: 12.5px; display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.issue-row.high { border-left-color: var(--red); }
+.issue-row.medium { border-left-color: var(--amber); }
+.issue-row.low { border-left-color: var(--faint); }
+.issue-row .ir-msg { flex: 1; min-width: 180px; color: var(--text); }
+.note-strip { margin-top: 12px; padding: 9px 13px; border-radius: var(--rs); background: rgba(251,191,36,0.05); border: 1px solid rgba(251,191,36,0.15); font-size: 11.5px; color: var(--amber); display: flex; align-items: center; gap: 8px; }
+
+/* ============================================================
+   STAGE 4 — Replay
+   ============================================================ */
+.change-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.change-card { padding: 13px 15px; border-radius: var(--r); border: 1px solid var(--border); background: var(--panel); cursor: pointer; transition: all var(--t); text-align: left; }
+.change-card:hover { border-color: var(--border-strong); }
+.change-card.active { border-color: rgba(34,211,238,0.45); background: rgba(34,211,238,0.06); box-shadow: 0 0 0 1px rgba(34,211,238,0.2), 0 0 18px rgba(34,211,238,0.07); }
+.cc-title { font-size: 12.5px; font-weight: 700; margin-bottom: 3px; }
+.cc-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.cc-radio { display: inline-block; width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--faint); margin-right: 8px; vertical-align: -2px; transition: all var(--t); }
+.change-card.active .cc-radio { border-color: var(--cyan); background: radial-gradient(circle, var(--cyan) 45%, transparent 50%); }
+.desc-input { width: 100%; padding: 9px 12px; border-radius: var(--rs); border: 1px solid var(--border); background: var(--nested); color: var(--text); font-size: 12.5px; margin-bottom: 14px; transition: border-color var(--t); }
+.desc-input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(34,211,238,0.15); }
+.desc-input::placeholder { color: var(--faint); }
+.cmp-rows { display: flex; flex-direction: column; gap: 7px; }
+.cmp-row { display: grid; grid-template-columns: 150px 64px 20px 64px 90px 1fr; align-items: center; gap: 10px; padding: 9px 13px; border-radius: var(--rs); background: var(--nested); border: 1px solid var(--border); font-size: 12px; }
+.cmp-row .cr-lbl { color: var(--muted); font-weight: 600; }
+.cmp-row .cr-base { font-family: var(--mono); font-size: 13px; color: var(--muted); text-align: right; }
+.cmp-row .cr-replay { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); text-align: right; }
+.cmp-row .cr-arrow { text-align: center; color: var(--faint); font-size: 10px; }
+.cr-delta { font-family: var(--mono); font-size: 11.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-align: center; }
+.cr-delta.up { color: var(--green); background: rgba(52,211,153,0.1); }
+.cr-delta.down { color: var(--red); background: rgba(248,113,113,0.1); }
+.cr-delta.flat { color: var(--faint); background: rgba(255,255,255,0.04); }
+.cr-expl { color: var(--faint); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-chips { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+/* ============================================================
+   STAGE 5 — Decision
+   ============================================================ */
+.decision-hero { display: grid; grid-template-columns: auto 1fr auto; gap: 24px; align-items: center; padding: 20px 22px; border-radius: var(--r); border: 1px solid var(--border); background: var(--panel); margin-bottom: 14px; }
+.dh-scores { display: flex; align-items: center; gap: 16px; }
+.dh-block .dh-val { font-family: var(--mono); font-size: 34px; font-weight: 800; line-height: 1; }
+.dh-block .dh-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); margin-top: 4px; }
+.dh-sep { font-family: var(--mono); font-size: 18px; color: var(--faint); }
+.dh-delta { font-family: var(--mono); font-size: 15px; font-weight: 700; padding: 4px 10px; border-radius: 5px; align-self: center; }
+.dh-delta.up { color: var(--green); background: rgba(52,211,153,0.1); }
+.dh-delta.down { color: var(--red); background: rgba(248,113,113,0.1); }
+.dh-delta.flat { color: var(--faint); background: rgba(255,255,255,0.04); }
+.rec-banner { padding: 10px 20px; border-radius: var(--r); font-size: 14px; font-weight: 800; text-align: center; letter-spacing: 0.03em; min-width: 210px; }
+.rec-banner.READY { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.4); color: var(--green); box-shadow: 0 0 22px rgba(52,211,153,0.15); }
+.rec-banner.NOT_READY { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.4); color: var(--red); box-shadow: 0 0 22px rgba(248,113,113,0.15); }
+.rec-banner.NEEDS_REVIEW { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.4); color: var(--amber); box-shadow: 0 0 22px rgba(251,191,36,0.12); }
+.dec-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.dec-panel { padding: 14px 16px; border-radius: var(--r); border: 1px solid var(--border); background: var(--panel); }
+.dec-panel h4 { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+.dec-panel h4.green { color: var(--green); }
+.dec-panel h4.red { color: var(--red); }
+.dec-panel h4.amber { color: var(--amber); }
+.dec-item { padding: 8px 10px; border-radius: var(--rs); background: var(--nested); margin-bottom: 6px; font-size: 12px; border-left: 3px solid var(--faint); }
+.dec-item.green { border-left-color: var(--green); }
+.dec-item.red { border-left-color: var(--red); }
+.dec-item.amber { border-left-color: var(--amber); }
+.dec-item .di-metric { font-family: var(--mono); font-size: 10px; color: var(--faint); margin-bottom: 2px; }
+.dec-item .di-msg { color: var(--text); line-height: 1.4; }
+.dec-item .di-delta { font-family: var(--mono); font-size: 11px; font-weight: 700; margin-right: 6px; }
+.dec-item .di-delta.up { color: var(--green); }
+.dec-item .di-delta.down { color: var(--red); }
+.thr-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.thr-table th, .thr-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.thr-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--faint); font-weight: 700; }
+.thr-table td.mono { font-family: var(--mono); color: var(--muted); }
+.rationale-box { padding: 14px 16px; border-radius: var(--r); border: 1px solid var(--border); background: var(--panel); font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+.rationale-box strong { color: var(--text); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .trace-layout { grid-template-columns: 1fr; }
+  .detail-panel { position: static; max-height: none; }
+  .score-grid { grid-template-columns: repeat(2, 1fr); }
+  .spec-layout { grid-template-columns: 1fr; }
+  .change-cards { grid-template-columns: 1fr; }
+  .dec-cols { grid-template-columns: 1fr; }
+  .decision-hero { grid-template-columns: 1fr; gap: 14px; }
+}
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 56px 1fr; }
+  .sb-brand { padding: 12px 10px; }
+  .sb-sub, .sb-story, .sb-label, .sb-item span:not(.sb-dot), .sb-scen, .sb-foot span:not(.sim-chip::before) { display: none; }
+  .sb-foot { padding: 10px 6px; display: flex; justify-content: center; }
+  .sb-foot .sim-chip { padding: 3px 5px; font-size: 0; gap: 0; }
+  .sb-foot .sim-chip::before { width: 7px; height: 7px; }
+  .sb-item { justify-content: center; padding: 9px 6px; }
+  .sb-num { width: 20px; height: 20px; }
+  .tl-row { grid-template-columns: 26px 74px 110px 1fr 56px 30px; }
+  .tl-row .tl-dur { display: none; }
+  .cmp-row { grid-template-columns: 110px 50px 16px 50px 70px 1fr; }
+  .score-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .score-grid { grid-template-columns: 1fr; }
+  .hd-id, .chip.lat, .hd-kicker { display: none; }
+  .tl-row { grid-template-columns: 24px 1fr 70px 28px; }
+  .tl-row .tl-ts, .tl-row .tl-agent { display: none; }
+  .cmp-row { grid-template-columns: 1fr; gap: 4px; }
+  .cmp-row .cr-base, .cmp-row .cr-replay { text-align: left; }
+  .cmp-row .cr-arrow { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-mark"><span class="sb-logo">T</span><span>Trace → Release</span></div>
+      <div class="sb-sub">AgenticLens → Agentic-Evals</div>
+    </div>
+    <div class="sb-story">AgenticLens captures what happened during a production agent workflow. Agentic-Evals turns that execution into a reproducible evaluation, tests a proposed change, and helps determine whether the change is safe to release.</div>
+    <div class="sb-scroll">
+      <div class="sb-label">Workflow</div>
+      <div id="sb-stages"></div>
+      <div class="sb-label" style="margin-top:18px;">Saved scenarios</div>
+      <div id="sb-scenarios"><div style="color:var(--faint);font-size:11.5px;padding:4px 6px;">Loading…</div></div>
+    </div>
+    <div class="sb-foot"><span class="sim-chip"><span>Simulated demo data</span></span></div>
+  </aside>
+
+  <!-- HEADER -->
+  <header class="header">
+    <span class="hd-kicker">From Production Trace to Release Decision</span>
+    <div class="hd-name" id="hd-name">—</div>
+    <div class="hd-id mono" id="hd-id"></div>
+    <div class="hd-spacer"></div>
+    <span class="sim-chip" id="hd-sim"><span>Simulated demo data</span></span>
+    <span class="chip" id="hd-db">DB: …</span>
+    <span class="chip lat" id="hd-lat" style="display:none;"></span>
+    <button class="btn ghost sm" id="btn-reset" title="Clear all local state and reload scenarios">Reset demo</button>
+  </header>
+
+  <!-- MAIN COLUMN -->
+  <div class="main-col">
+    <div class="steps" id="steps"></div>
+    <div class="stage-area" id="stage-area"></div>
+    <div class="botbar" id="botbar"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   STATE — single source of truth
+   ============================================================ */
+const STAGE_NAMES = [
+  "Production Trace",
+  "AI Ops Spec",
+  "Baseline Evaluation",
+  "Simulated Replay",
+  "Release Decision"
+];
+
+const METRIC_LABELS = {
+  response_quality: "Response quality",
+  task_completion: "Task completion",
+  tool_correctness: "Tool correctness",
+  agent_coordination: "Agent coordination",
+  safety_compliance: "Safety & policy",
+  performance: "Performance"
+};
+
+const METRIC_EXPL = {
+  performance: "End-to-end latency vs 1.5s target",
+  tool_correctness: "Tool args and result fidelity",
+  response_quality: "Clarity, accuracy, and grounding of answers",
+  task_completion: "Whether the user goal was fully satisfied",
+  agent_coordination: "Handoff quality and shared context",
+  safety_compliance: "Policy adherence and guardrail coverage"
+};
+
+const state = {
+  health: null,
+  scenarios: [],
+  currentScenario: null,
+  events: [],
+  spec: null,
+  baselineRun: null,
+  replayRun: null,
+  comparison: null,
+  stage: 1,
+  selectedEventIndex: 0,
+  selectedChange: "prompt_update",
+  loadingStage: false,
+  comparisonLoading: false,
+  compareError: null,
+  lastLatency: null,
+  runsLoaded: false
+};
+
+/* ============================================================
+   EMBEDDED SEED — demo scenario + spec for "Load demo" / fallback
+   ============================================================ */
+const SEED_EVENTS = [
+  { sequence: 0, agent_name: "cardholder-api", event_type: "user_request",
+    input: { message: "Why is there a $2,847 charge from NORTHWIND SUPPLY on my card?" },
+    output: { normalized_intent: "explain_unusual_expense",
+              initial_prompt: "Why is there a $2,847 charge from NORTHWIND SUPPLY on my card?" },
+    metadata: { session: "sess_8f2a", model: "gpt-4o-mini" },
+    timestamp: "2026-10-14T09:41:00Z" },
+  { sequence: 1, agent_name: "planner-agent", event_type: "plan",
+    input: { intent: "explain_unusual_expense" },
+    output: { plan: ["lookup_transactions", "analyze_flags", "summarize"],
+              delegate_to: "transaction-analysis-agent" },
+    metadata: { delegation: "transaction-analysis-agent",
+                handoff_context: "card_last4=4412, window=30d" },
+    timestamp: "2026-10-14T09:41:01Z" },
+  { sequence: 2, agent_name: "planner-agent", event_type: "agent_handoff",
+    input: null, output: null,
+    metadata: { from: "planner-agent", to: "transaction-analysis-agent" },
+    timestamp: "2026-10-14T09:41:02Z" },
+  { sequence: 3, agent_name: "transaction-analysis-agent", event_type: "tool_call",
+    input: { tool: "lookup_transactions",
+             args: { card_last4: "4412", amount_min: 2000, window_days: 30 } },
+    output: { matches: [{ merchant: "NORTHWIND SUPPLY", amount: 2847.0,
+                          category: "office_supplies", flag: "first_time_merchant",
+                          date: "2026-10-12" }],
+              count: 3 },
+    metadata: { tool: "lookup_transactions", latency_ms: 2410, status: "success",
+                issues: [{ severity: "low", metric: "performance",
+                           message: "lookup_transactions p95 latency 2.4s exceeds the 1.5s target." }] },
+    timestamp: "2026-10-14T09:41:03Z" },
+  { sequence: 4, agent_name: "transaction-analysis-agent", event_type: "model_response",
+    input: null,
+    output: { assessment: "first-time merchant, single high-value purchase, no duplicate charges" },
+    metadata: { model: "gpt-4o-mini", tokens: 412 },
+    timestamp: "2026-10-14T09:41:04Z" },
+  { sequence: 5, agent_name: "response-agent", event_type: "final_response",
+    input: null,
+    output: { reply: "This looks like a one-time purchase at NORTHWIND SUPPLY for $2,847 on Oct 12 — your first with this merchant. It's flagged only because it's a new merchant over your usual amount. If you don't recognize it, you can start a dispute from the card menu in the app.",
+              guardrail_notes: "No card numbers or PII included in user-facing reply." },
+    metadata: { model: "gpt-4o-mini", guardrails: "passed",
+                issues: [{ severity: "low", metric: "tool_correctness",
+                           message: "Agent filtered to 3 flagged transactions without surfacing paging metadata." }] },
+    timestamp: "2026-10-14T09:41:05Z" }
+];
+
+const SEED_SPEC = {
+  spec_version: "0.3",
+  scenario: { name: "Unusual Expense Explanation", source: "AgenticLens-style capture (SIMULATED)", captured_at: "2026-10-14T09:41:22Z", environment: "production-simulated" },
+  agents: [
+    { name: "planner-agent", role: "planner", model: "gpt-4o-mini" },
+    { name: "transaction-analysis-agent", role: "analyst", model: "gpt-4o-mini" },
+    { name: "response-agent", role: "responder", model: "gpt-4o-mini" }
+  ],
+  tool_calls: [
+    { tool: "lookup_transactions", args_schema: { card_last4: "string", amount_min: "number", window_days: "integer" }, latency_ms: 2410, status: "success" }
+  ],
+  model_responses: [
+    { agent: "response-agent", finish_reason: "stop", guardrails: "passed" }
+  ],
+  execution: { total_duration_ms: 6842, event_count: 6, handoffs: 2, status: "completed" },
+  notes: "Representative example spec. Not an actual AgenticLens export."
+};
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+const $ = (id) => document.getElementById(id);
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+  );
+}
+
+/* Syntax highlight JSON — HTML-escape FIRST, never use eval() */
+function highlightJSON(obj) {
+  let raw;
+  try { raw = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2); }
+  catch { raw = String(obj); }
+  // Escape entire string before injecting spans
+  const s = esc(raw);
+  // Regex over escaped text: keys, strings, numbers, booleans, null, punctuation
+  return s.replace(
+    /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false)\b|\bnull\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|([{}\[\],])/g,
+    (m, str, colon, bool, nul, num, punct) => {
+      if (str !== undefined) {
+        if (colon) return '<span class="jk">' + str + "</span>" + colon;
+        return '<span class="js">' + str + "</span>";
+      }
+      if (bool !== undefined) return '<span class="jb">' + bool + "</span>";
+      if (nul !== undefined) return '<span class="jnul">null</span>';
+      if (num !== undefined) return '<span class="jn">' + num + "</span>";
+      if (punct !== undefined) return '<span class="jp">' + punct + "</span>";
+      return m;
+    }
+  );
+}
+
+function fmtTs(ts) {
+  if (!ts) return "—";
+  try {
+    const d = new Date(ts);
+    if (isNaN(d)) return String(ts);
+    const p = (n, w = 2) => String(n).padStart(w, "0");
+    return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}.${p(d.getMilliseconds(), 3)}`;
+  } catch { return String(ts); }
+}
+
+function fmtShort(ts) {
+  if (!ts) return "";
+  try { return new Date(ts).toLocaleDateString(); } catch { return ""; }
+}
+
+function scoreColor(v) {
+  if (v < 60) return "var(--red)";
+  if (v < 75) return "var(--amber)";
+  return "var(--text)";
+}
+function barClass(v) {
+  if (v < 60) return "red";
+  if (v < 75) return "amber";
+  return "";
+}
+function statusColor(s) {
+  s = String(s || "").replace(/ /g, "_");
+  if (s === "READY") return "green";
+  if (s === "NOT_READY") return "red";
+  return "amber";
+}
+function statusText(s) {
+  s = String(s || "").replace(/ /g, "_");
+  if (s === "READY") return "Ready";
+  if (s === "NOT_READY") return "Not ready";
+  return "Needs review";
+}
+
+function toast(msg, type = "info") {
+  const el = document.createElement("div");
+  el.className = "toast " + type;
+  el.textContent = msg;
+  $("toasts").appendChild(el);
+  setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity 250ms"; setTimeout(() => el.remove(), 260); }, 3000);
+}
+
+/* ============================================================
+   API HELPER — uniform error parse + latency chip
+   ============================================================ */
+async function api(path, opts = {}) {
+  const t0 = performance.now();
+  let res;
+  try {
+    res = await fetch(path, Object.assign({ headers: { "Content-Type": "application/json" } }, opts));
+  } catch (e) {
+    const ms = Math.round(performance.now() - t0);
+    state.lastLatency = ms; renderHeaderLatency();
+    const err = new Error("Network error — could not reach API");
+    err.detail = "Network error — could not reach API. Check the server is running.";
+    throw err;
+  }
+  const ms = Math.round(performance.now() - t0);
+  state.lastLatency = ms;
+  renderHeaderLatency();
+  let data = null;
+  try { data = await res.json(); } catch { data = null; }
+  if (!res.ok) {
+    const detail = (data && data.detail) ? data.detail : `Request failed (${res.status})`;
+    const err = new Error(detail);
+    err.detail = detail;
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+function renderHeaderLatency() {
+  const el = $("hd-lat");
+  if (state.lastLatency == null) { el.style.display = "none"; return; }
+  el.style.display = "";
+  el.textContent = state.lastLatency + " ms";
+}
+
+/* ============================================================
+   RENDER — header chips
+   ============================================================ */
+function renderHeader() {
+  const h = state.health;
+  const db = $("hd-db");
+  if (!h) { db.className = "chip"; db.textContent = "DB: …"; return; }
+  const d = h.database || {};
+  if (d.mode === "in_memory") {
+    db.className = "chip warn";
+    db.textContent = "DB: IN-MEMORY (no Supabase)";
+  } else if (d.mode === "supabase" && d.connected === false) {
+    db.className = "chip bad";
+    db.textContent = "DB: DISCONNECTED";
+  } else if (d.mode === "supabase") {
+    db.className = "chip ok";
+    db.textContent = "DB: SUPABASE";
+  } else {
+    db.className = "chip";
+    db.textContent = "DB: …";
+  }
+  $("hd-name").textContent = state.currentScenario ? state.currentScenario.name : "No scenario loaded";
+  $("hd-id").textContent = state.currentScenario ? (state.currentScenario.id || "").slice(0, 18) : "";
+}
+
+/* ============================================================
+   RENDER — sidebar stages + scenarios
+   ============================================================ */
+function renderSidebar() {
+  const wrap = $("sb-stages");
+  wrap.innerHTML = STAGE_NAMES.map((name, i) => {
+    const n = i + 1;
+    let dot = "todo";
+    if (state.stage === n) dot = "active";
+    else if (state.stage > n) dot = "done";
+    const active = state.stage === n ? " active" : "";
+    const done = state.stage > n ? " done" : "";
+    return `<button class="sb-item${active}${done}" data-stage="${n}" title="${esc(name)}">
+      <span class="sb-dot ${dot}"></span>
+      <span class="sb-num">${n}</span>
+      <span>${esc(name)}</span>
+    </button>`;
+  }).join("");
+  wrap.querySelectorAll(".sb-item").forEach((b) => {
+    b.addEventListener("click", () => gotoStage(parseInt(b.dataset.stage, 10)));
+  });
+
+  const sc = $("sb-scenarios");
+  if (!state.scenarios.length) {
+    sc.innerHTML = '<div style="color:var(--faint);font-size:11.5px;padding:4px 6px;">No scenarios yet</div>';
+    return;
+  }
+  sc.innerHTML = state.scenarios.map((s) => {
+    const active = state.currentScenario && s.id === state.currentScenario.id ? " active" : "";
+    return `<button class="sb-scen${active}" data-id="${esc(s.id)}" title="${esc(s.name)}">
+      ${esc(s.name)}<small>${s.event_count != null ? s.event_count : "?"} events · ${esc(fmtShort(s.updated_at))}</small>
+    </button>`;
+  }).join("");
+  sc.querySelectorAll(".sb-scen").forEach((b) => {
+    b.addEventListener("click", () => loadScenario(b.dataset.id));
+  });
+}
+
+/* ============================================================
+   RENDER — progress steps + bottom bar
+   ============================================================ */
+function renderSteps() {
+  const el = $("steps");
+  el.innerHTML = STAGE_NAMES.map((name, i) => {
+    const n = i + 1;
+    const cls = state.stage === n ? "step active" : state.stage > n ? "step done" : "step";
+    const line = i < 4 ? `<span class="step-line${state.stage > n ? " done" : ""}"></span>` : "";
+    return `<button class="${cls}" data-stage="${n}">
+      <span class="step-dot"></span><span class="step-num">${n}</span> ${esc(name)}
+    </button>${line}`;
+  }).join("");
+  el.querySelectorAll(".step").forEach((b) => {
+    b.addEventListener("click", () => gotoStage(parseInt(b.dataset.stage, 10)));
+  });
+}
+
+function renderBotbar() {
+  const bar = $("botbar");
+  const n = state.stage;
+  const back = `<button class="btn ghost" id="bb-back" ${n === 1 ? "disabled" : ""}>← Back</button>`;
+  const next = `<button class="btn ghost" id="bb-next" ${n === 5 ? "disabled" : ""}>Next →</button>`;
+  let action = "";
+  if (n === 1 && state.events.length) action = `<button class="btn primary" id="bb-spec">Inspect AI Ops Spec</button>`;
+  if (n === 2) action = `<button class="btn primary" id="bb-save">Save Scenario</button>`;
+  if (n === 3) action = `<button class="btn primary" id="bb-eval" ${state.loadingStage ? "disabled" : ""}>${state.loadingStage ? '<span class="spinner"></span> Evaluating…' : (state.baselineRun ? "Re-run Baseline" : "Run Baseline Evaluation")}</button>`;
+  if (n === 4) action = `<button class="btn primary" id="bb-replay" ${state.loadingStage ? "disabled" : ""}>${state.loadingStage ? '<span class="spinner"></span> Simulating…' : "Run Simulated Replay"}</button>`;
+  if (n === 5) action = state.comparison ? `<button class="btn ghost" id="bb-refresh-cmp">Refresh decision</button>` : "";
+  const spacer = `<div class="botbar-spacer"></div>`;
+  bar.innerHTML = back + spacer + action + (n < 5 ? next : "");
+  const bBack = $("bb-back");
+  if (bBack) bBack.addEventListener("click", () => gotoStage(n - 1));
+  const bNext = $("bb-next");
+  if (bNext) bNext.addEventListener("click", () => gotoStage(n + 1));
+  const bSpec = $("bb-spec");
+  if (bSpec) bSpec.addEventListener("click", () => gotoStage(2));
+  const bSave = $("bb-save");
+  if (bSave) bSave.addEventListener("click", saveScenario);
+  const bEval = $("bb-eval");
+  if (bEval) bEval.addEventListener("click", runBaseline);
+  const bReplay = $("bb-replay");
+  if (bReplay) bReplay.addEventListener("click", runReplay);
+  const bRc = $("bb-refresh-cmp");
+  if (bRc) bRc.addEventListener("click", () => loadComparison(true));
+}
+
+/* ============================================================
+   STAGE 1 — Production Trace
+   ============================================================ */
+function renderStage1() {
+  const area = $("stage-area");
+  if (!state.currentScenario) {
+    area.innerHTML = `<div class="empty-state">
+      <div class="es-icon">◈</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text);">No scenario loaded</div>
+      <div style="font-size:12px;max-width:320px;">Load a saved scenario from the sidebar, or seed the demo capture to get started.</div>
+      <button class="btn primary" id="es-demo">Load demo scenario</button>
+    </div>`;
+    $("es-demo").addEventListener("click", loadDemoScenario);
+    return;
+  }
+  const s = state.currentScenario;
+  const evs = state.events;
+  const sel = Math.min(state.selectedEventIndex, Math.max(0, evs.length - 1));
+  const ev = evs[sel];
+
+  let timelineHtml = "";
+  if (!evs.length) {
+    timelineHtml = `<div class="empty-state"><div class="es-icon">∅</div><div>No events on this scenario.</div></div>`;
+  } else {
+    timelineHtml = `<div class="timeline">` + evs.map((e, i) => {
+      const lat = (e.metadata && typeof e.metadata.latency_ms === "number") ? e.metadata.latency_ms + " ms" : "—";
+      const chipCls = "ev-chip " + (e.event_type || "").replace(/[^a-z_]/g, "");
+      const done = i < sel ? " done" : "";
+      const selCls = i === sel ? " sel" : "";
+      const issues = (e.metadata && Array.isArray(e.metadata.issues)) ? e.metadata.issues : [];
+      const issueCell = issues.length
+        ? `<div style="text-align:right;"><span class="pill amber" style="padding:1px 6px;font-size:9px;letter-spacing:0.03em;" title="${esc(issues.map((x) => x.message || "").join(" · "))}">⚠ ${issues.length}</span></div>`
+        : `<div></div>`;
+      return `<div class="tl-row${selCls}${done}" data-idx="${i}">
+        <div class="tl-seq">${String(e.sequence_number != null ? e.sequence_number : i + 1).padStart(2, "0")}</div>
+        <div class="tl-ts">${esc(fmtTs(e.timestamp))}</div>
+        <div><span class="${chipCls}">${esc(e.event_type || "?")}</span></div>
+        <div class="tl-agent" title="${esc(e.agent_name)}">${esc(e.agent_name || "—")}</div>
+        <div><span class="pill ${e.event_type === "tool_call" ? "cyan" : e.event_type === "final_response" ? "green" : e.event_type === "agent_handoff" ? "amber" : "grey"}">${e.event_type === "tool_call" ? "ok" : "logged"}</span></div>
+        <div class="tl-dur">${esc(lat)}</div>
+        ${issueCell}
+      </div>`;
+    }).join("") + `</div>`;
+  }
+
+  let detailHtml = "";
+  if (ev) {
+    const meta = ev.metadata || {};
+    const handoffFrom = meta.from, handoffTo = meta.to, handoffCtx = meta.handoff_context;
+    const hasHandoff = handoffFrom || handoffTo;
+    const issues = Array.isArray(meta.issues) ? meta.issues : [];
+    detailHtml = `<div class="panel detail-panel">
+      <h3>${esc(ev.event_type || "Event")} · ${esc(ev.agent_name || "—")}</h3>
+      <div class="dp-sub">seq ${ev.sequence_number != null ? ev.sequence_number : sel + 1} · ${esc(fmtTs(ev.timestamp))}</div>
+      <div class="dp-section"><div class="section-label">Input</div>
+        <pre class="json-pre">${highlightJSON(ev.input ?? {})}</pre></div>
+      <div class="dp-section"><div class="section-label">Output</div>
+        <pre class="json-pre">${highlightJSON(ev.output ?? {})}</pre></div>
+      <div class="dp-section"><div class="section-label">Metadata</div>
+        <pre class="json-pre">${highlightJSON(meta)}</pre></div>
+      <div class="dp-section"><div class="section-label">Handoff</div>
+        ${hasHandoff
+          ? `<pre class="json-pre">${highlightJSON({ from: handoffFrom, to: handoffTo, handoff_context: handoffCtx })}</pre>`
+          : `<div style="font-size:12px;color:var(--faint);padding:6px 0;">No handoff on this event</div>`}
+      </div>
+      <div class="dp-section"><div class="section-label">Issues</div>
+        ${issues.length
+          ? `<div class="issues-list">` + issues.map((iss) => `
+        <div class="issue-row ${esc(iss.severity || "low")}">
+          <span class="pill ${iss.severity === "high" ? "red" : iss.severity === "medium" ? "amber" : "grey"}">${esc(iss.severity || "low")}</span>
+          <span class="ir-msg">${esc(iss.message || "")}</span>
+          <span class="pill grey mono">${esc(METRIC_LABELS[iss.metric] || iss.metric || "")}</span>
+        </div>`).join("") + `</div>`
+          : `<div style="font-size:12px;color:var(--faint);padding:6px 0;">No issues detected on this event.</div>`}
+      </div>
+    </div>`;
+  } else {
+    detailHtml = `<div class="panel detail-panel"><div class="empty-state"><div class="es-icon">⌁</div><div style="font-size:12px;">Select an event to inspect</div></div></div>`;
+  }
+
+  area.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div class="stage-title" style="margin-bottom:0;">Production Trace</div>
+      <span class="sim-chip"><span>Captured by AgenticLens (simulated demonstration)</span></span>
+    </div>
+    <div class="stage-sub">Captured by AgenticLens (simulated demonstration) — what happened during this production agent workflow.</div>
+    <div class="scen-hero">
+      <div>
+        <h2>${esc(s.name)}</h2>
+        <p>${esc(s.description || "")}</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span class="pill cyan">Simulated production capture</span>
+        <span class="pill grey">${evs.length} events</span>
+      </div>
+    </div>
+    <div class="trace-layout">
+      <div>${timelineHtml}</div>
+      ${detailHtml}
+    </div>
+    ${evs.length ? `<div class="panel" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-top:14px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;font-size:12.5px;color:var(--muted);">This execution is ready to become a reproducible evaluation.</div>
+      <button class="btn primary" id="s1-continue">Continue to AI Ops Spec →</button>
+    </div>` : ""}`;
+
+  area.querySelectorAll(".tl-row").forEach((row) => {
+    row.addEventListener("click", () => {
+      state.selectedEventIndex = parseInt(row.dataset.idx, 10);
+      renderStage1();
+    });
+  });
+  const s1Continue = $("s1-continue");
+  if (s1Continue) s1Continue.addEventListener("click", () => gotoStage(2));
+}
+
+/* ============================================================
+   STAGE 2 — AI Ops Spec
+   ============================================================ */
+function renderStage2() {
+  const area = $("stage-area");
+  const s = state.currentScenario;
+  let spec = state.spec;
+  if (!spec && s) spec = s.ai_ops_spec || s.spec || null;
+  if (!spec) spec = SEED_SPEC;
+
+  let specPretty = "";
+  try { specPretty = JSON.stringify(spec, null, 2); } catch { specPretty = String(spec); }
+  const lines = specPretty.split("\n");
+  const gutter = lines.map((_, i) => i + 1).join("\n");
+  const highlighted = highlightJSON(specPretty);
+
+  const evCount = state.events.length || (s && s.event_count) || 0;
+  const agents = (spec.agents || []).length;
+  const tools = (spec.tool_calls || []).length;
+  const src = (s && s.source_type) || (spec.scenario && (spec.scenario.source_type || spec.scenario.source)) || "production_trace";
+  const ver = spec.spec_version || "—";
+
+  area.innerHTML = `
+    <div class="stage-title">AI Ops Spec</div>
+    <div class="stage-sub">Machine-readable execution contract captured from production. Edit locally, then save a copy.</div>
+    <div class="spec-layout">
+      <div>
+        <div class="spec-toolbar">
+          <span class="pill cyan">JSON · spec v${esc(ver)}</span>
+          <div style="flex:1;"></div>
+          <button class="btn ghost sm" id="btn-copy">Copy JSON</button>
+        </div>
+        <div class="spec-editor">
+          <div class="spec-lines">
+            <div class="spec-gutter">${esc(gutter)}</div>
+            <div class="spec-code">${highlighted}</div>
+          </div>
+        </div>
+      </div>
+      <div class="meta-cards">
+        <div class="meta-card"><div class="mc-val">${evCount}</div><div class="mc-lbl">Event count</div></div>
+        <div class="meta-card"><div class="mc-val">${agents}</div><div class="mc-lbl">Agents</div></div>
+        <div class="meta-card"><div class="mc-val">${tools}</div><div class="mc-lbl">Tool calls</div></div>
+        <div class="meta-card"><div class="mc-txt">${esc(src)}</div><div class="mc-lbl">Scenario source</div></div>
+        <div class="meta-card"><div class="mc-val" style="font-size:14px;">${esc(ver)}</div><div class="mc-lbl">Spec version</div></div>
+      </div>
+    </div>`;
+
+  $("btn-copy").addEventListener("click", () => copyText(specPretty));
+}
+
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed"; ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    const btn = $("btn-copy");
+    if (btn) { btn.textContent = "✓ Copied"; setTimeout(() => { btn.textContent = "Copy JSON"; }, 2000); }
+    toast("JSON copied to clipboard", "ok");
+  } catch (e) {
+    toast("Copy failed — select and copy manually", "err");
+  }
+}
+
+/* ============================================================
+   STAGE 3 — Baseline Evaluation
+   ============================================================ */
+function renderStage3() {
+  const area = $("stage-area");
+  const run = state.baselineRun;
+  const metrics = (run && run.metrics) || (state.spec && state.spec.evaluation) || null;
+
+  let cards = "";
+  if (metrics) {
+    cards = `<div class="score-grid">` + Object.keys(METRIC_LABELS).map((k) => {
+      const raw = metrics[k];
+      const v = raw != null ? Math.round(raw * 100) : 0;
+      return `<div class="score-card">
+        <div class="sc-lbl">${esc(METRIC_LABELS[k])}</div>
+        <div class="sc-val" style="color:${scoreColor(v)}">${v}</div>
+        <div class="sc-bar"><div class="sc-bar-fill ${barClass(v)}" style="width:${Math.min(100, v)}%"></div></div>
+        <div class="sc-desc">${esc(METRIC_EXPL[k] || "")}</div>
+      </div>`;
+    }).join("") + `</div>`;
+  } else {
+    cards = `<div class="score-grid">` + Object.keys(METRIC_LABELS).map((k) => `
+      <div class="score-card">
+        <div class="sc-lbl">${esc(METRIC_LABELS[k])}</div>
+        <div class="sc-val" style="color:var(--faint)">—</div>
+        <div class="sc-bar"><div class="sc-bar-fill" style="width:0%"></div></div>
+        <div class="sc-desc">${esc(METRIC_EXPL[k] || "")}</div>
+      </div>`).join("") + `</div>`;
+  }
+
+  let hero = "";
+  if (run) {
+    const overall = Math.round(run.overall_score);
+    const st = run.readiness_status || "NEEDS REVIEW";
+    const issues = run.issues || [];
+    hero = `<div class="hero-card">
+      <div class="hero-score" style="color:${scoreColor(overall)}">${overall}</div>
+      <div class="hero-meta">
+        <div class="hm-status ${statusColor(st)}">${esc(statusText(st))}</div>
+        <div class="hm-sub">Overall score · baseline run <span class="mono" style="color:var(--faint);">${esc((run.id || "").slice(0, 12))}</span> · ${esc(fmtTs(run.created_at))}</div>
+      </div>
+      <div style="flex:1;"></div>
+      <span class="pill ${statusColor(st)}">${esc(statusText(st))}</span>
+    </div>`;
+    if (issues.length) {
+      hero += `<div class="section-label">Issues (${issues.length})</div>
+      <div class="issues-list">` + issues.map((iss) => `
+        <div class="issue-row ${esc(iss.severity || "low")}">
+          <span class="pill ${iss.severity === "high" ? "red" : iss.severity === "medium" ? "amber" : "grey"}">${esc(iss.severity || "low")}</span>
+          <span class="ir-msg">${esc(iss.message || "")}</span>
+          <span class="pill grey mono">${esc(METRIC_LABELS[iss.metric] || iss.metric || "")}</span>
+        </div>`).join("") + `</div>`;
+    }
+    if (run.simulation_note) {
+      hero += `<div class="note-strip">⚡ ${esc(run.simulation_note)}</div>`;
+    }
+  } else {
+    hero = `<div class="empty-state panel" style="margin-top:4px;">
+      <div class="es-icon">◎</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);">No baseline run yet</div>
+      <div style="font-size:12px;max-width:340px;">Run a baseline evaluation to score the production capture across six quality dimensions.</div>
+    </div>`;
+  }
+
+  area.innerHTML = `
+    <div class="stage-title">Baseline Evaluation</div>
+    <div class="stage-sub">Six-dimension scorecard of the captured trace before any change.</div>
+    ${cards}
+    ${hero}`;
+
+  if (state.loadingStage) {
+    area.insertAdjacentHTML("beforeend", `<div class="note-strip" style="border-color:rgba(34,211,238,0.2);background:rgba(34,211,238,0.05);color:var(--cyan);"><span class="spinner"></span> Running baseline evaluation…</div>`);
+  }
+}
+
+/* ============================================================
+   STAGE 4 — Simulated Replay
+   ============================================================ */
+const CHANGE_CARDS = [
+  { id: "prompt_update", title: "Prompt update", desc: "Tighten the explanation template: force merchant context, prior-charge reference, and a clear next step." },
+  { id: "model_change", title: "Model change", desc: "Swap the analyst model to a stronger reasoning variant with higher grounding constraints." },
+  { id: "coordination_update", title: "Coordination update", desc: "Improve planner handoff: enrich shared context and reduce redundant tool hops." }
+];
+
+function renderStage4() {
+  const area = $("stage-area");
+  const b = state.baselineRun;
+  const r = state.replayRun;
+  let compareHtml = "";
+
+  if (r && b) {
+    const rows = Object.keys(METRIC_LABELS).map((k) => {
+      const bv = Math.round((b.metrics && b.metrics[k] || 0) * 100);
+      const rv = Math.round((r.metrics && r.metrics[k] || 0) * 100);
+      const d = rv - bv;
+      const dc = d > 0 ? "up" : d < 0 ? "down" : "flat";
+      const arrow = d > 0 ? "▲" : d < 0 ? "▼" : "–";
+      let expl = "";
+      if (state.comparison) {
+        const imp = (state.comparison.improvements || []).find((x) => x.metric === k);
+        const reg = (state.comparison.regressions || []).find((x) => x.metric === k);
+        if (imp) expl = imp.explanation || "";
+        else if (reg) expl = reg.explanation || "";
+        else expl = d === 0 ? "No change" : `moved from ${bv} to ${rv}`;
+      } else {
+        expl = d === 0 ? "No change" : `moved from ${bv} to ${rv}`;
+      }
+      return `<div class="cmp-row">
+        <div class="cr-lbl">${esc(METRIC_LABELS[k])}</div>
+        <div class="cr-base">${bv}</div>
+        <div class="cr-arrow">→</div>
+        <div class="cr-replay">${rv}</div>
+        <div class="cr-delta ${dc}">${arrow} ${d > 0 ? "+" : ""}${d}</div>
+        <div class="cr-expl" title="${esc(expl)}">${esc(expl)}</div>
+      </div>`;
+    }).join("");
+    const impN = state.comparison ? (state.comparison.improvements || []).length : Object.keys(METRIC_LABELS).filter((k) => (r.metrics[k]||0) > (b.metrics[k]||0)).length;
+    const regN = state.comparison ? (state.comparison.regressions || []).length : Object.keys(METRIC_LABELS).filter((k) => (r.metrics[k]||0) < (b.metrics[k]||0)).length;
+    compareHtml = `
+      <div class="section-label" style="margin-top:18px;">Metric comparison</div>
+      <div class="cmp-rows">${rows}</div>
+      <div class="cmp-chips">
+        <span class="pill green">${impN} improvement${impN === 1 ? "" : "s"}</span>
+        <span class="pill ${regN ? "red" : "grey"}">${regN} regression${regN === 1 ? "" : "s"}</span>
+        <span class="pill grey mono">overall ${Math.round(b.overall_score)} → ${Math.round(r.overall_score)}</span>
+      </div>
+      <div class="note-strip">⚡ Replay simulated — no real agent application was rerun.</div>`;
+  } else {
+    compareHtml = `<div class="empty-state panel" style="margin-top:14px;">
+      <div class="es-icon">⇄</div>
+      <div style="font-size:12.5px;">Run a simulated replay to see the 6-metric comparison against baseline.</div>
+    </div>`;
+  }
+
+  area.innerHTML = `
+    <div class="stage-title">Simulated Replay</div>
+    <div class="stage-sub">Choose a change, then replay the trace against a simulated model of the change.</div>
+    <div class="change-cards">
+      ${CHANGE_CARDS.map((c) => `
+        <button class="change-card${state.selectedChange === c.id ? " active" : ""}" data-change="${c.id}">
+          <div class="cc-title"><span class="cc-radio"></span>${esc(c.title)}</div>
+          <div class="cc-desc">${esc(c.desc)}</div>
+        </button>`).join("")}
+    </div>
+    <input class="desc-input" id="change-desc" placeholder="Optional: describe the change for the run record…" value="${esc(r ? (r.change_description || "") : "")}" ${state.loadingStage ? "disabled" : ""}>
+    ${state.loadingStage ? `<div class="note-strip" style="border-color:rgba(34,211,238,0.2);background:rgba(34,211,238,0.05);color:var(--cyan);"><span class="spinner"></span> Running simulated replay…</div>` : ""}
+    ${compareHtml}`;
+
+  area.querySelectorAll(".change-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      state.selectedChange = card.dataset.change;
+      renderStage4();
+    });
+  });
+}
+
+/* ============================================================
+   STAGE 5 — Release Decision
+   ============================================================ */
+function renderStage5() {
+  const area = $("stage-area");
+  const b = state.baselineRun;
+  const r = state.replayRun;
+
+  if (!b || !r) {
+    const baseRow = b
+      ? `<span class="pill green">Ready · overall ${Math.round(b.overall_score)}</span><span style="font-size:11.5px;color:var(--faint);">completed</span>`
+      : `<span class="pill amber">Missing</span><button class="btn ghost sm" id="s5-run-baseline">Run baseline</button>`;
+    const replayRow = r
+      ? `<span class="pill green">Ready · overall ${Math.round(r.overall_score)}</span><span style="font-size:11.5px;color:var(--faint);">completed</span>`
+      : `<span class="pill amber">Missing</span><button class="btn ghost sm" id="s5-run-replay">Run replay</button>`;
+    area.innerHTML = `
+      <div class="stage-title">Release Decision</div>
+      <div class="stage-sub">Compare baseline vs replay and decide whether the change is ready to ship.</div>
+      <div class="empty-state panel" style="align-items:stretch;text-align:left;padding:18px 20px;">
+        <div class="es-icon" style="align-self:center;">⚖</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);text-align:center;">Need a baseline and a replay to decide</div>
+        <div style="font-size:12px;max-width:430px;margin:0 auto 6px;text-align:center;">Run the baseline evaluation (stage 3), then a simulated replay (stage 4), then return here for the release decision.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:540px;margin:6px auto 0;">
+          <div class="panel" style="display:flex;align-items:center;gap:12px;padding:12px 16px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:180px;">
+              <div style="font-size:12.5px;font-weight:600;color:var(--text);">Baseline evaluation</div>
+              <div style="font-size:11px;color:var(--faint);">Six-dimension scorecard of the captured trace.</div>
+            </div>
+            ${baseRow}
+          </div>
+          <div class="panel" style="display:flex;align-items:center;gap:12px;padding:12px 16px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:180px;">
+              <div style="font-size:12.5px;font-weight:600;color:var(--text);">Simulated replay</div>
+              <div style="font-size:11px;color:var(--faint);">Replay the trace against a proposed change.</div>
+            </div>
+            ${replayRow}
+          </div>
+        </div>
+      </div>`;
+    const b5 = $("s5-run-baseline");
+    if (b5) b5.addEventListener("click", () => gotoStage(3));
+    const r5 = $("s5-run-replay");
+    if (r5) r5.addEventListener("click", () => gotoStage(4));
+    return;
+  }
+
+  const c = state.comparison;
+  const bOverall = Math.round(b.overall_score);
+  const rOverall = Math.round(r.overall_score);
+  const dOverall = rOverall - bOverall;
+  const dCls = dOverall > 0 ? "up" : dOverall < 0 ? "down" : "flat";
+  const dTxt = (dOverall > 0 ? "▲ +" : dOverall < 0 ? "▼ " : "– ") + dOverall;
+
+  let recHtml;
+  if (state.comparisonLoading) {
+    recHtml = `<div class="rec-banner" style="background:var(--nested);border:1px solid var(--border);color:var(--faint);box-shadow:none;">Computing…</div>`;
+  } else if (state.compareError) {
+    recHtml = `<div class="rec-banner" style="background:var(--nested);border:1px solid var(--border);color:var(--muted);box-shadow:none;">— Decision unavailable</div>`;
+  } else if (c && c.recommendation) {
+    const rec = c.recommendation;
+    recHtml = `<div class="rec-banner ${rec.replace(/ /g, "_")}">${esc(statusText(rec))}</div>`;
+  } else {
+    recHtml = `<div class="rec-banner" style="background:var(--nested);border:1px solid var(--border);color:var(--muted);box-shadow:none;">Awaiting comparison</div>`;
+  }
+
+  let detailHtml = "";
+  if (state.comparisonLoading) {
+    detailHtml = `<div class="sk" style="height:90px;margin-bottom:12px;"></div><div class="sk" style="height:60px;margin-bottom:12px;"></div>`;
+  } else if (state.compareError) {
+    detailHtml = `<div class="err-state">⚠ ${esc(state.compareError)} <button class="btn ghost sm" id="cmp-retry">Retry</button></div>`;
+  } else if (c) {
+    const impHtml = (c.improvements || []).map((x) => `
+      <div class="dec-item green">
+        <div class="di-metric">${esc(METRIC_LABELS[x.metric] || x.metric)} <span class="di-delta up">${x.delta > 0 ? "+" : ""}${Math.round(x.delta * 100) || Math.round(x.delta)}</span></div>
+        <div class="di-msg">${esc(x.explanation || "")}</div>
+      </div>`).join("") || `<div style="color:var(--faint);font-size:12px;">No improvements detected.</div>`;
+    const regHtml = (c.regressions || []).map((x) => `
+      <div class="dec-item red">
+        <div class="di-metric">${esc(METRIC_LABELS[x.metric] || x.metric)} <span class="di-delta down">${x.delta > 0 ? "+" : ""}${Math.round(x.delta * 100) || Math.round(x.delta)}</span></div>
+        <div class="di-msg">${esc(x.explanation || "")}</div>
+      </div>`).join("") || `<div style="color:var(--faint);font-size:12px;">No regressions detected.</div>`;
+    const riskHtml = (c.remaining_risks || []).map((x) => `
+      <div class="dec-item amber">
+        <div class="di-metric">${esc(METRIC_LABELS[x.metric] || x.metric || "General")}</div>
+        <div class="di-msg">${esc(x.message || "")}</div>
+      </div>`).join("") || `<div style="color:var(--faint);font-size:12px;">No remaining risks listed.</div>`;
+
+    const deltas = c.deltas || {};
+    const metricRows = Object.keys(METRIC_LABELS).map((k) => {
+      const bv = Math.round((c.baseline && c.baseline.metrics && c.baseline.metrics[k] || 0) * 100);
+      const rv = Math.round((c.comparison && c.comparison.metrics && c.comparison.metrics[k] || 0) * 100);
+      const d = rv - bv;
+      const dc = d > 0 ? "up" : d < 0 ? "down" : "flat";
+      return `<tr>
+        <td style="color:var(--text);font-weight:600;">${esc(METRIC_LABELS[k])}</td>
+        <td class="mono">${bv}</td><td class="mono">${rv}</td>
+        <td class="mono" style="color:${d > 0 ? "var(--green)" : d < 0 ? "var(--red)" : "var(--faint)"};">${d > 0 ? "+" : ""}${d}</td>
+      </tr>`;
+    }).join("");
+
+    const thr = c.thresholds || {};
+    const thrRows = Object.keys(thr).map((k) => `
+      <tr><td>${esc(k.replace(/_/g, " "))}</td><td class="mono">${typeof thr[k] === "object" ? esc(JSON.stringify(thr[k])) : esc(String(thr[k]))}</td></tr>`).join("");
+
+    detailHtml = `
+      <div class="dec-cols">
+        <div class="dec-panel"><h4 class="green">Improvements (${(c.improvements || []).length})</h4>${impHtml}</div>
+        <div class="dec-panel"><h4 class="red">Regressions (${(c.regressions || []).length})</h4>${regHtml}</div>
+        <div class="dec-panel"><h4 class="amber">Remaining risks (${(c.remaining_risks || []).length})</h4>${riskHtml}</div>
+      </div>
+      <div class="panel" style="padding:12px 0 2px;margin-bottom:14px;">
+        <div class="section-label" style="padding:0 16px;">Metric deltas</div>
+        <table class="thr-table"><thead><tr><th>Metric</th><th>Baseline</th><th>Replay</th><th>Δ</th></tr></thead><tbody>${metricRows}</tbody></table>
+      </div>
+      ${thrRows ? `<div class="panel" style="padding:12px 0 2px;margin-bottom:14px;">
+        <div class="section-label" style="padding:0 16px;">Thresholds</div>
+        <table class="thr-table"><tbody>${thrRows}</tbody></table>
+      </div>` : ""}
+      ${c.rationale ? `<div class="rationale-box"><strong>Rationale.</strong> ${esc(c.rationale)}</div>` : ""}
+      ${c.simulation ? `<div class="note-strip">⚡ Comparison is simulated — derived from demo replay data, not a live agent rerun.</div>` : ""}`;
+  } else {
+    detailHtml = `<div class="empty-state panel"><div class="es-icon">◌</div><div style="font-size:12px;">Both runs are ready — compute the release decision to compare them.</div><button class="btn primary" id="cmp-compute">Compute decision</button></div>`;
+  }
+
+  area.innerHTML = `
+    <div class="stage-title">Release Decision</div>
+    <div class="stage-sub">Baseline vs simulated replay — ship, hold, or investigate.</div>
+    <div class="decision-hero">
+      <div class="dh-scores">
+        <div class="dh-block"><div class="dh-val" style="color:var(--muted)">${bOverall}</div><div class="dh-lbl">Baseline</div></div>
+        <div class="dh-sep">→</div>
+        <div class="dh-block"><div class="dh-val" style="color:${scoreColor(rOverall)}">${rOverall}</div><div class="dh-lbl">Replay</div></div>
+        <div class="dh-delta ${dCls}">${esc(dTxt)}</div>
+      </div>
+      <div></div>
+      ${recHtml}
+    </div>
+    ${detailHtml}
+    <div style="margin-top:16px;"><button class="btn primary" id="explore-another">Explore another trace</button></div>`;
+
+  const retry = $("cmp-retry");
+  if (retry) retry.addEventListener("click", () => loadComparison(true));
+  const compute = $("cmp-compute");
+  if (compute) compute.addEventListener("click", () => loadComparison(true));
+  $("explore-another").addEventListener("click", resetToStage1);
+}
+
+/* ============================================================
+   MAIN RENDER — dispatch
+   ============================================================ */
+function render() {
+  renderHeader();
+  renderSidebar();
+  renderSteps();
+  if (state.stage === 1) renderStage1();
+  else if (state.stage === 2) renderStage2();
+  else if (state.stage === 3) renderStage3();
+  else if (state.stage === 4) renderStage4();
+  else if (state.stage === 5) renderStage5();
+  renderBotbar();
+}
+
+function gotoStage(n) {
+  if (n < 1 || n > 5) return;
+  state.stage = n;
+  // When entering stage 5 with both runs, fetch comparison
+  if (n === 5 && state.baselineRun && state.replayRun && !state.comparison && !state.comparisonLoading) {
+    loadComparison(false);
+  }
+  // When entering stage 3, ensure we have latest baseline from runs list
+  if (n === 3 && !state.baselineRun && state.currentScenario) {
+    loadLatestBaseline();
+  }
+  render();
+  // Scroll stage area to top
+  $("stage-area").scrollTop = 0;
+}
+
+/* ============================================================
+   ACTIONS — load / save / evaluate / replay / compare
+   ============================================================ */
+async function loadScenarios() {
+  try {
+    const data = await api("/api/scenarios");
+    state.scenarios = (data && data.scenarios) || [];
+    renderSidebar();
+    if (state.scenarios.length && !state.currentScenario) {
+      await loadScenario(state.scenarios[0].id);
+    } else if (!state.scenarios.length) {
+      // Show empty state on stage 1
+      state.currentScenario = null;
+      state.events = [];
+      state.spec = null;
+      render();
+    }
+  } catch (e) {
+    toast(e.detail || e.message || "Failed to load scenarios", "err");
+    const area = $("stage-area");
+    area.innerHTML = `<div class="err-state">⚠ ${esc(e.detail || e.message || "Failed to load scenarios")} <button class="btn ghost sm" id="retry-scen">Retry</button></div>`;
+    const rb = $("retry-scen");
+    if (rb) rb.addEventListener("click", loadScenarios);
+  }
+}
+
+async function loadScenario(id) {
+  try {
+    const data = await api("/api/scenarios/" + encodeURIComponent(id));
+    state.currentScenario = data.scenario;
+    state.events = data.events || [];
+    state.spec = data.scenario && (data.scenario.ai_ops_spec || data.scenario.spec) || null;
+    state.selectedEventIndex = 0;
+    // Keep baseline if same scenario? Clear runs on scenario switch for clarity
+    state.baselineRun = null;
+    state.replayRun = null;
+    state.comparison = null;
+    state.compareError = null;
+    state.runsLoaded = false;
+    render();
+    // Try load existing baseline run
+    loadLatestBaseline();
+  } catch (e) {
+    toast(e.detail || e.message || "Failed to load scenario", "err");
+  }
+}
+
+async function loadLatestBaseline() {
+  if (!state.currentScenario) return;
+  try {
+    const data = await api("/api/scenarios/" + encodeURIComponent(state.currentScenario.id) + "/runs");
+    const runs = (data && data.runs) || [];
+    const baseline = runs.find((r) => r.run_type === "baseline");
+    if (baseline) {
+      state.baselineRun = baseline;
+      const replay = runs.find((r) => r.run_type === "simulated_replay");
+      if (replay) state.replayRun = replay;
+      state.runsLoaded = true;
+      if (state.stage === 3 || state.stage === 4 || state.stage === 5) render();
+      if (state.baselineRun && state.replayRun && state.stage === 5
+          && !state.comparison && !state.comparisonLoading) {
+        loadComparison(false);
+      }
+    }
+  } catch (e) {
+    // Non-fatal — runs list optional
+    console.warn("runs fetch failed", e);
+  }
+}
+
+async function loadDemoScenario() {
+  const body = {
+    name: "Unusual Expense Explanation",
+    description: "Cardholder asks why an unfamiliar merchant charged their card; multi-agent pipeline explains the charge. Seeded demo capture.",
+    source_type: "production_trace",
+    spec: SEED_SPEC,
+    events: SEED_EVENTS.map((e) => ({
+      sequence: e.sequence,
+      agent_name: e.agent_name,
+      event_type: e.event_type,
+      input: e.input,
+      output: e.output,
+      metadata: e.metadata,
+      timestamp: e.timestamp
+    }))
+  };
+  try {
+    const data = await api("/api/scenarios", { method: "POST", body: JSON.stringify(body) });
+    const sc = data && data.scenario;
+    if (!sc || !sc.id) throw new Error("Unexpected response loading demo scenario");
+    toast("Demo scenario loaded", "ok");
+    await loadScenarios();
+    await loadScenario(sc.id);
+  } catch (e) {
+    toast(e.detail || e.message || "Failed to load demo scenario", "err");
+  }
+}
+
+async function saveScenario() {
+  const s = state.currentScenario;
+  if (!s) { toast("No scenario to save", "err"); return; }
+  const btn = $("bb-save");
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving…'; }
+  const events = state.events.map((e) => ({
+    sequence: e.sequence_number != null ? e.sequence_number : e.sequence,
+    agent_name: e.agent_name,
+    event_type: e.event_type,
+    input: e.input,
+    output: e.output,
+    metadata: e.metadata,
+    timestamp: e.timestamp
+  }));
+  const spec = state.spec || s.ai_ops_spec || s.spec || SEED_SPEC;
+  const body = {
+    name: (s.name || "Scenario") + " (saved copy)",
+    description: s.description || "",
+    source_type: s.source_type || "production_trace",
+    spec,
+    events
+  };
+  try {
+    const data = await api("/api/scenarios", { method: "POST", body: JSON.stringify(body) });
+    if (!data || !data.scenario || !data.scenario.id) throw new Error("Unexpected response from save");
+    const mode = state.health && state.health.database ? state.health.database.mode : "";
+    toast(mode === "in_memory" ? "Scenario saved (in-memory)" : "Scenario saved", "ok");
+    await loadScenarios();
+    await loadScenario(data.scenario.id);
+  } catch (e) {
+    toast(e.detail || e.message || "Failed to save scenario", "err");
+  } finally {
+    renderBotbar();
+  }
+}
+
+async function runBaseline() {
+  if (!state.currentScenario) { toast("Load a scenario first", "err"); return; }
+  state.loadingStage = true;
+  render();
+  try {
+    const data = await api("/api/scenarios/" + encodeURIComponent(state.currentScenario.id) + "/evaluate", {
+      method: "POST",
+      body: JSON.stringify({ run_type: "baseline" })
+    });
+    if (!data || !data.run) throw new Error("Unexpected response from baseline evaluation");
+    state.baselineRun = data.run;
+    state.replayRun = null;
+    state.comparison = null;
+    state.compareError = null;
+    toast("Baseline evaluation complete", "ok");
+  } catch (e) {
+    toast(e.detail || e.message || "Baseline evaluation failed", "err");
+  } finally {
+    state.loadingStage = false;
+    render();
+  }
+}
+
+async function runReplay() {
+  if (!state.currentScenario) { toast("Load a scenario first", "err"); return; }
+  const descInput = $("change-desc");
+  const desc = descInput ? descInput.value.trim() : "";
+  const defaults = {
+    prompt_update: "Tighten explanation template with merchant context and prior-charge reference",
+    model_change: "Swap analyst model to stronger reasoning variant",
+    coordination_update: "Enrich planner handoff context and reduce tool hops"
+  };
+  state.loadingStage = true;
+  render();
+  try {
+    const data = await api("/api/scenarios/" + encodeURIComponent(state.currentScenario.id) + "/replay", {
+      method: "POST",
+      body: JSON.stringify({
+        change_type: state.selectedChange,
+        change_description: desc || defaults[state.selectedChange] || ""
+      })
+    });
+    if (!data || !data.run) throw new Error("Unexpected response from simulated replay");
+    state.replayRun = data.run;
+    toast("Simulated replay complete", "ok");
+  } catch (e) {
+    toast(e.detail || e.message || "Simulated replay failed", "err");
+  } finally {
+    state.loadingStage = false;
+    render();
+  }
+}
+
+async function loadComparison(showToast) {
+  if (!state.baselineRun || !state.replayRun) return;
+  if (!state.currentScenario) return;
+  state.comparisonLoading = true;
+  state.compareError = null;
+  render();
+  try {
+    const data = await api(
+      "/api/scenarios/" + encodeURIComponent(state.currentScenario.id) +
+      "/compare/" + encodeURIComponent(state.baselineRun.id) + "/" + encodeURIComponent(state.replayRun.id)
+    );
+    state.comparison = data && data.comparison;
+    if (!state.comparison) throw new Error("Comparison response missing decision payload");
+    if (showToast) toast("Decision refreshed", "ok");
+  } catch (e) {
+    state.compareError = e.detail || e.message || "Comparison failed";
+    toast(state.compareError, "err");
+  } finally {
+    state.comparisonLoading = false;
+    render();
+  }
+}
+
+function resetToStage1() {
+  state.stage = 1;
+  state.baselineRun = null;
+  state.replayRun = null;
+  state.comparison = null;
+  state.compareError = null;
+  state.selectedEventIndex = 0;
+  render();
+  toast("Reset — explore another trace", "info");
+}
+
+async function resetDemo() {
+  if (!confirm("Reset demo? This clears local run state and reloads the scenario list.")) return;
+  state.baselineRun = null;
+  state.replayRun = null;
+  state.comparison = null;
+  state.compareError = null;
+  state.currentScenario = null;
+  state.events = [];
+  state.spec = null;
+  state.stage = 1;
+  state.selectedEventIndex = 0;
+  state.runsLoaded = false;
+  render();
+  await loadScenarios();
+  toast("Demo reset", "info");
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+async function init() {
+  $("btn-reset").addEventListener("click", resetDemo);
+  // Fetch health + scenarios in parallel
+  try {
+    state.health = await api("/health");
+    renderHeader();
+  } catch (e) {
+    // Non-fatal; still try scenarios
+    console.warn("health failed", e);
+  }
+  await loadScenarios();
+}
+
+init();
+</script>
+</body>
+</html>

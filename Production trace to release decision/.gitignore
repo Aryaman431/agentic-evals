@@ -1,0 +1,14 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+.env.local
+.env.*
+!.env.example
+.opencode/
+node_modules/
+*.log
+*.pid
+.pytest_cache/
+.DS_Store

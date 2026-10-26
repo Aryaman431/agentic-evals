@@ -1,8 +1,8 @@
-# Agentic Evals — Interactive Agent Evaluation Lab
+# Voice Agent Evaluation with Agentic Evals
 
 ## Overview
 
-This project demonstrates how **Agentic Evals** can be used to evaluate a simulated interactive agent.
+This project demonstrates how **Agentic Evals** can be used to evaluate a simulated voice-based customer support agent.
 
 The evaluation focuses on:
 
@@ -21,7 +21,7 @@ The voice system is simulated locally so that the evaluation workflow can be tes
 
 ## Problem
 
-Interactive agents must do more than generate a response. They need to correctly understand the user's request, select the appropriate tool, provide the correct information, and recover gracefully when information is missing.
+Voice customer-support agents must do more than generate a response. They need to correctly understand the user's request, select the appropriate tool, provide the correct information, and recover gracefully when information is missing.
 
 This project evaluates these behaviors using a structured test dataset and the **Agentic Evals** evaluation framework.
 
@@ -416,19 +416,6 @@ The evaluation could be extended with:
 ---
 
 ## Running the Project
-
-### Install
-
-From the repository root (where `pyproject.toml` lives), install the package in
-editable mode with the `voice` extra:
-
-```bash
-python -m pip install -e ".[voice]"
-```
-
-This also installs the dashboard backend dependencies (`fastapi>=0.115` and
-`uvicorn>=0.30`) that `server.py` uses to serve the Evaluation API, so run it
-before starting the API.
 
 From the `voice-agent-evals` directory:
 

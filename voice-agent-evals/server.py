@@ -6,12 +6,12 @@ from datetime import datetime
 from typing import Any
 
 import uvicorn
-from dataset import VOICE_TEST_CASES
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+from dataset import VOICE_TEST_CASES
 from scenario_runner import evaluate_scenario
-from voice_agents import run_agent
 from scenarios import (
     FAULT_KEYS,
     Scenario,
@@ -24,10 +24,10 @@ from scenarios import (
     validate_scenario,
 )
 
+
 # -----------------------------
 # Request models
 # -----------------------------
-
 
 class ScenarioCreate(BaseModel):
     name: str
@@ -57,10 +57,6 @@ class ScenarioUpdate(BaseModel):
     max_latency_ms: float | None = None
 
 
-class ChatRequest(BaseModel):
-    message: str
-
-
 class EvaluateRequest(BaseModel):
     scenario_id: str | None = None
     scenario_name: str | None = None
@@ -83,8 +79,7 @@ app = FastAPI(title="Voice Agent Evaluation API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=os.getenv("EVAL_CORS_ORIGINS", "*").split(","),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -97,15 +92,13 @@ _RUN_COUNTER = itertools.count(1)
 # Scenario resolution helpers
 # -----------------------------
 
-
 def _default_rules(request: EvaluateRequest) -> dict[str, bool]:
     """All rules that the provided fields can support default to enabled."""
     return {
         "transcript_accuracy": request.expected_transcript is not None,
         "intent_accuracy": request.expected_intent is not None,
         "tool_selection": request.expected_tool is not None,
-        "tool_arguments": request.expected_tool is not None
-        and request.expected_arguments is not None,
+        "tool_arguments": request.expected_tool is not None and request.expected_arguments is not None,
         "response_quality": bool(request.expected_response_criteria),
         "groundedness": True,
         "reliability": True,
@@ -121,9 +114,7 @@ def _resolve_scenario(request: EvaluateRequest) -> Scenario:
     if request.scenario_id is not None:
         stored = get_scenario(request.scenario_id)
         if stored is None:
-            raise HTTPException(
-                status_code=404, detail=f"Scenario '{request.scenario_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Scenario '{request.scenario_id}' not found")
 
         data = stored.model_dump()
         overrides = {
@@ -147,9 +138,7 @@ def _resolve_scenario(request: EvaluateRequest) -> Scenario:
         return scenario
 
     if not (request.input or "").strip():
-        raise HTTPException(
-            status_code=400, detail="input is required when scenario_id is not provided"
-        )
+        raise HTTPException(status_code=400, detail="input is required when scenario_id is not provided")
 
     data = {
         "id": slugify(request.scenario_name or "Untitled Scenario"),
@@ -175,7 +164,6 @@ def _resolve_scenario(request: EvaluateRequest) -> Scenario:
 # -----------------------------
 # Routes
 # -----------------------------
-
 
 @app.get("/health")
 def health() -> dict[str, str]:
@@ -253,30 +241,8 @@ def evaluate_endpoint(request: EvaluateRequest) -> dict[str, Any]:
         "evaluation": payload,
     }
     _RUNS.insert(0, run)
+
     return payload
-
-
-@app.post("/chat/evaluate")
-def chat_evaluate_endpoint(request: ChatRequest) -> dict[str, Any]:
-    import time
-    start = time.time()
-    result = run_agent(request.message)
-    latency = time.time() - start
-    response, intent, tool, args = result.response, result.intent, result.tool_name, result.tool_args
-    return {
-        "response": response,
-        "intent": intent,
-        "tool": tool,
-        "args": args,
-        "result": result.tool_result,
-        "latency": latency,
-        "evaluation": None,
-    }
-
-
-@app.options("/chat/evaluate")
-def chat_evaluate_options():
-    return {"status": "ok"}
 
 
 @app.get("/runs")

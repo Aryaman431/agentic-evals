@@ -29,9 +29,13 @@
   --font-serif: Georgia, "Times New Roman", Times, serif;
   --font-mono:  ui-monospace, "Cascadia Mono", "Cascadia Code", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
+  /* Type ladder — five distinct steps, largest to smallest:
+     display (h1) → section (h2) → story (h3) → body (h4) → body. */
   --fs-display:    clamp(2.35rem, 1.55rem + 3.4vw, 4.15rem);
   --fs-h2:         clamp(1.55rem, 1.25rem + 1.5vw, 2.35rem);
+  --fs-story:      clamp(1.5rem, 1.25rem + 1.2vw, 2.15rem);
   --fs-h3:         clamp(1.18rem, 1.08rem + 0.45vw, 1.42rem);
+  --fs-h4:         1.0625rem;
   --fs-lede:       clamp(1rem, 0.95rem + 0.24vw, 1.16rem);
   --fs-body:       1rem;
   --fs-small:      0.94rem;
@@ -41,20 +45,22 @@
   --lh-display:    1.04;
   --lh-heading:    1.18;
   --lh-body:       1.65;
+  --lh-narrative:  1.72;
   --track-display: -0.025em;
   --track-label:   0.14em;
 
   --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px; --s-5: 20px;
   --s-6: 24px; --s-7: 32px; --s-8: 40px; --s-9: 56px; --s-10: 72px; --s-11: 96px;
 
-  --wrap:           1160px;
-  --header-h:       56px;
+  --wrap:           1400px;
+  --header-h:       62px;
   --radius:         4px;
   --radius-sm:      3px;
   --hairline:       1px solid var(--border);
+  --shadow-panel:   0 24px 48px -24px rgba(0, 0, 0, 0.85);
   --t-fast:         150ms ease;
   --t:              220ms ease;
-  --anchor-offset:  76px;
+  --anchor-offset:  84px;
 }
 
 /* ---------- Globals ---------- */
@@ -75,6 +81,15 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+::selection {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+/* Long-form copy is meant to be read — let the engine avoid
+   orphans and rags where it can. */
+p { text-wrap: pretty; }
 
 .wrap {
   width: 100%;
@@ -102,7 +117,10 @@ code {
 #use-cases,
 #uc-01,
 #uc-02,
-#uc-03 { scroll-margin-top: var(--anchor-offset); }
+#uc-03,
+#blog,
+#about,
+#main { scroll-margin-top: var(--anchor-offset); }
 
 /* ---------- Skip link ---------- */
 
@@ -129,37 +147,50 @@ code {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(10, 15, 14, 0.92);
-  border-bottom: var(--hairline);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background: rgba(10, 15, 14, 0.88);
+  border-bottom: 1px solid var(--border);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  backdrop-filter: blur(12px) saturate(150%);
 }
 
 .header-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--s-4);
+  gap: var(--s-6);
   min-height: var(--header-h);
 }
 
 .brand {
+  position: relative;
   margin: 0;
   display: inline-flex;
   align-items: baseline;
   gap: var(--s-2);
   white-space: nowrap;
+  text-decoration: none;
+}
+/* single lime identity mark — the only accent in the bar at rest */
+.brand::before {
+  content: "";
+  align-self: center;
+  width: 9px;
+  height: 9px;
+  margin-right: 2px;
+  background: var(--lime);
+  border-radius: 2px;
+  transform: rotate(45deg);
 }
 .brand-name {
   font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: -0.01em;
+  font-size: 0.98rem;
+  letter-spacing: -0.012em;
   color: var(--text);
 }
 .brand-sep { color: var(--text-dim); font-weight: 400; }
 .brand-sub {
   font-family: var(--font-mono);
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: var(--track-label);
   text-transform: uppercase;
@@ -174,21 +205,22 @@ code {
 .nav-list {
   display: flex;
   align-items: center;
-  gap: var(--s-5);
+  gap: clamp(14px, 1.6vw, 26px);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .nav-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 0;
+  padding: 8px 0;
   font-family: var(--font-mono);
   font-size: 11.5px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--text-muted);
   text-decoration: none;
@@ -203,6 +235,101 @@ code {
 .nav-link--ext .arrow { transition: transform var(--t-fast); }
 .nav-link--ext:hover .arrow { transform: translate(2px, -2px); }
 
+/* ---------- Submenu (hover + focus-within on desktop, always
+   expanded in the mobile drawer — zero JavaScript either way) ---------- */
+
+.nav-item--has-sub { position: relative; }
+
+/* base applies at every width; positioning is desktop-only below */
+.nav-sub-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-link--sub { gap: 7px; }
+.nav-link--sub .chevron {
+  color: var(--text-dim);
+  transition: transform var(--t), color var(--t-fast);
+}
+.nav-link--sub:hover .chevron,
+.nav-link--sub:focus-visible .chevron { color: var(--lime); }
+
+@media (min-width: 861px) {
+
+  .nav-sub-list {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 70;
+    min-width: 252px;
+    padding: var(--s-2);
+    background: var(--surface);
+    border: var(--hairline);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-panel);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-6px);
+    transition: opacity var(--t), transform var(--t),
+                visibility 0s linear var(--t);
+  }
+
+  /* caret tying the panel back to its trigger */
+  .nav-sub-list::before {
+    content: "";
+    position: absolute;
+    top: -4px;
+    right: 26px;
+    width: 8px;
+    height: 8px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    transform: rotate(45deg);
+  }
+
+  .nav-item--has-sub:hover .nav-sub-list,
+  .nav-item--has-sub:focus-within .nav-sub-list {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+    transition: opacity var(--t), transform var(--t),
+                visibility 0s linear 0s;
+  }
+
+  .nav-item--has-sub:hover .nav-link--sub .chevron,
+  .nav-item--has-sub:focus-within .nav-link--sub .chevron {
+    color: var(--lime);
+    transform: rotate(180deg);
+  }
+
+  .nav-sub-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 12px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    transition: color var(--t-fast), background var(--t-fast);
+  }
+  .nav-sub-link + .nav-sub-link { margin-top: 2px; }
+  .nav-sub-link:hover,
+  .nav-sub-link:focus-visible {
+    color: var(--lime);
+    background: var(--lime-dim);
+  }
+}
+
 /* ---------- Mobile nav disclosure ---------- */
 
 .nav-disclosure {
@@ -214,8 +341,8 @@ code {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  min-height: 36px;
-  padding: 8px 14px;
+  min-height: 38px;
+  padding: 8px 15px;
   font-family: var(--font-mono);
   font-size: 11.5px;
   font-weight: 600;
@@ -246,12 +373,13 @@ code {
   max-width: min(300px, calc(100vw - 32px));
   margin: 0;
   padding: var(--s-1) 0;
-  background: var(--bg-raised);
+  background: var(--surface);
   border: var(--hairline);
   border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
   list-style: none;
 }
-.nav-list--drawer li + li { border-top: var(--hairline); }
+.nav-list--drawer > li + li { border-top: var(--hairline); }
 .nav-list--drawer a {
   display: flex;
   align-items: center;
@@ -267,6 +395,43 @@ code {
 .nav-list--drawer a:hover,
 .nav-list--drawer a:focus-visible { color: var(--lime); }
 
+/* In the drawer the submenu is always open, static and indented —
+   no hover dependency, no absolute positioning. */
+.nav-list--drawer .nav-sub-list {
+  position: static;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition: none;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0 0 var(--s-2) var(--s-4);
+  background: transparent;
+  border: 0;
+  border-left: 1px solid var(--border-strong);
+  border-radius: 0;
+  box-shadow: none;
+}
+.nav-list--drawer .nav-sub-list::before { content: none; }
+.nav-list--drawer .nav-sub-link {
+  min-height: 38px;
+  padding: 7px 14px;
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+}
+.nav-list--drawer .nav-sub-link:hover,
+.nav-list--drawer .nav-sub-link:focus-visible {
+  color: var(--lime);
+  background: transparent;
+}
+
 /* ---------- Hero ---------- */
 
 .hero {
@@ -276,10 +441,12 @@ code {
 
 .hero-grid {
   display: grid;
-  grid-template-columns: 7fr 5fr;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
   gap: clamp(32px, 4vw, 56px);
   align-items: center;
 }
+
+.hero-copy { min-width: 0; }
 
 .eyebrow {
   margin: 0 0 var(--s-4);
@@ -315,18 +482,23 @@ code {
   padding-inline: 0.06em;
   background: linear-gradient(transparent 74%, var(--lime-dim) 74%, var(--lime-dim) 94%, transparent 94%);
 }
-.serif-em--strong {
-  background: linear-gradient(transparent 74%, var(--lime-soft) 74%, var(--lime-soft) 94%, transparent 94%);
-}
 
 .hero-lede {
   margin: 0;
-  max-width: 56ch;
+  max-width: 60ch;
   font-size: var(--fs-lede);
+  line-height: 1.7;
   color: var(--text-muted);
+  text-wrap: pretty;
 }
 
-.hero-actions { margin: var(--s-7) 0 0; }
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  margin: var(--s-7) 0 0;
+}
 
 /* The only solid-lime surface on the page. */
 .btn {
@@ -341,12 +513,27 @@ code {
   font-size: 0.98rem;
   font-weight: 700;
   text-decoration: none;
+  border: 1px solid transparent;
   border-radius: 3px;
-  transition: background var(--t);
+  transition: background var(--t), border-color var(--t), color var(--t);
 }
 .btn:hover { background: var(--lime-strong); }
 .btn:hover .arrow--dr { transform: translate(2px, 2px); }
 .btn:active { transform: translateY(1px); }
+
+/* secondary CTA — transparent, hairline, lime on hover */
+.btn--ghost {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.btn--ghost:hover,
+.btn--ghost:focus-visible {
+  background: transparent;
+  border-color: var(--lime);
+  color: var(--lime);
+}
+.btn--ghost:hover .arrow { transform: translateX(3px); }
 
 .arrow {
   display: inline-block;
@@ -372,7 +559,7 @@ code {
 .coord {
   position: absolute;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--text-dim);
   pointer-events: none;
@@ -384,7 +571,7 @@ code {
 
 /* ---------- Section head ---------- */
 
-.use-cases {
+.stories {
   border-top: var(--hairline);
   margin-top: -1px; /* collapse with the hero's bottom hairline */
   padding: clamp(48px, 6vw, 80px) 0 clamp(64px, 8vw, 104px);
@@ -405,159 +592,176 @@ code {
 
 .section-intro {
   margin: 0;
-  max-width: 58ch;
+  max-width: 62ch;
   font-size: var(--fs-lede);
+  line-height: 1.7;
   color: var(--text-muted);
+  text-wrap: pretty;
 }
 
-/* ---------- Case grid ---------- */
-
-.case-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--s-5);
-}
-
-.case {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  padding: var(--s-7) var(--s-6) var(--s-6);
-  background: var(--surface);
-  border: var(--hairline);
-  border-radius: var(--radius);
-  transition: border-color var(--t), background var(--t);
-}
-
-/* 2px lime top bar — scales in from the left on hover/focus. */
-.case::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--lime);
-  border-radius: var(--radius) var(--radius) 0 0;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--t);
-}
-.case:hover,
-.case:focus-within {
-  border-color: var(--border-strong);
-  background: var(--surface-2);
-}
-.case:hover::before,
-.case:focus-within::before { transform: scaleX(1); }
-
-.case-head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--s-3);
-  margin-bottom: var(--s-3);
-}
-
-.case-index {
-  font-family: var(--font-mono);
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1;
-  color: transparent;
-  -webkit-text-stroke: 1px var(--border-strong);
-  transition: -webkit-text-stroke-color var(--t);
-}
-.case:hover .case-index,
-.case:focus-within .case-index { -webkit-text-stroke-color: var(--lime); }
-@supports not (-webkit-text-stroke: 1px #000) {
-  .case-index { color: var(--text-dim); }
-}
-
-.case-cat {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--fs-label);
-  font-weight: 600;
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.case-title {
-  margin: 0 0 var(--s-4);
-  font-size: var(--fs-h3);
-  font-weight: 700;
-  line-height: var(--lh-heading);
-  letter-spacing: -0.015em;
-  text-wrap: balance;
-  color: var(--text);
-}
-
-.case-visual {
-  margin: 0 0 var(--s-5);
-  padding: 12px 12px 8px;
-  background: var(--bg-raised);
-  border: var(--hairline);
-  border-radius: var(--radius-sm);
-}
+/* ---------- Figure caption (shared) ---------- */
 
 .fig-caption {
   margin: var(--s-3) 0 0;
   font-family: var(--font-mono);
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-dim);
 }
 
-.case-body {
-  margin: 0 0 var(--s-5);
-  flex: 1;
-  font-size: var(--fs-small);
-  color: var(--text-muted);
+/* ============================================================
+   Stories — three compositions on one shared skeleton:
+     .story--split    narrative left / flow diagram right
+     .story--band     full-width flow band, then narrative + side panel
+     .story--pipeline full-width flow band, then one measure column
+   The base .story is ALWAYS a single column. Nothing is ever
+   auto-placed into a narrow second column.
+   ============================================================ */
+
+.story {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--s-5);
+  padding-block: clamp(40px, 5vw, 72px);
 }
 
-.case-learn {
-  margin: 0 0 var(--s-5);
-  padding-top: var(--s-4);
-  border-top: var(--hairline);
+/* hairline divider between stacked stories */
+.story + .story { border-top: var(--hairline); }
+
+/* calm odd/even alternation — border + surface only */
+.story:nth-of-type(even) {
+  background: var(--bg-raised);
+  border-top-color: var(--border-strong);
 }
-.case-learn h4 {
-  margin: 0 0 var(--s-3);
+
+/* head, title, lede, note, cta and the composition rows always
+   span the full story width */
+.story-head,
+.story-title,
+.story-lede,
+.story-note,
+.story-cta-row,
+.story-split,
+.flow-band { grid-column: 1 / -1; }
+
+.story-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+}
+
+/* large mono outline numeral */
+.story-index {
+  font-family: var(--font-mono);
+  font-size: clamp(32px, 3.4vw, 44px);
+  font-weight: 700;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--border-strong);
+}
+@supports not (-webkit-text-stroke: 1px #000) {
+  .story-index { color: var(--text-dim); }
+}
+
+.story-cat {
+  margin: 0;
   font-family: var(--font-mono);
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: var(--track-label);
   text-transform: uppercase;
-  color: var(--text-dim);
-}
-.case-learn ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.case-learn li {
-  position: relative;
-  margin: 0 0 var(--s-2);
-  padding-left: 16px;
-  font-size: var(--fs-tiny);
   color: var(--text-muted);
 }
-.case-learn li:last-child { margin-bottom: 0; }
-.case-learn li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.55em;
-  width: 5px;
-  height: 5px;
-  background: var(--lime-dim);
+
+/* step 3 of the type ladder — its own size, below the section h2 */
+.story-title {
+  margin: 0;
+  max-width: 24ch;
+  font-size: var(--fs-story);
+  font-weight: 700;
+  line-height: var(--lh-heading);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--text);
 }
 
-.case-cta-row { margin: 0; }
+/* narrative opening — serif lead-in, comfortable measure */
+.story-lede {
+  margin: 0;
+  max-width: 64ch;
+  font-family: var(--font-serif);
+  font-size: clamp(1.12rem, 1.02rem + 0.5vw, 1.34rem);
+  line-height: 1.58;
+  color: var(--text);
+  text-wrap: pretty;
+}
+.story-lede::first-line { font-style: italic; }
 
-.case-cta {
+.story-body {
+  min-width: 0;
+  max-width: 68ch;
+  line-height: var(--lh-narrative);
+  color: var(--text-muted);
+}
+.story-body p { margin: 0 0 var(--s-5); }
+.story-body p:last-child { margin-bottom: 0; }
+.story-body a {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+  transition: color var(--t-fast), text-decoration-color var(--t-fast);
+}
+.story-body a:hover {
+  color: var(--lime);
+  text-decoration-color: var(--lime);
+}
+
+/* step 4 of the type ladder — sub-heads inside long narrative */
+.story-body h4,
+.about-body h4 {
+  margin: var(--s-6) 0 var(--s-3);
+  font-size: var(--fs-h4);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  color: var(--text);
+}
+
+.story-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  min-width: 0;
+  padding-top: var(--s-5);
+  border-top: var(--hairline);
+  container-type: inline-size;
+}
+
+/* small honest-caveat line */
+.story-note {
+  margin: 0;
+  padding-left: var(--s-3);
+  border-left: 2px solid var(--border-strong);
+  font-size: var(--fs-tiny);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.story-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  margin: 0;
+}
+
+/* ghost button — hover turns lime */
+.story-cta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -572,16 +776,250 @@ code {
   text-decoration: none;
   transition: border-color var(--t-fast), color var(--t-fast);
 }
-.case-cta:hover {
+.story-cta:hover {
   border-color: var(--lime);
   color: var(--lime);
 }
-.case-cta:hover .arrow--ur { transform: translate(2px, -2px); }
+.story-cta:hover .arrow--ur { transform: translate(2px, -2px); }
 
-/* ---------- Run note (frontend vs backend) ---------- */
+/* ---------- Story compositions ---------- */
 
-.case-run {
+/* Shared two-column narrative row: story-main left, visual or side
+   panel right. Stacks to one column below 960px. */
+.story-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-6);
+}
+
+.story-main { min-width: 0; }
+
+/* Right-hand band: hairline divider + padding, content top-aligned
+   at its natural height — the flow never inherits the body's height. */
+.story-visual {
+  min-width: 0;
+  container-type: inline-size;
+  padding-top: var(--s-5);
+  border-top: var(--hairline);
+}
+.story-visual .story-note { margin-top: var(--s-4); }
+
+/* Full-width flow band (stories 2 and 3) — its own query container. */
+.flow-band {
+  grid-column: 1 / -1;
+  container-type: inline-size;
+  margin-top: var(--s-2);
+  padding: clamp(20px, 2.2vw, 32px);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+.flow-band > .fig-caption:first-child { margin: 0 0 var(--s-4); }
+/* steps sit one step lighter than the band they live in */
+.flow-band .flow-step { background: var(--surface-2); }
+
+/* Elevated side panel (story 2) */
+.side-panel {
+  min-width: 0;
+  padding: var(--s-6);
+  background: var(--surface);
+  border: var(--hairline);
+  border-radius: var(--radius);
+}
+
+.side-panel-title {
   margin: 0 0 var(--s-4);
+  padding-bottom: var(--s-3);
+  border-bottom: var(--hairline);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--mint);
+}
+
+.side-list {
+  display: grid;
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.side-list > li {
+  position: relative;
+  padding-left: 18px;
+  font-size: var(--fs-small);
+  line-height: 1.6;
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+/* mint tick — leaves any inline "fault → evaluator" arrow untouched */
+.side-list > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.66em;
+  width: 8px;
+  height: 2px;
+  background: var(--mint);
+}
+.side-list strong,
+.side-list b { color: var(--text); font-weight: 700; }
+
+/* --- composition modifiers -------------------------------- */
+
+/* 1 · split — narrative left, flow diagram right */
+.story--split .story-visual .flow { margin: 0; }
+
+/* 2 · band — full-width flow band above the narrative row */
+.story--band .flow-band { margin-top: var(--s-2); }
+.story--band .side-panel { align-self: start; }
+
+/* 3 · pipeline — one comfortable-measure column under the band */
+.story--pipeline .story-body,
+.story--pipeline .takeaway,
+.story--pipeline .run-note,
+.story--pipeline .story-cta-row,
+.story--pipeline .story-note { max-width: 76ch; }
+
+/* ---------- Flow diagram ---------- */
+
+/* Base = narrow container or no container at all: a vertical stack
+   with down-chevrons. Wider containers re-flow it further down. */
+.flow {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(22px, 3vw, 32px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* a diagram step stays put — no hover lift */
+.flow-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: var(--s-5);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.flow-num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  color: var(--text-dim);
+}
+
+/* never shrinks below 0.95rem, whatever the container width */
+.flow-label {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.flow-desc {
+  font-size: var(--fs-tiny);
+  line-height: 1.55;
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+/* accent step: lime border + lime label */
+.flow-step--accent { border-color: var(--lime); }
+.flow-step--accent .flow-label { color: var(--lime); }
+
+/* chevrons drawn with the border trick — no glyphs, no JS.
+   The step draws its own arrow unless the markup supplies one. */
+.flow-arrow,
+.flow-step:not(:has(.flow-arrow))::after {
+  position: absolute;
+  left: 50%;
+  bottom: -21px;
+  width: 9px;
+  height: 9px;
+  font-size: 0;
+  color: transparent;
+  overflow: hidden;
+  border-right: 2px solid var(--text-dim);
+  border-bottom: 2px solid var(--text-dim);
+  transform: translateX(-50%) rotate(45deg);
+  pointer-events: none;
+}
+.flow-step:not(:has(.flow-arrow))::after { content: ""; }
+
+/* no arrow after the final step */
+.flow-step:last-child > .flow-arrow { display: none; }
+.flow-step:last-child::after { content: none; }
+
+/* ---------- Takeaway ---------- */
+
+.takeaway {
+  margin: var(--s-6) 0;
+  padding: var(--s-5) var(--s-6);
+  background: var(--surface);
+  border: var(--hairline);
+  border-left: 2px solid var(--lime);
+  border-radius: var(--radius-sm);
+}
+
+.takeaway-label {
+  display: block;
+  margin: 0 0 var(--s-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--lime);
+}
+
+.takeaway p {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--text);
+}
+.takeaway p + p { margin-top: var(--s-3); }
+
+/* ---------- Notes ---------- */
+
+.note {
+  margin: 0;
+  padding: var(--s-3) var(--s-4);
+  background: var(--surface);
+  border: var(--hairline);
+  border-left: 2px solid var(--mint);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-tiny);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* "SIMULATED DEMO DATA" — lime edge + mono uppercase label */
+.note--sim {
+  background: var(--surface-2);
+  border-left-color: var(--lime);
+}
+.note--sim > :first-child:not(:last-child),
+.note--sim strong {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--lime);
+}
+
+/* tiny honest run caveat (frontend vs backend) */
+.run-note {
+  margin: 0;
   padding: 10px 12px;
   font-size: var(--fs-tiny);
   line-height: 1.55;
@@ -590,6 +1028,501 @@ code {
   border: var(--hairline);
   border-left: 2px solid var(--mint-dim);
   border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+   Blog cards
+   ============================================================ */
+
+.blog {
+  border-top: var(--hairline);
+  padding: clamp(48px, 6vw, 80px) 0 clamp(64px, 8vw, 104px);
+}
+
+.blog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-5);
+}
+
+.blog-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-7) var(--s-6) var(--s-6);
+  background: var(--surface);
+  border: var(--hairline);
+  border-radius: var(--radius);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color var(--t), background var(--t);
+}
+
+/* 2px lime top bar — scales in from the left on hover/focus. No lift. */
+.blog-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--lime);
+  border-radius: var(--radius) var(--radius) 0 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--t);
+}
+.blog-card:hover,
+.blog-card:focus-within {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+.blog-card:hover::before,
+.blog-card:focus-within::before { transform: scaleX(1); }
+
+.blog-card-index {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--border-strong);
+}
+@supports not (-webkit-text-stroke: 1px #000) {
+  .blog-card-index { color: var(--text-dim); }
+}
+
+.blog-card-title {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  line-height: var(--lh-heading);
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  color: var(--text);
+}
+
+.blog-card-desc {
+  margin: 0;
+  flex: 1;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+.blog-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: var(--s-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color var(--t-fast);
+}
+.blog-card:hover .blog-card-link,
+.blog-card:focus-within .blog-card-link,
+.blog-card-link:hover { color: var(--lime); }
+
+/* The inner <a> needs its own colour: the UA default link blue is not
+   inherited-away, so it beats the <p> above and fails contrast on the
+   card surface. Resting = --text, hover/focus = --lime, underline stays
+   (subtle decoration at rest, lime on hover) — same language as
+   .story-body a / .prose a. */
+.blog-card-link a {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+  transition: color var(--t-fast), text-decoration-color var(--t-fast);
+}
+.blog-card:hover .blog-card-link a,
+.blog-card:focus-within .blog-card-link a,
+.blog-card-link a:hover {
+  color: var(--lime);
+  text-decoration-color: var(--lime);
+}
+
+.blog-card-link:hover .arrow,
+.blog-card:hover .blog-card-link .arrow,
+.blog-card:focus-within .blog-card-link .arrow { transform: translateX(3px); }
+
+.blog-more {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 8px;
+  margin: var(--s-8) auto 0;
+  padding-bottom: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border-strong);
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+.blog-more:hover {
+  color: var(--lime);
+  border-bottom-color: var(--lime);
+}
+/* Same fix as .blog-card-link: the inner <a> would otherwise keep the UA
+   default blue. Its underline IS the <p>'s border-bottom (subtle at rest,
+   lime on hover), so the UA underline is suppressed to avoid a double line. */
+.blog-more a {
+  color: var(--text);
+  text-decoration: none;
+  transition: color var(--t-fast);
+}
+.blog-more:hover a,
+.blog-more a:hover { color: var(--lime); }
+
+/* ============================================================
+   About
+   ============================================================ */
+
+.about {
+  border-top: var(--hairline);
+  padding: clamp(48px, 6vw, 80px) 0 clamp(64px, 8vw, 104px);
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(28px, 4vw, 56px);
+}
+
+.about-body {
+  max-width: 68ch;
+  color: var(--text-muted);
+}
+.about-body p { margin: 0 0 var(--s-4); }
+.about-body p:last-child { margin-bottom: 0; }
+.about-body a {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+  transition: color var(--t-fast), text-decoration-color var(--t-fast);
+}
+.about-body a:hover {
+  color: var(--lime);
+  text-decoration-color: var(--lime);
+}
+
+/* ============================================================
+   Blog article pages (blog/*.html → ../styles.css)
+   ============================================================ */
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: var(--s-6);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--t-fast);
+}
+.back-link:hover { color: var(--lime); }
+
+.article-header {
+  padding-block: clamp(32px, 4vw, 56px) var(--s-7);
+  border-bottom: var(--hairline);
+}
+
+.article-header h1 {
+  margin: 0;
+  max-width: 20ch;
+  font-size: clamp(2rem, 1.4rem + 2.6vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: var(--track-display);
+  text-wrap: balance;
+  color: var(--text);
+}
+
+.article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  margin: var(--s-5) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.article-meta > * + * {
+  padding-left: var(--s-3);
+  border-left: 1px solid var(--border);
+}
+
+.article-lede {
+  margin: var(--s-5) 0 0;
+  max-width: 62ch;
+  font-family: var(--font-serif);
+  font-size: clamp(1.1rem, 1rem + 0.5vw, 1.3rem);
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.article-section { margin-top: clamp(48px, 6vw, 80px); }
+
+/* ---------- Article prose ---------- */
+
+.prose {
+  max-width: 70ch;
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  color: var(--text-muted);
+  /* query container, so an in-article .flow re-flows to the measure
+     it actually has instead of to the viewport */
+  container-type: inline-size;
+}
+
+.prose p { margin: 0 0 var(--s-5); }
+
+.prose h2 {
+  margin: var(--s-9) 0 var(--s-4);
+  padding-top: var(--s-5);
+  border-top: var(--hairline);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  line-height: var(--lh-heading);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--text);
+}
+/* lime section marker */
+.prose h2::before {
+  content: "";
+  display: block;
+  width: 28px;
+  height: 2px;
+  margin-bottom: var(--s-4);
+  background: var(--lime);
+}
+
+.prose h3 {
+  margin: var(--s-7) 0 var(--s-3);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  line-height: var(--lh-heading);
+  letter-spacing: -0.015em;
+  color: var(--text);
+}
+
+.prose ul,
+.prose ol {
+  margin: 0 0 var(--s-5);
+  padding-left: 1.25em;
+}
+.prose li { margin-bottom: var(--s-2); }
+.prose li:last-child { margin-bottom: 0; }
+.prose li::marker { color: var(--lime); }
+
+.prose a {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+  transition: color var(--t-fast), text-decoration-color var(--t-fast);
+}
+.prose a:hover {
+  color: var(--lime);
+  text-decoration-color: var(--lime);
+}
+
+.prose strong,
+.prose b { color: var(--text); }
+
+.prose figure { margin: var(--s-6) 0; }
+
+.prose blockquote {
+  margin: var(--s-6) 0;
+  padding: var(--s-4) var(--s-5);
+  background: var(--surface);
+  border-left: 2px solid var(--mint);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+.prose blockquote p:last-child { margin-bottom: 0; }
+
+.callout {
+  margin: var(--s-6) 0;
+  padding: var(--s-4) var(--s-5);
+  background: var(--surface);
+  border: var(--hairline);
+  border-left: 2px solid var(--lime);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+}
+.callout p:last-child { margin-bottom: 0; }
+
+/* ---------- Responsive table ---------- */
+
+.table-wrap {
+  margin: var(--s-6) 0;
+  overflow-x: auto;
+  background: var(--surface);
+  border: var(--hairline);
+  border-radius: var(--radius);
+}
+
+.table-wrap table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+.table-wrap th,
+.table-wrap td {
+  padding: 10px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.table-wrap thead th {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+
+.table-wrap tbody tr:last-child td { border-bottom: 0; }
+.table-wrap tbody tr:hover td { background: var(--surface-2); }
+.table-wrap td:first-child { color: var(--text); font-weight: 600; }
+
+/* ---------- Example conversation ---------- */
+
+.example {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin: var(--s-6) 0;
+  padding: var(--s-5);
+  background: var(--surface);
+  border: var(--hairline);
+  border-radius: var(--radius);
+}
+
+.msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 88%;
+  padding: 10px 14px;
+  font-size: var(--fs-small);
+  line-height: 1.6;
+  border-radius: var(--radius-sm);
+}
+.msg p { margin: 0; }
+
+.msg--user {
+  align-self: flex-end;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+}
+
+.msg--agent {
+  align-self: flex-start;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 3px 10px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  border-radius: 999px;
+}
+.verdict--pass {
+  color: var(--lime);
+  background: var(--lime-dim);
+  border-color: var(--lime-soft);
+}
+.verdict--fail {
+  color: #FF6B6B;
+  background: rgba(255, 107, 107, 0.12);
+  border-color: rgba(255, 107, 107, 0.45);
+}
+
+/* ---------- Previous / next between articles ---------- */
+
+.article-footer-nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4);
+  margin-top: var(--s-9);
+  padding-top: var(--s-6);
+  border-top: var(--hairline);
+}
+
+.article-footer-nav a {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--s-4) var(--s-5);
+  background: var(--surface);
+  border: var(--hairline);
+  border-radius: var(--radius);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color var(--t), background var(--t);
+}
+.article-footer-nav a:hover {
+  border-color: var(--lime);
+  background: var(--surface-2);
+}
+.article-footer-nav a > :first-child {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.article-footer-nav a > :last-child {
+  font-size: var(--fs-small);
+  font-weight: 700;
+  color: var(--text);
+}
+.article-footer-nav a:last-child {
+  text-align: right;
+  align-items: flex-end;
 }
 
 /* ---------- Footer ---------- */
@@ -625,7 +1558,7 @@ code {
 .footer-meta {
   margin: 0 0 0 auto;
   font-family: var(--font-mono);
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--text-dim);
@@ -639,17 +1572,17 @@ code {
   height: auto;
   text-rendering: geometricPrecision;
 }
-.d-panel    { fill: var(--surface);    stroke: var(--border-strong); stroke-width: 1; }
-.d-panel-alt{ fill: var(--surface-2);  stroke: var(--border);        stroke-width: 1; }
-.d-edge     { fill: none; stroke: var(--border-strong); stroke-width: 1; }
-.d-dash     { fill: none; stroke: var(--mint); stroke-width: 1; stroke-dasharray: 3 3; }
+.d-panel    { fill: var(--surface);    stroke: var(--border-strong); stroke-width: 1.25; }
+.d-panel-alt{ fill: var(--surface-2);  stroke: var(--border);        stroke-width: 1.25; }
+.d-edge     { fill: none; stroke: var(--border-strong); stroke-width: 1.25; }
+.d-dash     { fill: none; stroke: var(--mint); stroke-width: 1.25; stroke-dasharray: 3 3; }
 .d-dot-lime { fill: var(--lime); }
 .d-dot-mint { fill: var(--mint); }
-.d-junction { fill: var(--bg); stroke: var(--border-strong); stroke-width: 1; }
+.d-junction { fill: var(--bg); stroke: var(--border-strong); stroke-width: 1.25; }
 .d-tick     { fill: var(--lime-dim); }
 .d-fill-strong { fill: var(--border-strong); }
-.d-lbl      { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; fill: var(--text-dim); }
-.d-lbl-b    { fill: var(--text); font-size: 10.5px; letter-spacing: 0.04em; }
+.d-lbl      { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.07em; fill: var(--text-muted); }
+.d-lbl-b    { fill: var(--text); font-size: 11.5px; letter-spacing: 0.03em; }
 .d-lbl-lime { fill: var(--lime); }
 .d-lbl-mint { fill: var(--mint); }
 .d-sans     { font-family: var(--font-sans); font-weight: 700; fill: var(--text); }
@@ -657,8 +1590,7 @@ code {
 /* ---------- Responsive: 3 → 2 → 1 columns ---------- */
 
 @media (max-width: 1024px) {
-  .case-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .case--03 { grid-column: 1 / -1; }
+  .blog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 860px) {
@@ -672,15 +1604,167 @@ code {
 @media (max-width: 640px) {
   .wrap { padding-inline: var(--s-4); }
   .hero { padding-block: var(--s-9) var(--s-8); }
-  .use-cases { padding-block: var(--s-8) var(--s-9); }
-  .case-grid { grid-template-columns: 1fr; }
-  .case--03 { grid-column: auto; }
+  .stories,
+  .blog,
+  .about { padding-block: var(--s-8) var(--s-9); }
+  .blog-grid { grid-template-columns: 1fr; }
+  .article-footer-nav { grid-template-columns: 1fr; }
+  .msg { max-width: 100%; }
 }
 
 @media (max-width: 480px) {
   .coord { display: none; }
   .hero-visual { padding: 12px; }
-  .case-index { font-size: 24px; }
+  .story-index { font-size: 26px; }
+  .blog-card-index { font-size: 24px; }
+}
+
+/* ---------- Responsive: story compositions + about split ---------- */
+
+@media (min-width: 860px) {
+  .about-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+/* Two-column narrative row — narrative left, visual / side panel
+   right. Below 960px .story-split is a single stacked column, so
+   nothing is ever auto-placed into a narrow second column. */
+@media (min-width: 960px) {
+  .story-split {
+    grid-template-columns: minmax(0, 57fr) minmax(0, 43fr);
+    column-gap: clamp(32px, 4vw, 56px);
+    row-gap: 0;
+  }
+
+  .story-split > .story-main { grid-column: 1; }
+
+  /* divider treatment: hairline + padding, content top-aligned.
+     The padding is deliberately modest — .story-visual must keep a
+     content box ≥520px at desktop so its flow lands in the
+     two-column container bucket, not the single-column one. */
+  .story-split > .story-visual,
+  .story-split > .story-aside {
+    grid-column: 2;
+    padding-top: 0;
+    padding-left: clamp(20px, 1.8vw, 28px);
+    border-top: 0;
+    border-left: var(--hairline);
+  }
+
+  /* the side panel is an elevated card, not a divider column */
+  .story-split > .side-panel { grid-column: 2; }
+
+  /* pipeline: one comfortable-measure column, band above it */
+  .story--pipeline .story-split { grid-template-columns: minmax(0, 1fr); }
+  .story--pipeline .story-split > * { grid-column: 1 / -1; }
+  .story--pipeline .story-split > .story-visual,
+  .story--pipeline .story-split > .story-aside {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+/* ---------- Flow diagram — container queries (the core fix) ----------
+   The diagram re-flows against its nearest query container
+   (.story-visual, .flow-band or .prose), never against the viewport,
+   so a 4–5 step flow can never be squeezed into a column it does
+   not fit. Text size never changes between modes. */
+
+/* < 520px — one column, down-chevrons (the base rules above). */
+@container (max-width: 519px) {
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(22px, 4vw, 32px);
+  }
+  .flow-step { flex: initial; }
+}
+
+/* 520–999px — two columns, normal row flow. Cards stay ~250px+ so
+   copy wraps on words, never letter-by-letter. Chevrons are hidden
+   here: the step numbers carry the order across the wrap. */
+@container (min-width: 520px) and (max-width: 999px) {
+  .flow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(14px, 2vw, 22px);
+  }
+  .flow-arrow,
+  .flow-step:not(:has(.flow-arrow))::after { display: none; }
+}
+
+/* ≥ 1000px — a single horizontal row of equal-width steps with
+   right-pointing chevrons between them. Only .flow-band reaches
+   this at desktop widths, where 4–5 steps each keep ~200px+. */
+@container (min-width: 1000px) {
+  .flow {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: clamp(26px, 2.6vw, 40px);
+    align-items: stretch;
+  }
+  .flow-step { padding: var(--s-4); }
+  .flow-arrow,
+  .flow-step:not(:has(.flow-arrow))::after {
+    left: auto;
+    right: -22px;
+    bottom: auto;
+    top: 50%;
+    transform: translateY(-50%) rotate(-45deg);
+  }
+}
+
+/* ---------- Motion (opt-in only) ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* Hero: gentle staggered fade-up on load. */
+  .hero-copy > *,
+  .hero-visual {
+    animation: fade-up 560ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+  .hero-copy > *:nth-child(1) { animation-delay: 40ms; }
+  .hero-copy > *:nth-child(2) { animation-delay: 120ms; }
+  .hero-copy > *:nth-child(3) { animation-delay: 200ms; }
+  .hero-copy > *:nth-child(4) { animation-delay: 280ms; }
+  .hero-copy > *:nth-child(5) { animation-delay: 360ms; }
+  .hero-visual { animation-delay: 320ms; }
+
+  /* Scroll reveal — progressive enhancement only. Without
+     animation-timeline support these selectors never match, so
+     nothing is ever hidden by default. */
+  @supports (animation-timeline: view()) {
+
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .story,
+    .blog-card {
+      animation-name: reveal;
+      animation-duration: 1ms;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 25%;
+    }
+  }
+}
+
+/* Safety net: never let a scroll-driven reveal blank printed output. */
+@media print {
+  .story,
+  .blog-card {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* ---------- Reduced motion ---------- */

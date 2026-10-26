@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ============================================================
+     BLOG ARTICLE 03 — From Production Trace to Release Decision
+     Lives in blog/: stylesheet ../styles.css, home ../index.html,
+     project ../Production%20trace%20to%20release%20decision/index.html
+     (folder on disk has spaces — URL-encoded). ZERO JavaScript.
+     ============================================================ -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A beginner-first walkthrough of the Production Trace to Release Decision project: how a recorded run, a saved baseline, and a replay turn 'I think this is better' into a ship-or-wait answer.">
+<title>From Production Trace to Release Decision · Blog · Agentic Evals</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <p class="brand">
+      <span class="brand-name">DeepAgentLabs</span>
+      <span class="brand-sep" aria-hidden="true">/</span>
+      <span class="brand-sub">Agentic Evals</span>
+    </p>
+
+    <nav class="site-nav" aria-label="Primary">
+
+      <!-- desktop navigation -->
+      <ul class="nav-list nav-list--wide">
+        <li><a class="nav-link" href="../index.html">Home</a></li>
+        <li><a class="nav-link" href="../index.html#use-cases">Use Cases</a></li>
+        <li class="nav-item--has-sub">
+          <a class="nav-link nav-link--sub" href="index.html">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <ul class="nav-sub-list">
+            <li><a class="nav-sub-link" href="index.html">All posts</a></li>
+            <li><a class="nav-sub-link" href="chatbot-evaluation.html">Chatbot Evaluation</a></li>
+            <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+            <li><a class="nav-sub-link" href="production-trace-release-decision.html" aria-current="page">From Production Trace to Release Decision</a></li>
+          </ul>
+        </li>
+        <li><a class="nav-link" href="../index.html#about">About</a></li>
+        <li>
+          <a class="nav-link nav-link--ext"
+             href="https://github.com/Aryaman431/agentic-evals"
+             target="_blank"
+             rel="noopener noreferrer"
+             aria-label="Open the agentic-evals repository on GitHub from the Production Trace article — opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+        </li>
+      </ul>
+
+      <!-- mobile navigation: native disclosure, no JavaScript -->
+      <details class="nav-disclosure">
+        <summary class="nav-summary">Menu<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <ul class="nav-list nav-list--drawer">
+          <li><a class="nav-link" href="../index.html">Home</a></li>
+          <li><a class="nav-link" href="../index.html#use-cases">Use Cases</a></li>
+          <li class="nav-item--has-sub">
+            <a class="nav-link nav-link--sub" href="index.html">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <ul class="nav-sub-list">
+              <li><a class="nav-sub-link" href="index.html">All posts</a></li>
+              <li><a class="nav-sub-link" href="chatbot-evaluation.html">Chatbot Evaluation</a></li>
+              <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+              <li><a class="nav-sub-link" href="production-trace-release-decision.html" aria-current="page">From Production Trace to Release Decision</a></li>
+            </ul>
+          </li>
+          <li><a class="nav-link" href="../index.html#about">About</a></li>
+          <li>
+            <a class="nav-link nav-link--ext"
+               href="https://github.com/Aryaman431/agentic-evals"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="Open the agentic-evals repository on GitHub from the article menu — opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+          </li>
+        </ul>
+      </details>
+
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+
+    <a class="back-link" href="../index.html">← All stories</a>
+
+    <!-- ==========================================================
+         1 · ARTICLE HEADER
+         ========================================================== -->
+    <header class="article-header">
+      <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">§03</span>Story 03 · Blog</p>
+
+      <h1>From Production Trace to Release Decision</h1>
+
+      <p class="article-meta">
+        <span>Beginner · 9 min read</span>
+        <span><code>Production trace to release decision</code></span>
+      </p>
+
+      <p class="article-lede">
+        Sam wants to change how a financial assistant reasons and ship it this week.
+        “I think this is better” is not a decision, and neither is a gut feeling about
+        a demo. This article follows one recorded run all the way to a verdict with
+        written thresholds — READY, NEEDS REVIEW, or NOT READY — and shows exactly
+        which number decided it.
+      </p>
+    </header>
+
+    <!-- ==========================================================
+         2 · THE PROBLEM
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>The problem</h2>
+
+        <p>
+          Sam maintains a financial assistant — the kind of tool that reads your
+          spending and explains it in plain language. One run in production looked
+          odd: the assistant was asked why there was a <strong>$2,847</strong> charge
+          from NORTHWIND SUPPLY on a card, and it had to look the charge up, compare it
+          to the person's history, and answer without inventing anything.
+        </p>
+
+        <p>
+          Sam now wants to change how the assistant reasons: a tighter explanation
+          template, a smarter model, better handoffs between the parts of the system.
+          Every one of those changes sounds like an improvement in the meeting. The
+          problem is that “sounds better” and “is better” are different claims, and
+          the second one needs evidence.
+        </p>
+
+        <p>
+          There are three bad ways to answer this question. Ship it and hope — then
+          find out from customers. Ask the team to eyeball a few outputs — which
+          measures whoever happened to be watching. Or run the new version once, see a
+          good number, and declare victory — which measures nothing, because you do
+          not know what the old version would have scored on the same run.
+        </p>
+
+        <p>
+          The missing piece is always the same: a <strong>reference point</strong>.
+          Without knowing what the current system scores, any number from the new
+          system is just a number. And without a rule written down in advance, any
+          judgement about that number is just an opinion with a decimal point.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         3 · THE APPROACH
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>The approach: record, save, replay, compare</h2>
+
+        <p>
+          The fix is an old engineering habit applied to AI systems: keep the last
+          known-good measurement, run the change against the same scenario, and
+          compare the two with thresholds you agreed on <em>before</em> you looked at
+          the results. Four words carry the whole method:
+        </p>
+
+        <ul>
+          <li>
+            <strong>Trace</strong> — a recorded timeline of one run: the question that
+            came in, the tools that were called, what they returned, and the answer
+            that went out, in order. In this project the trace is one run of the
+            financial assistant explaining that unusual $2,847 expense. A trace is also
+            the raw material of a <strong>test case</strong> — one input plus the
+            behaviour we expect back — because it captures a real situation worth
+            replaying.
+          </li>
+          <li>
+            <strong>Baseline</strong> — the current system's scores on that scenario,
+            saved as the reference point for every later comparison. Six metrics are
+            recorded, so the baseline is a profile, not a single number that can hide a
+            collapse in one dimension.
+          </li>
+          <li>
+            <strong>Proposed change</strong> — the thing Sam wants to ship. This
+            project offers three: <code>prompt_update</code> (new instructions),
+            <code>coordination_update</code> (new teamwork logic between parts), and
+            <code>model_change</code> (a different model).
+          </li>
+          <li>
+            <strong>Replay</strong> — running the same scenario again with the change
+            in place, then comparing the new numbers metric by metric against the
+            baseline. Same input, same scenario, one variable changed: that is what
+            makes the difference attributable to the change.
+          </li>
+        </ul>
+
+        <p>
+          Then the last piece, and the one that removes the argument:
+          a <strong>threshold</strong> — a number written down in advance that decides
+          what counts as good enough. “Improved overall” is not a rule. “Overall delta
+          of at least +2.0 with no metric regressing more than −3.0” is a rule, and it
+          can be checked by code at 2 a.m. without anyone's mood involved.
+        </p>
+
+        <p>
+          Notice what this buys. The comparison is against a saved reference instead of
+          a memory. The thresholds exist before the numbers do, so the verdict cannot
+          be reverse-engineered from the result. And because six metrics are checked
+          separately, a change that improves the average while quietly wrecking one
+          dimension gets caught instead of averaged away.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         4 · HOW THE EVALUATION WORKS
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>How the evaluation works</h2>
+
+        <p>
+          The walkthrough has five stages. The production trace is captured, exported
+          as an <strong>AI Ops Spec</strong> (a JSON file describing the run so it can
+          be reused), scored as a baseline, replayed with a proposed change, and then
+          compared — which produces the release decision.
+        </p>
+
+        <p>
+          Six metrics are scored at baseline and again after the replay:
+        </p>
+
+        <ul>
+          <li><strong>response_quality</strong> — clarity, accuracy, and grounding of the answer</li>
+          <li><strong>task_completion</strong> — whether the user's goal was actually satisfied</li>
+          <li><strong>tool_correctness</strong> — whether tool arguments and results stayed faithful</li>
+          <li><strong>agent_coordination</strong> — handoff quality and shared context between parts</li>
+          <li><strong>safety_compliance</strong> — policy adherence and guardrail coverage</li>
+          <li><strong>performance</strong> — end-to-end latency against a 1.5 s target</li>
+        </ul>
+
+        <p>
+          The decision itself is three ordered gates, checked in this exact order. The
+          thresholds are returned verbatim inside every comparison payload, so you can
+          read the rule next to the number it judged:
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Verdict</th>
+                <th scope="col">Condition</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>NOT READY</td>
+                <td>Overall delta ≤ −2.0 <strong>or</strong> any metric delta ≤ −8.0 <strong>or</strong> post-replay safety &lt; 70 <strong>or</strong> any metric &lt; 60</td>
+              </tr>
+              <tr>
+                <td>READY</td>
+                <td>Overall delta ≥ +2.0 <strong>and</strong> worst-metric regression ≥ −3.0 <strong>and</strong> post-replay safety ≥ 80 <strong>and</strong> post-replay overall ≥ 78</td>
+              </tr>
+              <tr>
+                <td>NEEDS REVIEW</td>
+                <td>Everything else — nothing hard-failed, but a readiness gate was missed</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          The order matters. The hard fails are checked first, so a catastrophic
+          regression cannot be rescued by a good average. Only if nothing failed does
+          the READY gate get its turn, and it demands <em>all four</em> of its
+          conditions. Anything left over lands in NEEDS REVIEW, which is the honest
+          answer for “this needs a human”.
+        </p>
+      </div>
+
+      <ol class="flow" aria-label="How a production trace becomes a release decision">
+        <li class="flow-step">
+          <span class="flow-num" aria-hidden="true">01</span>
+          <span class="flow-label">Trace</span>
+          <span class="flow-desc">One recorded run of the current agent, explaining the $2,847 charge.</span>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+        </li>
+        <li class="flow-step">
+          <span class="flow-num" aria-hidden="true">02</span>
+          <span class="flow-label">Baseline</span>
+          <span class="flow-desc">Today's six metric scores, saved as the reference.</span>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+        </li>
+        <li class="flow-step">
+          <span class="flow-num" aria-hidden="true">03</span>
+          <span class="flow-label">Proposed Change</span>
+          <span class="flow-desc">Prompt, coordination, or model — pick exactly one.</span>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+        </li>
+        <li class="flow-step">
+          <span class="flow-num" aria-hidden="true">04</span>
+          <span class="flow-label">Comparison</span>
+          <span class="flow-desc">Replay the scenario and compare metric by metric.</span>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+        </li>
+        <li class="flow-step flow-step--accent">
+          <span class="flow-num" aria-hidden="true">05</span>
+          <span class="flow-label">Release Decision</span>
+          <span class="flow-desc">READY, NEEDS REVIEW, or NOT READY — computed from the written thresholds.</span>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ==========================================================
+         5 · A SIMPLE EXAMPLE
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>A simple example</h2>
+
+        <p>
+          Here is the whole method in one table. The baseline column is the project's
+          documented demo baseline for the six metrics; the replay column applies the
+          project's documented base deltas for a <code>prompt_update</code>. (The demo
+          adds ±1 hash jitter to each delta and ±2 to the baseline, so your own run may
+          show a neighbouring number — the arithmetic below is the jitter-free version,
+          which is what makes the logic easy to follow.)
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Metric</th>
+                <th scope="col">Baseline</th>
+                <th scope="col">Replay</th>
+                <th scope="col">Delta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>response_quality</td>
+                <td>82</td>
+                <td>90</td>
+                <td>+8</td>
+              </tr>
+              <tr>
+                <td>task_completion</td>
+                <td>85</td>
+                <td>90</td>
+                <td>+5</td>
+              </tr>
+              <tr>
+                <td>tool_correctness</td>
+                <td>78</td>
+                <td>79</td>
+                <td>+1</td>
+              </tr>
+              <tr>
+                <td>agent_coordination</td>
+                <td>74</td>
+                <td>76</td>
+                <td>+2</td>
+              </tr>
+              <tr>
+                <td>safety_compliance</td>
+                <td>86</td>
+                <td>86</td>
+                <td>0</td>
+              </tr>
+              <tr>
+                <td>performance</td>
+                <td>71</td>
+                <td>70</td>
+                <td>−1</td>
+              </tr>
+              <tr>
+                <td>Overall (mean of six)</td>
+                <td>79.3</td>
+                <td>81.8</td>
+                <td>+2.5</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="fig-caption">
+          Fig. 03 — worked example from the project's documented base values, before hash jitter
+        </p>
+
+        <p>
+          Now run the four READY gates against those numbers:
+        </p>
+
+        <ul>
+          <li>Overall delta <strong>+2.5 ≥ +2.0</strong> — pass</li>
+          <li>Worst-metric regression <strong>−1 ≥ −3.0</strong> (performance) — pass</li>
+          <li>Post-replay safety <strong>86 ≥ 80</strong> — pass</li>
+          <li>Post-replay overall <strong>81.8 ≥ 78</strong> — pass</li>
+        </ul>
+
+        <p>
+          All four, so the verdict is <strong>READY</strong>, and it ships with a
+          plain-language recommendation: approve the release, because the replay shows
+          measurable gains and clears every readiness gate.
+        </p>
+
+        <p>
+          The other two change types are where the method earns its keep. Watch what
+          happens when a change improves the average but hurts one dimension:
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Change</th>
+                <th scope="col">Overall delta</th>
+                <th scope="col">Worst regression</th>
+                <th scope="col">Post-replay safety</th>
+                <th scope="col">Verdict</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>prompt_update</td>
+                <td>+2.5</td>
+                <td>−1 (performance)</td>
+                <td>86</td>
+                <td>READY</td>
+              </tr>
+              <tr>
+                <td>coordination_update</td>
+                <td>+2.7</td>
+                <td>−4 (performance)</td>
+                <td>85</td>
+                <td>NEEDS REVIEW</td>
+              </tr>
+              <tr>
+                <td>model_change</td>
+                <td>+1.0</td>
+                <td>−10 (safety_compliance)</td>
+                <td>76</td>
+                <td>NOT READY</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="fig-caption">
+          Fig. 04 — the three documented demo outcomes, jitter-free
+        </p>
+
+        <p class="takeaway-label">Demo outcomes at a glance</p>
+        <div class="callout">
+          <p>
+            <span class="verdict verdict--pass">prompt_update → READY</span>
+            <span class="verdict verdict--pass">coordination_update → NEEDS REVIEW</span>
+            <span class="verdict verdict--fail">model_change → NOT READY</span>
+          </p>
+        </div>
+
+        <p>
+          <code>coordination_update</code> has the <em>best</em> overall delta of the
+          three and still gets a worse verdict than <code>prompt_update</code>,
+          because one metric regressed by −4 and the READY gate requires every
+          regression to stay within −3.0. Averaging would have hidden that. And
+          <code>model_change</code> is blocked outright: its safety metric drops by
+          −10, which breaches the −8.0 hard fail on its own — no good average can
+          rescue it. That is the difference between a rule and an opinion.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         6 · WHAT THE ACTUAL PROJECT DEMONSTRATES
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>What the actual project demonstrates</h2>
+
+        <p>
+          The project lives in <code>Production trace to release decision/</code> and
+          is deliberately small: no React build, no Node, no Docker — one HTML file and
+          an optional Python backend.
+        </p>
+
+        <ul>
+          <li>
+            <strong>A self-contained frontend.</strong> The whole five-stage walkthrough
+            — trace, AI Ops Spec, baseline, replay, decision — is a single file that
+            works when you open it directly in a browser. Nothing is fetched, nothing
+            is compiled.
+          </li>
+          <li>
+            <strong>Three change types.</strong> <code>prompt_update</code> tightens
+            the explanation template with merchant context and a prior-charge
+            reference; <code>coordination_update</code> improves the planner handoff by
+            enriching shared context; <code>model_change</code> swaps the analyst model
+            for a stronger reasoning variant.
+          </li>
+          <li>
+            <strong>Thresholds returned verbatim.</strong> Every comparison payload
+            carries the readiness gates alongside the numbers, plus a plain-language
+            recommendation: approve, hold for human review, or block the release.
+          </li>
+          <li>
+            <strong>An optional backend that really works.</strong>
+            <code>app.py</code> is a FastAPI service with Supabase persistence. When
+            <code>SUPABASE_URL</code> and <code>SUPABASE_SERVICE_ROLE_KEY</code> are
+            set it genuinely stores and serves runs; without them it falls back to
+            in-memory demo mode with identical endpoints. The service-role key stays
+            server-side — it is never sent to the browser.
+          </li>
+        </ul>
+
+        <p>
+          The five stages you click through are Production Trace → AI Ops Spec (the
+          JSON export) → Baseline Evaluation → Simulated Replay → Release Decision,
+          and the baseline scores are deterministic demo values — 82, 85, 78, 74, 86,
+          71 across the six metrics, jittered by ±2 from a hash of the scenario id, so
+          the same scenario always produces the same story.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         7 · LIMITATIONS
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Limitations</h2>
+
+        <div class="callout">
+          <p>
+            Read the numbers as a demonstration of a <em>method</em>, not as a
+            measurement of a real system. The value of this project is the shape of the
+            argument — record a run, save a baseline, replay with one change, compare
+            against thresholds you wrote down first — and that shape works whether the
+            numbers come from a demo or from a real evaluation. The numbers here come
+            from a demo.
+          </p>
+        </div>
+
+        <p class="note note--sim">
+          <strong>Simulated demo data.</strong> The production capture is simulated
+          demo data, the AI Ops Spec is a representative example rather than a real
+          AgenticLens export, and the replay is simulated: the scores come from
+          documented deterministic demo logic, no real agent application is rerun, and
+          the scores are illustrative — they were not produced by the agentic-evals
+          framework. This page makes no claim of a live production integration.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         8 · TAKEAWAY
+         ========================================================== -->
+    <div class="takeaway">
+      <p class="takeaway-label">Takeaway</p>
+      <p>
+        A saved baseline plus thresholds written down in advance turns “I hope this
+        helps” into a decision you can defend: compare against a reference, check every
+        metric separately, and let one bad regression block the release even when the
+        average went up. Labelling what is simulated is part of the rigor, not a
+        footnote to it.
+      </p>
+    </div>
+
+    <p class="run-note">
+      Run it locally: open <code>Production trace to release decision/index.html</code>
+      directly — it is fully self-contained · optional backend:
+      <code>cd "Production trace to release decision"</code> then
+      <code>uvicorn app:app --reload</code> (port 8000, in-memory demo mode until
+      <code>SUPABASE_URL</code> and <code>SUPABASE_SERVICE_ROLE_KEY</code> are set).
+    </p>
+
+    <!-- ==========================================================
+         9 · PREV / NEXT / PROJECT
+         ========================================================== -->
+    <nav class="article-footer-nav" aria-label="More articles">
+      <a href="voice-agent-evaluation.html">
+        <span>Previous article</span>
+        <span>Voice Agent Evaluation</span>
+      </a>
+      <a href="chatbot-evaluation.html">
+        <span>Next article</span>
+        <span>Chatbot Evaluation</span>
+      </a>
+      <a href="../Production%20trace%20to%20release%20decision/index.html">
+        <span>Open the project</span>
+        <span>Production trace to release decision/</span>
+      </a>
+    </nav>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p class="footer-brand">DeepAgentLabs · Agentic Evals</p>
+    <p class="footer-note">
+      A static storytelling site — zero JavaScript, relative links, one stylesheet.
+    </p>
+    <p class="footer-meta" aria-hidden="true">DL / STORIES · REV 2026.10</p>
+  </div>
+</footer>
+
+</body>
+</html>

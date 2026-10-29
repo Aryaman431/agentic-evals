@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ============================================================
+     BLOG INDEX — lives in blog/, so every link is relative:
+       stylesheet  → ../styles.css
+       Home        → ../index.html
+       Use Cases   → ../index.html#use-cases
+       Blog        → index.html   (this page)
+       About       → ../index.html#about
+       GitHub      → external (the agentic-evals repository)
+       Articles    → chatbot-evaluation.html
+                     voice-agent-evaluation.html
+                     production-trace-release-decision.html
+       Projects    → ../Chatbot-eval/index.html
+                     ../voice-agent-evals/index.html
+                     ../Production%20trace%20to%20release%20decision/index.html
+     ZERO JavaScript: navigation is a native <details> drawer.
+     ============================================================ -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Three beginner-first deep dives from the agentic-evals repository: chatbot evaluation, voice agent evaluation, and turning a production trace into a release decision.">
+<title>Blog · Agentic Evals</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <p class="brand">
+      <span class="brand-name">DeepAgentLabs</span>
+      <span class="brand-sep" aria-hidden="true">/</span>
+      <span class="brand-sub">Agentic Evals</span>
+    </p>
+
+    <nav class="site-nav" aria-label="Primary">
+
+      <!-- desktop navigation -->
+      <ul class="nav-list nav-list--wide">
+        <li><a class="nav-link" href="../index.html">Home</a></li>
+        <li><a class="nav-link" href="../index.html#use-cases">Use Cases</a></li>
+        <li class="nav-item--has-sub">
+          <a class="nav-link nav-link--sub" href="index.html">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <ul class="nav-sub-list">
+            <li><a class="nav-sub-link" href="index.html" aria-current="page">All posts</a></li>
+            <li><a class="nav-sub-link" href="chatbot-evaluation.html">Chatbot Evaluation</a></li>
+            <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+            <li><a class="nav-sub-link" href="production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+          </ul>
+        </li>
+        <li><a class="nav-link" href="../index.html#about">About</a></li>
+        <li>
+          <a class="nav-link nav-link--ext"
+             href="https://github.com/Aryaman431/agentic-evals"
+             target="_blank"
+             rel="noopener noreferrer"
+             aria-label="Open the agentic-evals repository on GitHub — opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+        </li>
+      </ul>
+
+      <!-- mobile navigation: native disclosure, no JavaScript -->
+      <details class="nav-disclosure">
+        <summary class="nav-summary">Menu<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <ul class="nav-list nav-list--drawer">
+          <li><a class="nav-link" href="../index.html">Home</a></li>
+          <li><a class="nav-link" href="../index.html#use-cases">Use Cases</a></li>
+          <li class="nav-item--has-sub">
+            <a class="nav-link nav-link--sub" href="index.html">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <ul class="nav-sub-list">
+              <li><a class="nav-sub-link" href="index.html" aria-current="page">All posts</a></li>
+              <li><a class="nav-sub-link" href="chatbot-evaluation.html">Chatbot Evaluation</a></li>
+              <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+              <li><a class="nav-sub-link" href="production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+            </ul>
+          </li>
+          <li><a class="nav-link" href="../index.html#about">About</a></li>
+          <li>
+            <a class="nav-link nav-link--ext"
+               href="https://github.com/Aryaman431/agentic-evals"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="Open the agentic-evals repository on GitHub from the blog menu — opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+          </li>
+        </ul>
+      </details>
+
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+
+    <a class="back-link" href="../index.html">← All stories</a>
+
+    <!-- ==========================================================
+         ARTICLE HEADER
+         ========================================================== -->
+    <header class="article-header">
+      <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">§B</span>Blog</p>
+
+      <h1>Three stories, three deep dives</h1>
+
+      <p class="article-meta">
+        <span>Beginner · 3 articles</span>
+        <span>Agentic Evals</span>
+      </p>
+
+      <p class="article-lede">
+        The homepage tells each story in one sitting. These articles go the other way:
+        one project at a time, with the test cases, the rules, a worked conversation
+        that fails on purpose, and the exact command that runs it on your own machine.
+      </p>
+    </header>
+
+    <!-- ==========================================================
+         THE THREE ARTICLES
+         ========================================================== -->
+    <section class="article-section" aria-label="Articles">
+      <div class="blog-grid">
+
+        <article class="blog-card">
+          <span class="blog-card-index" aria-hidden="true">01</span>
+          <h2 class="blog-card-title">Chatbot Evaluation</h2>
+          <p class="blog-card-desc">
+            What actually happens between Maya typing “I want a refund for order 1234”
+            and the chatbot answering — and how ten test cases check every step.
+          </p>
+          <p class="blog-card-link"><a href="chatbot-evaluation.html">Read the article →</a></p>
+        </article>
+
+        <article class="blog-card">
+          <span class="blog-card-index" aria-hidden="true">02</span>
+          <h2 class="blog-card-title">Voice Agent Evaluation</h2>
+          <p class="blog-card-desc">
+            A phone call is five links in a chain. Break any one of them and the call
+            fails — so each link gets its own rule.
+          </p>
+          <p class="blog-card-link"><a href="voice-agent-evaluation.html">Read the article →</a></p>
+        </article>
+
+        <article class="blog-card">
+          <span class="blog-card-index" aria-hidden="true">03</span>
+          <h2 class="blog-card-title">From Production Trace to Release Decision</h2>
+          <p class="blog-card-desc">
+            Sam wants to ship a change to a financial assistant. Here is how a recorded
+            run, a saved baseline, and a replay answer “is it safe to ship?”
+          </p>
+          <p class="blog-card-link"><a href="production-trace-release-decision.html">Read the article →</a></p>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         CLOSING
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <p>
+          Every article above started as one of the
+          <a href="../index.html#use-cases">three stories on the homepage</a> — read
+          those first if you want the short version, then come back here for the full
+          walkthrough. The projects themselves live in this repository, so the last
+          section of each article ends with the command that runs it.
+        </p>
+        <p>
+          New to the subject entirely? The
+          <a href="../index.html#about">About section</a> explains what this site is,
+          who it is written for, and why every claim on these pages is tied to
+          something you can open and run yourself.
+        </p>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p class="footer-brand">DeepAgentLabs · Agentic Evals</p>
+    <p class="footer-note">
+      A static storytelling site — zero JavaScript, relative links, one stylesheet.
+    </p>
+    <p class="footer-meta" aria-hidden="true">DL / STORIES · REV 2026.10</p>
+  </div>
+</footer>
+
+</body>
+</html>

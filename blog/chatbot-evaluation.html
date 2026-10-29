@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ============================================================
+     BLOG ARTICLE 01 — Chatbot Evaluation
+     Lives in blog/: stylesheet ../styles.css, home ../index.html,
+     projects ../Chatbot-eval/index.html, siblings are the other
+     two files in this folder. ZERO JavaScript, no external assets.
+     ============================================================ -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A beginner-first walkthrough of the Chatbot Evaluation project: what goes wrong behind a fast support answer, and how ten test cases and eight rules check it.">
+<title>Chatbot Evaluation · Blog · Agentic Evals</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <p class="brand">
+      <span class="brand-name">DeepAgentLabs</span>
+      <span class="brand-sep" aria-hidden="true">/</span>
+      <span class="brand-sub">Agentic Evals</span>
+    </p>
+
+    <nav class="site-nav" aria-label="Primary">
+
+      <!-- desktop navigation -->
+      <ul class="nav-list nav-list--wide">
+        <li><a class="nav-link" href="../index.html">Home</a></li>
+        <li><a class="nav-link" href="../index.html#use-cases">Use Cases</a></li>
+        <li class="nav-item--has-sub">
+          <a class="nav-link nav-link--sub" href="index.html">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <ul class="nav-sub-list">
+            <li><a class="nav-sub-link" href="index.html">All posts</a></li>
+            <li><a class="nav-sub-link" href="chatbot-evaluation.html" aria-current="page">Chatbot Evaluation</a></li>
+            <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+            <li><a class="nav-sub-link" href="production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+          </ul>
+        </li>
+        <li><a class="nav-link" href="../index.html#about">About</a></li>
+        <li>
+          <a class="nav-link nav-link--ext"
+             href="https://github.com/Aryaman431/agentic-evals"
+             target="_blank"
+             rel="noopener noreferrer"
+             aria-label="Open the agentic-evals repository on GitHub from the Chatbot Evaluation article — opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+        </li>
+      </ul>
+
+      <!-- mobile navigation: native disclosure, no JavaScript -->
+      <details class="nav-disclosure">
+        <summary class="nav-summary">Menu<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <ul class="nav-list nav-list--drawer">
+          <li><a class="nav-link" href="../index.html">Home</a></li>
+          <li><a class="nav-link" href="../index.html#use-cases">Use Cases</a></li>
+          <li class="nav-item--has-sub">
+            <a class="nav-link nav-link--sub" href="index.html">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <ul class="nav-sub-list">
+              <li><a class="nav-sub-link" href="index.html">All posts</a></li>
+              <li><a class="nav-sub-link" href="chatbot-evaluation.html" aria-current="page">Chatbot Evaluation</a></li>
+              <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+              <li><a class="nav-sub-link" href="production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+            </ul>
+          </li>
+          <li><a class="nav-link" href="../index.html#about">About</a></li>
+          <li>
+            <a class="nav-link nav-link--ext"
+               href="https://github.com/Aryaman431/agentic-evals"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="Open the agentic-evals repository on GitHub from the article menu — opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+          </li>
+        </ul>
+      </details>
+
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+
+    <a class="back-link" href="../index.html">← All stories</a>
+
+    <!-- ==========================================================
+         1 · ARTICLE HEADER
+         ========================================================== -->
+    <header class="article-header">
+      <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">§01</span>Story 01 · Blog</p>
+
+      <h1>Chatbot Evaluation</h1>
+
+      <p class="article-meta">
+        <span>Beginner · 8 min read</span>
+        <span><code>Chatbot-eval</code></span>
+      </p>
+
+      <p class="article-lede">
+        Maya types two sentences into a support chat and gets two instant answers. Both
+        sound perfect. This article opens the box between her message and the reply,
+        then shows the ten test cases and eight rules that decide whether what came
+        out was actually right.
+      </p>
+    </header>
+
+    <!-- ==========================================================
+         2 · THE PROBLEM
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>The problem</h2>
+
+        <p>
+          Maya ordered a birthday gift for her sister. The delivery date passed, the
+          tracking never updated, and at 11 p.m. she opens the company's support chat.
+          She types: <em>“Where is my order 1234?”</em> A second later the bot replies
+          that the order shipped and gives her a date. She types:
+          <em>“I want a refund for order 1234.”</em> Another second, another confident
+          reply.
+        </p>
+
+        <p>
+          Here is the uncomfortable part: from the outside, a correct answer and a
+          confident guess look identical. Nothing in that chat window tells Maya
+          whether the bot actually looked up order 1234, or whether it pattern-matched
+          her sentence and produced something that <em>sounds</em> like an answer.
+        </p>
+
+        <p>
+          It gets worse when you zoom out. One chatbot serves thousands of people at
+          once, and the answers that go wrong go wrong quietly. A refund issued
+          against the wrong order. A cancellation that never happened. A delivery date
+          invented out of thin air. Nobody files a bug report — they just stop
+          trusting the company.
+        </p>
+
+        <p>
+          So the question is not “does the chatbot sound good?” The question is:
+          <strong>how would we know?</strong> Reading one reply by eye cannot answer
+          that, because you would have to already know the correct answer. What we need
+          is a way to check the reply against something written down first.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         3 · THE APPROACH
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>The approach: write the expectation down first</h2>
+
+        <p>
+          <strong>Agent evaluation</strong> is a simple idea with a fancy name: before
+          you run the agent, write down what each exchange is supposed to do. Then run
+          it. Then compare what it actually did with what you wrote. The comparison is
+          mechanical, so it gives the same answer every time — and it can run a
+          hundred times without anyone getting bored.
+        </p>
+
+        <p>
+          Five words carry most of the weight, so let us define them once, properly:
+        </p>
+
+        <ul>
+          <li>
+            <strong>Test case</strong> — one input plus the behaviour we expect back.
+            Maya's refund case is the sentence <code>I want a refund for order
+            1234.</code> plus the expectations: intent <code>refund_order</code>, tool
+            <code>refund_order</code>, and a reply that contains the word “refund”.
+          </li>
+          <li>
+            <strong>Intent</strong> — the label the agent concludes the user wants.
+            This project uses four: <code>order_status</code>,
+            <code>cancel_order</code>, <code>refund_order</code>, and
+            <code>unknown</code> for anything out of scope.
+          </li>
+          <li>
+            <strong>Tool</strong> — a small program the agent is allowed to call, the
+            only way it can touch real data. This project ships three:
+            <code>get_order</code>, <code>cancel_order</code>, and
+            <code>refund_order</code>.
+          </li>
+          <li>
+            <strong>Trace</strong> — a recorded timeline of one run: the message that
+            went in, the intent that was detected, the order id that was extracted, the
+            tool that was called with which arguments, the reply that came out, and how
+            long it took. Everything the evaluators need lives in the trace.
+          </li>
+          <li>
+            <strong>Evaluator</strong> — a rule that reads a trace and returns pass or
+            fail with a short explanation of why. Evaluators are where “we think it
+            works” turns into “rule 4 says it works”.
+          </li>
+        </ul>
+
+        <p>
+          Notice what writing the expectation down buys us. The expectations exist
+          <em>before</em> the run, so the answer gets judged instead of admired. A
+          single case only proves one path, so we keep a suite of cases that covers the
+          boring paths too — the missing order number, the nonsense request, the
+          cancellation. And because each rule is separate, a failure tells us
+          <em>which</em> stage broke instead of just “it was wrong somehow”.
+        </p>
+
+        <p>
+          There is one more trick, and it is the most convincing one:
+          <strong>fault injection</strong>. We deliberately break one stage of the
+          agent on purpose — swap the tool, corrupt the order id, append a claim the
+          data does not support — and then check that the matching rule actually
+          fires. A rule that never fires when you break things on purpose is decoration,
+          not a check.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         4 · HOW THE EVALUATION WORKS
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>How the evaluation works</h2>
+
+        <p>
+          Every message travels the same road inside the project. The message goes into
+          a transcription step (simulated — it returns the text unchanged, kept so this
+          project and the voice project share the same shape), then keyword-based
+          intent detection picks one of the four labels, then the order id is pulled out
+          of the sentence, then a tool is selected, and finally the reply is written
+          from whatever the tool returned.
+        </p>
+
+        <p>
+          Eight rules judge the result. Each one looks at a different stage, so each
+          one can fail independently:
+        </p>
+
+        <ol>
+          <li><strong>Transcript Accuracy</strong> — did the text that entered the pipeline match the text the case expects?</li>
+          <li><strong>Intent Accuracy</strong> — was the detected intent the label the case requires?</li>
+          <li><strong>Tool Selection</strong> — was the required tool the tool that actually ran?</li>
+          <li><strong>Tool Arguments</strong> — did the arguments survive the trip, order id <code>1234</code> and not <code>12340</code>?</li>
+          <li><strong>Response Quality</strong> — does the reply contain what the case asks for, such as the word “refund” or the string <code>September 28</code>?</li>
+          <li><strong>Groundedness</strong> — can every factual claim in the reply be traced back to what the tool really returned?</li>
+          <li><strong>Reliability</strong> — did the run finish without errors, and did the agent ask instead of guessing when information was missing?</li>
+          <li><strong>Latency</strong> — did the whole thing finish inside the time budget?</li>
+        </ol>
+
+        <p>
+          Groundedness is the one worth pausing on, because it is the rule that catches
+          the polite lie. It takes the words in the reply that make factual claims —
+          <code>shipped</code>, <code>delivered</code>, <code>processing</code>,
+          <code>cancelled</code>, <code>refunded</code>, <code>tomorrow</code>,
+          <code>today</code> — and checks each one against the tool's real result. If
+          the tool said “shipped, ETA September 28” and the reply says “it will arrive
+          tomorrow”, the word <code>tomorrow</code> has no evidence behind it, and the
+          rule fails.
+        </p>
+      </div>
+
+      <ol class="flow" aria-label="How one chatbot evaluation run flows">
+        <li class="flow-step">
+          <span class="flow-num" aria-hidden="true">01</span>
+          <span class="flow-label">Question</span>
+          <span class="flow-desc">Maya's message enters the pipeline as text.</span>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+        </li>
+        <li class="flow-step">
+          <span class="flow-num" aria-hidden="true">02</span>
+          <span class="flow-label">Chatbot Response</span>
+          <span class="flow-desc">Intent, order id, tool, then a reply built from the tool result.</span>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+        </li>
+        <li class="flow-step flow-step--accent">
+          <span class="flow-num" aria-hidden="true">03</span>
+          <span class="flow-label">Evaluation</span>
+          <span class="flow-desc">Eight rules read the trace and score it against the written expectations.</span>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+        </li>
+        <li class="flow-step">
+          <span class="flow-num" aria-hidden="true">04</span>
+          <span class="flow-label">Result</span>
+          <span class="flow-desc">Pass or fail per rule, each with a one-line reason.</span>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ==========================================================
+         5 · A SIMPLE EXAMPLE
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>A simple example</h2>
+
+        <p>
+          Three exchanges, all built from the project's own mock data. Order
+          <code>1234</code> is shipped with an ETA of September 28, order
+          <code>5678</code> is still processing with an ETA of October 2, and order
+          <code>9999</code> has already been delivered. The chips under each reply are
+          what the evaluators would print.
+        </p>
+
+        <h3>Attempt 1 — the agent picks the wrong tool</h3>
+
+        <p>
+          Maya asks for a refund. The intent detection gets it right
+          (<code>refund_order</code>), but the fault injection rotates the tool one
+          step, so <code>refund_order</code> becomes <code>get_order</code>. The agent
+          dutifully reports on her shipment instead of refunding anything.
+        </p>
+
+        <div class="example">
+          <div class="msg msg--user">
+            <p><strong>Maya</strong> — I want a refund for order 1234.</p>
+          </div>
+          <div class="msg msg--agent">
+            <p><strong>Agent</strong> (fault: <code>wrong_tool</code>) — Order 1234 has shipped. It will arrive on September 28.</p>
+          </div>
+          <span class="verdict verdict--fail">Fail · Tool Selection</span>
+          <span class="verdict verdict--fail">Fail · Response Quality — no “refund”</span>
+        </div>
+
+        <p>
+          Two rules fail for two different reasons, and that is the point: Tool
+          Selection says the wrong program ran, Response Quality says the reply never
+          answered her question. Maya would have just typed again, annoyed.
+        </p>
+
+        <h3>Attempt 2 — the agent does it properly</h3>
+
+        <p>
+          Same message, no fault. The intent is <code>refund_order</code>, the tool is
+          <code>refund_order</code>, the argument is <code>order_id: "1234"</code>, and
+          the reply is built from what the tool returned.
+        </p>
+
+        <div class="example">
+          <div class="msg msg--user">
+            <p><strong>Maya</strong> — I want a refund for order 1234.</p>
+          </div>
+          <div class="msg msg--agent">
+            <p><strong>Agent</strong> — I've started a refund for order 1234. It will be returned to your original payment method.</p>
+          </div>
+          <span class="verdict verdict--pass">Pass · Tool Selection</span>
+          <span class="verdict verdict--pass">Pass · Tool Arguments — order_id 1234</span>
+          <span class="verdict verdict--pass">Pass · Response Quality — contains “refund”</span>
+        </div>
+
+        <h3>Attempt 3 — a correct answer with one invented sentence</h3>
+
+        <p>
+          This is the failure a human reviewer misses most often. Everything above is
+          right, and then the agent adds a friendly promise that no data supports:
+        </p>
+
+        <div class="example">
+          <div class="msg msg--user">
+            <p><strong>Maya</strong> — Where is my order 1234?</p>
+          </div>
+          <div class="msg msg--agent">
+            <p><strong>Agent</strong> (fault: <code>unsupported_claim</code>) — Order 1234 has shipped. It will arrive tomorrow.</p>
+          </div>
+          <span class="verdict verdict--pass">Pass · Tool Selection — get_order</span>
+          <span class="verdict verdict--fail">Fail · Groundedness — “tomorrow” not in the tool result</span>
+        </div>
+
+        <p>
+          The tool result for order <code>1234</code> says shipped, ETA September 28.
+          The word <code>tomorrow</code> appears nowhere in it, so Groundedness fails
+          even though every other rule passes. One polite sentence, one broken promise,
+          one rule whose whole job is to notice.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         6 · WHAT THE ACTUAL PROJECT DEMONSTRATES
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>What the actual project demonstrates</h2>
+
+        <p>
+          Everything above runs inside <code>Chatbot-eval/</code> in this repository.
+          It is a simulated text customer-support agent: no real payments, no real
+          orders, no external services. The dataset is ten cases, and each case checks
+          exactly one thing so a failure points at one stage.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Test case</th>
+                <th scope="col">Input</th>
+                <th scope="col">What it checks</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>stt-basic</td>
+                <td>Where is my order 1234?</td>
+                <td>The transcript step passes a plain sentence through unchanged</td>
+              </tr>
+              <tr>
+                <td>stt-accent</td>
+                <td>Can you track order 5678?</td>
+                <td>The same, with accented wording in the input</td>
+              </tr>
+              <tr>
+                <td>intent-status</td>
+                <td>Where is my order 1234?</td>
+                <td>Detected intent is <code>order_status</code></td>
+              </tr>
+              <tr>
+                <td>intent-cancel</td>
+                <td>Please cancel order 5678.</td>
+                <td>Detected intent is <code>cancel_order</code></td>
+              </tr>
+              <tr>
+                <td>intent-refund</td>
+                <td>I want a refund for order 1234.</td>
+                <td>Detected intent is <code>refund_order</code></td>
+              </tr>
+              <tr>
+                <td>tool-selection</td>
+                <td>Where is my order 1234?</td>
+                <td>The tool that ran is <code>get_order</code></td>
+              </tr>
+              <tr>
+                <td>tool-arguments</td>
+                <td>Where is my order 1234?</td>
+                <td>The argument that reached the tool is <code>order_id: "1234"</code></td>
+              </tr>
+              <tr>
+                <td>task-completion</td>
+                <td>Where is my order 1234?</td>
+                <td>The reply contains <code>1234</code>, <code>shipped</code>, and <code>September 28</code></td>
+              </tr>
+              <tr>
+                <td>missing-order</td>
+                <td>Where is my order?</td>
+                <td>With no id given, the reply asks for the “order number” instead of guessing</td>
+              </tr>
+              <tr>
+                <td>unknown-intent</td>
+                <td>Tell me something interesting.</td>
+                <td>Intent is <code>unknown</code> and the reply says it “didn't understand” — no order tool called</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          On top of the dataset, the project ships nine fault modes —
+          <code>normal</code> plus eight deliberate breakages — and each one names the
+          rule that is supposed to catch it. This table is the project's own
+          fault-to-rule mapping:
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Fault injected</th>
+                <th scope="col">What it does</th>
+                <th scope="col">Rule that catches it</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>wrong_intent</td>
+                <td>Intent label swapped after detection</td>
+                <td>Intent Accuracy</td>
+              </tr>
+              <tr>
+                <td>wrong_tool</td>
+                <td>Intent kept, but a rotated tool runs with the same arguments</td>
+                <td>Tool Selection</td>
+              </tr>
+              <tr>
+                <td>wrong_arguments</td>
+                <td>Extracted order id corrupted (<code>1234</code> → <code>12340</code>)</td>
+                <td>Tool Arguments</td>
+              </tr>
+              <tr>
+                <td>hallucinated_response</td>
+                <td>Reply claims delivered/tomorrow regardless of the tool output</td>
+                <td>Groundedness</td>
+              </tr>
+              <tr>
+                <td>unsupported_claim</td>
+                <td>Correct reply with “It will arrive tomorrow.” appended</td>
+                <td>Groundedness</td>
+              </tr>
+              <tr>
+                <td>tool_failure</td>
+                <td>Tool returns an error payload instead of a real result</td>
+                <td>Response Quality</td>
+              </tr>
+              <tr>
+                <td>missing_information</td>
+                <td>Order-id extraction forced to fail; the agent must ask</td>
+                <td>Reliability</td>
+              </tr>
+              <tr>
+                <td>slow_response</td>
+                <td>A real 250 ms delay against a 100 ms budget</td>
+                <td>Latency</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>What you can open and click</h3>
+
+        <p>
+          The frontend has three working views. A <strong>Chat Playground</strong>,
+          where a typed message is posted to <code>POST /chat/evaluate</code> and comes
+          back with the response, the detected intent, the tool, the arguments, and the
+          latency. A <strong>Scenario Lab</strong>, which runs a chosen scenario live
+          through the full chain — Evaluation API → agent → evaluation → trace →
+          metrics → dashboard — so you can watch a fault get caught in real time. And
+          views for the 10-case dataset and for the evaluation report of each run.
+        </p>
+
+        <p>
+          The backend is FastAPI in <code>Chatbot-eval/server.py</code>, port 8001,
+          with the endpoints <code>/health</code>, <code>/scenarios</code>,
+          <code>/dataset</code>, <code>/evaluate</code>, <code>/chat/evaluate</code>,
+          <code>/runs</code>, and <code>/stats</code>. Run history lives in memory:
+          there is no database, so a restart clears it. Opened statically, without the
+          backend, the page still loads and shows an offline status rather than
+          pretending to work.
+        </p>
+
+        <p>
+          There is also a command-line path for people who never want to open a
+          browser: <code>run_evals.py</code> builds a test suite from the ten cases,
+          runs the agent against each one, prints a scorecard with per-metric pass
+          rates, and exits with code 0 when everything passed and 1 when something did
+          not — which is what makes it usable in a CI job.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         7 · LIMITATIONS
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Limitations</h2>
+
+        <div class="callout">
+          <p>
+            This is a teaching project, and it is honest about the seams. The
+            transcription step is simulated — it hands the text straight back
+            unchanged — so nothing here proves anything about real speech recognition.
+            Intent detection is keyword matching, not a language model, which makes it
+            fast and deterministic but easy to fool with an unusual phrasing. The
+            dataset is ten synthetic cases, not a sample of real customer traffic, and
+            the mock orders are three dictionary entries.
+          </p>
+        </div>
+
+        <p class="note note--sim">
+          <strong>Simulated pipeline.</strong> The “speech-to-text” step returns its
+          input unchanged, and the dataset keeps the legacy <code>audio</code> and
+          transcript field names it shares with the voice project — so a field called
+          <code>audio</code> here contains plain text. Latency is measured on your
+          machine against a local mock, which tells you about this code, not about
+          production traffic.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         8 · TAKEAWAY
+         ========================================================== -->
+    <div class="takeaway">
+      <p class="takeaway-label">Takeaway</p>
+      <p>
+        A chatbot that sounds right is an opinion; a chatbot that passes ten written
+        cases is a measurement. Write the expectation down before the run, give every
+        stage its own rule, and break the agent on purpose to prove the rules fire.
+      </p>
+    </div>
+
+    <p class="run-note">
+      Run it from the repository root: <code>python Chatbot-eval/run_evals.py</code>
+      prints the scorecard and exits 0 or 1 · <code>python Chatbot-eval/server.py</code>
+      starts the backend on port 8001 for the Chat Playground and Scenario Lab ·
+      without the backend the page opens statically and shows an offline status.
+    </p>
+
+    <!-- ==========================================================
+         9 · PREV / NEXT / PROJECT
+         ========================================================== -->
+    <nav class="article-footer-nav" aria-label="More articles">
+      <a href="production-trace-release-decision.html">
+        <span>Previous article</span>
+        <span>From Production Trace to Release Decision</span>
+      </a>
+      <a href="voice-agent-evaluation.html">
+        <span>Next article</span>
+        <span>Voice Agent Evaluation</span>
+      </a>
+      <a href="../Chatbot-eval/index.html">
+        <span>Open the project</span>
+        <span>Chatbot-eval/</span>
+      </a>
+    </nav>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p class="footer-brand">DeepAgentLabs · Agentic Evals</p>
+    <p class="footer-note">
+      A static storytelling site — zero JavaScript, relative links, one stylesheet.
+    </p>
+    <p class="footer-meta" aria-hidden="true">DL / STORIES · REV 2026.10</p>
+  </div>
+</footer>
+
+</body>
+</html>

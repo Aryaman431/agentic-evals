@@ -1,0 +1,184 @@
+name: voice-agent-evals
+version: "1"
+description: Evaluation suite for the simulated voice agent
+cases:
+  - id: stt-basic
+    name: Basic STT transcription accuracy
+    input: "Where is my order 1234?"
+    expected_output: "Where is my order 1234?"
+    evaluators:
+      - name: exact_match
+        threshold: 1.0
+  - id: stt-accent
+    name: STT with accented speech simulation
+    input: "Can you track order 5678?"
+    expected_output: "Can you track order 5678?"
+    evaluators:
+      - name: exact_match
+        threshold: 1.0
+  - id: intent-status
+    name: Detect order_status intent
+    input: "Where is my order 1234?"
+    expected_contains:
+      - "shipped"
+      - "September 28"
+    required_tools:
+      - get_order
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+  - id: intent-cancel
+    name: Detect cancel_order intent
+    input: "Please cancel order 5678."
+    expected_contains:
+      - "cancelled"
+    required_tools:
+      - cancel_order
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+  - id: intent-refund
+    name: Detect refund_order intent
+    input: "I want a refund for order 1234."
+    expected_contains:
+      - "refund"
+      - "initiated"
+    required_tools:
+      - refund_order
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+  - id: tool-selection-status
+    name: Select correct tool for order status
+    input: "Where is my order 1234?"
+    required_tools:
+      - get_order
+    forbidden_tools:
+      - cancel_order
+      - refund_order
+    evaluators:
+      - name: tool_call_recall
+        threshold: 1.0
+      - name: tool_call_precision
+        threshold: 1.0
+        config:
+          allowed_tools:
+            - get_order
+  - id: tool-selection-cancel
+    name: Select correct tool for cancellation
+    input: "Please cancel order 5678."
+    required_tools:
+      - cancel_order
+    forbidden_tools:
+      - get_order
+      - refund_order
+    evaluators:
+      - name: tool_call_recall
+        threshold: 1.0
+      - name: tool_call_precision
+        threshold: 1.0
+        config:
+          allowed_tools:
+            - cancel_order
+  - id: tool-arguments-status
+    name: Extract correct order_id for status check
+    input: "Where is my order 1234?"
+    required_tool_arguments:
+      get_order:
+        - order_id
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+        config:
+          reference: "1234"
+  - id: tool-arguments-cancel
+    name: Extract correct order_id for cancellation
+    input: "Please cancel order 5678."
+    required_tool_arguments:
+      cancel_order:
+        - order_id
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+        config:
+          reference: "5678"
+  - id: task-completion-status
+    name: Complete order status task with grounded response
+    input: "Where is my order 1234?"
+    expected_contains:
+      - "1234"
+      - "shipped"
+      - "September 28"
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+  - id: task-completion-cancel-success
+    name: Complete cancellation task successfully
+    input: "Please cancel order 5678."
+    expected_contains:
+      - "5678"
+      - "cancelled"
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+  - id: task-completion-refund
+    name: Complete refund task with grounded response
+    input: "I want a refund for order 1234."
+    expected_contains:
+      - "1234"
+      - "refund"
+      - "initiated"
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+  - id: missing-order-recovery
+    name: Gracefully handle missing order number
+    input: "Where is my order?"
+    expected_contains:
+      - "order number"
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+  - id: unknown-intent-reliability
+    name: Handle unknown intent gracefully
+    input: "Tell me something interesting."
+    expected_contains:
+      - "didn't understand"
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+  - id: not-found-order-recovery
+    name: Handle order not found gracefully
+    input: "Where is my order 99999?"
+    expected_contains:
+      - "couldn't find"
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+  - id: latency-status
+    name: Order status response within latency budget
+    input: "Where is my order 1234?"
+    max_latency_ms: 100.0
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+        config:
+          reference: "shipped"
+  - id: latency-cancel
+    name: Cancellation response within latency budget
+    input: "Please cancel order 5678."
+    max_latency_ms: 100.0
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+        config:
+          reference: "cancelled"
+  - id: latency-refund
+    name: Refund response within latency budget
+    input: "I want a refund for order 1234."
+    max_latency_ms: 100.0
+    evaluators:
+      - name: contains_all
+        threshold: 1.0
+        config:
+          reference: "refund"

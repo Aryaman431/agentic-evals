@@ -164,6 +164,12 @@ button.hamburger{display:none}
 }
 .btn-primary:hover{background:linear-gradient(180deg,#25ffa0,#00e284);color:#03150d;
   border-color:rgba(0,255,136,.8);box-shadow:0 0 0 1px rgba(0,255,136,.28), 0 8px 26px rgba(0,255,136,.26)}
+.btn-blog{
+  white-space:nowrap;color:var(--green);border-color:rgba(0,255,136,.38);
+  background:rgba(0,255,136,.06);
+}
+.btn-blog:hover{background:rgba(0,255,136,.12);border-color:rgba(0,255,136,.65);
+  color:#8dffce;box-shadow:0 0 16px rgba(0,255,136,.14)}
 .icon-btn{
   width:32px;height:32px;display:inline-grid;place-items:center;flex:none;cursor:pointer;
   border-radius:var(--r);border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);
@@ -804,6 +810,7 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
 @keyframes slideL{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
 @keyframes fadeDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 .js .anim-side{animation:slideL .5s cubic-bezier(.22,1,.36,1) both}
+@media (max-width:767px){.js .anim-side{animation:none}}
 .js .anim-head{animation:fadeDown .45s cubic-bezier(.22,1,.36,1) .08s both}
 .js .anim-up{animation:rise .55s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(var(--i,0) * 70ms + .12s)}
 @media (prefers-reduced-motion: reduce){
@@ -880,6 +887,7 @@ button.project-row{width:100%;border:0;background:transparent;text-align:left;cu
       </div>
       <button class="btn btn-primary" id="openEval" type="button">View Evaluation</button>
       <button class="btn btn-primary" id="openAgenticLensStory" type="button" aria-label="Explore the AgenticLens Workflow">Explore the AgenticLens Workflow</button>
+      <a class="btn btn-blog" href="../blog/chatbot-evaluation.html">Read Blog →</a>
     </div>
   </header>
 

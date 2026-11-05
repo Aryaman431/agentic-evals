@@ -11,7 +11,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from scenario_runner import evaluate_scenario
-from voice_agents import run_agent
 from scenarios import (
     FAULT_KEYS,
     Scenario,
@@ -23,6 +22,7 @@ from scenarios import (
     update_scenario,
     validate_scenario,
 )
+from voice_agents import run_agent
 
 # -----------------------------
 # Request models
@@ -259,10 +259,16 @@ def evaluate_endpoint(request: EvaluateRequest) -> dict[str, Any]:
 @app.post("/chat/evaluate")
 def chat_evaluate_endpoint(request: ChatRequest) -> dict[str, Any]:
     import time
+
     start = time.time()
     result = run_agent(request.message)
     latency = time.time() - start
-    response, intent, tool, args = result.response, result.intent, result.tool_name, result.tool_args
+    response, intent, tool, args = (
+        result.response,
+        result.intent,
+        result.tool_name,
+        result.tool_args,
+    )
     return {
         "response": response,
         "intent": intent,

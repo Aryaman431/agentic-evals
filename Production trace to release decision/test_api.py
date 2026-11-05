@@ -4,6 +4,7 @@ Covers: the five-stage workflow contract (in-memory mode), error honesty
 (404/400/503 with no secret leaks), determinism of scoring, and config
 consistency across schema.sql / render.yaml / requirements.txt.
 """
+
 import os
 import re
 from pathlib import Path
@@ -23,8 +24,12 @@ import app as app_module  # noqa: E402
 BASE = "http://testserver"
 SEED_ID = "00000000-0000-4000-8000-000000000001"
 METRIC_KEYS = {
-    "response_quality", "task_completion", "tool_correctness",
-    "agent_coordination", "safety_compliance", "performance",
+    "response_quality",
+    "task_completion",
+    "tool_correctness",
+    "agent_coordination",
+    "safety_compliance",
+    "performance",
 }
 READINESS = {"READY", "NEEDS REVIEW", "NOT READY"}
 ROOT = Path(__file__).parent
@@ -114,8 +119,9 @@ def test_evaluate_baseline_contract(client):
 
 
 def test_replay_contract(client):
-    resp = client.post(f"{BASE}/api/scenarios/{SEED_ID}/replay",
-                       json={"change_type": "prompt_update"})
+    resp = client.post(
+        f"{BASE}/api/scenarios/{SEED_ID}/replay", json={"change_type": "prompt_update"}
+    )
     assert resp.status_code == 201
     run = resp.json()["run"]
     assert run["run_type"] == "simulated_replay"
@@ -134,9 +140,7 @@ def test_runs_list_has_both_runs(client, seed_workflow):
 
 def test_compare_contract(client, seed_workflow):
     baseline, replay = seed_workflow
-    resp = client.get(
-        f"{BASE}/api/scenarios/{SEED_ID}/compare/{baseline['id']}/{replay['id']}"
-    )
+    resp = client.get(f"{BASE}/api/scenarios/{SEED_ID}/compare/{baseline['id']}/{replay['id']}")
     assert resp.status_code == 200
     cmp = resp.json()["comparison"]
     assert cmp["recommendation"] in READINESS
@@ -178,11 +182,15 @@ def test_unknown_change_type_is_400(client):
     assert resp.status_code == 400
 
 
-_LEAKY_EXC = "connection refused to https://abcdefg.supabase.co/rest/v1 with key eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.leak"
+_LEAKY_EXC = (
+    "connection refused to https://abcdefg.supabase.co/rest/v1 "
+    "with key eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.leak"
+)
 
 
 class _BoomClient:
     """Fake supabase client: every DB call raises a leaky exception."""
+
     def table(self, *args, **kwargs):
         raise RuntimeError(_LEAKY_EXC)
 
@@ -211,12 +219,19 @@ def _assert_503_no_leak(resp):
 def test_persistence_errors_are_honest_503s(client, forced_supabase_mode):
     _assert_503_no_leak(client.get(f"{BASE}/api/scenarios"))
     _assert_503_no_leak(client.get(f"{BASE}/api/scenarios/{SEED_ID}"))
-    _assert_503_no_leak(client.post(f"{BASE}/api/scenarios", json={
-        "name": "x", "spec": {},
-        "events": [{"sequence": 0, "agent_name": "a", "event_type": "e"}],
-    }))
-    _assert_503_no_leak(client.post(f"{BASE}/api/scenarios/{SEED_ID}/evaluate",
-                                    json={"run_type": "baseline"}))
+    _assert_503_no_leak(
+        client.post(
+            f"{BASE}/api/scenarios",
+            json={
+                "name": "x",
+                "spec": {},
+                "events": [{"sequence": 0, "agent_name": "a", "event_type": "e"}],
+            },
+        )
+    )
+    _assert_503_no_leak(
+        client.post(f"{BASE}/api/scenarios/{SEED_ID}/evaluate", json={"run_type": "baseline"})
+    )
     _assert_503_no_leak(client.get(f"{BASE}/api/scenarios/{SEED_ID}/runs"))
 
 
@@ -244,7 +259,8 @@ def _schema_tables():
     sql = (ROOT / "schema.sql").read_text(encoding="utf-8")
     tables = {}
     for name, block in re.findall(
-            r"create table if not exists\s+(\w+)\s*\((.*?)\);", sql, re.S | re.I):
+        r"create table if not exists\s+(\w+)\s*\((.*?)\);", sql, re.S | re.I
+    ):
         cols = set(re.findall(r"^\s*([a-z_][a-z0-9_]*)\s+\w", block, re.M | re.I))
         tables[name.lower()] = cols
     return tables

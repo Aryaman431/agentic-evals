@@ -2,25 +2,28 @@
 <html lang="en">
 <head>
 <!-- ============================================================
-     BLOG INDEX — lives in blog/, so every link is relative:
-       stylesheet  → ../styles.css
-       Home        → ../index.html
-       Use Cases   → ../index.html#use-cases
-       Blog        → index.html   (this page)
-       About       → ../index.html#about
-       GitHub      → external (the agentic-evals repository)
-       Articles    → chatbot-evaluation.html
-                     voice-agent-evaluation.html
-                     production-trace-release-decision.html
-       Projects    → ../Chatbot-eval/index.html
-                     ../voice-agent-evals/index.html
-                     ../Production%20trace%20to%20release%20decision/index.html
-     ZERO JavaScript: navigation is a native <details> drawer.
+     BLOG INDEX &mdash; lives in blog/, so every link is relative:
+       stylesheet  &rarr; ../styles.css
+       Home        &rarr; ../index.html
+       Use Cases   &rarr; ../index.html#use-cases
+       Blog        &rarr; index.html   (this page)
+       About       &rarr; ../index.html#about
+       GitHub      &rarr; external (the agentic-evals repository)
+       Articles    &rarr; chatbot-evaluation.html
+                      &rarr; voice-agent-evaluation.html
+                      &rarr; production-trace-release-decision.html
+                      &rarr; eval-engine.html
+                      &rarr; judge-reliability.html
+                      &rarr; latency-engineering.html
+       Projects    &rarr; ../Chatbot-eval/index.html
+                      &rarr; ../voice-agent-evals/index.html
+                      &rarr; ../Production%20trace%20to%20release%20decision/index.html
+       ZERO JavaScript: navigation is a native <details> drawer.
      ============================================================ -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Three beginner-first deep dives from the agentic-evals repository: chatbot evaluation, voice agent evaluation, and turning a production trace into a release decision.">
-<title>Blog · Agentic Evals</title>
+<meta name="description" content="Six in-depth articles from the agentic-evals repository: how the evaluation engine was built, how an LLM judge is kept honest, and how real-time agents hold latency budgets - alongside the chatbot, voice, and release-decision deep dives.">
+<title>Blog &middot; Agentic Evals</title>
 <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -48,6 +51,9 @@
             <li><a class="nav-sub-link" href="chatbot-evaluation.html">Chatbot Evaluation</a></li>
             <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
             <li><a class="nav-sub-link" href="production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+            <li><a class="nav-sub-link" href="eval-engine.html">How the Evaluation Engine Was Built</a></li>
+            <li><a class="nav-sub-link" href="judge-reliability.html">Judging the Judge: Building LLM-as-a-Judge Evaluations That Stay Honest</a></li>
+            <li><a class="nav-sub-link" href="latency-engineering.html">The 100ms Budget: Latency Engineering for Real-Time Agents</a></li>
           </ul>
         </li>
         <li><a class="nav-link" href="../index.html#about">About</a></li>
@@ -56,7 +62,7 @@
              href="https://github.com/Aryaman431/agentic-evals"
              target="_blank"
              rel="noopener noreferrer"
-             aria-label="Open the agentic-evals repository on GitHub — opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+             aria-label="Open the agentic-evals repository on GitHub � opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
         </li>
       </ul>
 
@@ -73,6 +79,9 @@
               <li><a class="nav-sub-link" href="chatbot-evaluation.html">Chatbot Evaluation</a></li>
               <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
               <li><a class="nav-sub-link" href="production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+              <li><a class="nav-sub-link" href="eval-engine.html">How the Evaluation Engine Was Built</a></li>
+              <li><a class="nav-sub-link" href="judge-reliability.html">Judging the Judge: Building LLM-as-a-Judge Evaluations That Stay Honest</a></li>
+              <li><a class="nav-sub-link" href="latency-engineering.html">The 100ms Budget: Latency Engineering for Real-Time Agents</a></li>
             </ul>
           </li>
           <li><a class="nav-link" href="../index.html#about">About</a></li>
@@ -81,7 +90,7 @@
                href="https://github.com/Aryaman431/agentic-evals"
                target="_blank"
                rel="noopener noreferrer"
-               aria-label="Open the agentic-evals repository on GitHub from the blog menu — opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+               aria-label="Open the agentic-evals repository on GitHub from the blog menu - opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
           </li>
         </ul>
       </details>
@@ -93,18 +102,18 @@
 <main id="main">
   <div class="wrap">
 
-    <a class="back-link" href="../index.html">← All stories</a>
+    <a class="back-link" href="../index.html">&larr; All stories</a>
 
     <!-- ==========================================================
          ARTICLE HEADER
          ========================================================== -->
     <header class="article-header">
-      <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">§B</span>Blog</p>
+      <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">&#167;B</span>Blog</p>
 
-      <h1>Three stories, three deep dives</h1>
+      <h1>Notes from the evaluation bench</h1>
 
       <p class="article-meta">
-        <span>Beginner · 3 articles</span>
+        <span>Independent &middot; 6 articles</span>
         <span>Agentic Evals</span>
       </p>
 
@@ -112,11 +121,13 @@
         The homepage tells each story in one sitting. These articles go the other way:
         one project at a time, with the test cases, the rules, a worked conversation
         that fails on purpose, and the exact command that runs it on your own machine.
+        The newest posts go further still - into the evaluation engine itself, into how a
+        judge is kept honest, and into the latency budgets that real-time agents live under.
       </p>
     </header>
 
     <!-- ==========================================================
-         THE THREE ARTICLES
+         THE ARTICLES
          ========================================================== -->
     <section class="article-section" aria-label="Articles">
       <div class="blog-grid">
@@ -125,10 +136,10 @@
           <span class="blog-card-index" aria-hidden="true">01</span>
           <h2 class="blog-card-title">Chatbot Evaluation</h2>
           <p class="blog-card-desc">
-            What actually happens between Maya typing “I want a refund for order 1234”
-            and the chatbot answering — and how ten test cases check every step.
+            What actually happens between Maya typing &ldquo;I want a refund for order 1234�
+            and the chatbot answering &mdash; and how ten test cases check every step.
           </p>
-          <p class="blog-card-link"><a href="chatbot-evaluation.html">Read the article →</a></p>
+          <p class="blog-card-link"><a href="chatbot-evaluation.html">Read the article &rarr;</a></p>
         </article>
 
         <article class="blog-card">
@@ -136,9 +147,9 @@
           <h2 class="blog-card-title">Voice Agent Evaluation</h2>
           <p class="blog-card-desc">
             A phone call is five links in a chain. Break any one of them and the call
-            fails — so each link gets its own rule.
+            fails &mdash; so each link gets its own rule.
           </p>
-          <p class="blog-card-link"><a href="voice-agent-evaluation.html">Read the article →</a></p>
+          <p class="blog-card-link"><a href="voice-agent-evaluation.html">Read the article &rarr;</a></p>
         </article>
 
         <article class="blog-card">
@@ -146,9 +157,39 @@
           <h2 class="blog-card-title">From Production Trace to Release Decision</h2>
           <p class="blog-card-desc">
             Sam wants to ship a change to a financial assistant. Here is how a recorded
-            run, a saved baseline, and a replay answer “is it safe to ship?”
+            run, a saved baseline, and a replay answer &ldquo;is it safe to ship?&rdquo;
           </p>
-          <p class="blog-card-link"><a href="production-trace-release-decision.html">Read the article →</a></p>
+          <p class="blog-card-link"><a href="production-trace-release-decision.html">Read the article &rarr;</a></p>
+        </article>
+
+        <article class="blog-card">
+          <span class="blog-card-index" aria-hidden="true">04</span>
+          <h2 class="blog-card-title">How the Evaluation Engine Was Built</h2>
+          <p class="blog-card-desc">
+            The trace contract, the scorer interface, packs, the release gate, and the CLI that turn
+            agent behaviour into pass or fail.
+          </p>
+          <p class="blog-card-link"><a href="eval-engine.html">Read the article &rarr;</a></p>
+        </article>
+
+        <article class="blog-card">
+          <span class="blog-card-index" aria-hidden="true">05</span>
+          <h2 class="blog-card-title">Judging the Judge: Building LLM-as-a-Judge Evaluations That Stay Honest</h2>
+          <p class="blog-card-desc">
+            Why a judge is needed, what it reads, how rubrics are written, and how the judgement is
+            tested.
+          </p>
+          <p class="blog-card-link"><a href="judge-reliability.html">Read the article &rarr;</a></p>
+        </article>
+
+        <article class="blog-card">
+          <span class="blog-card-index" aria-hidden="true">06</span>
+          <h2 class="blog-card-title">The 100ms Budget: Latency Engineering for Real-Time Agents</h2>
+          <p class="blog-card-desc">
+            Latency as a quality attribute, budgets that are set before the runs, and the discipline
+            that proves a check is real.
+          </p>
+          <p class="blog-card-link"><a href="latency-engineering.html">Read the article &rarr;</a></p>
         </article>
 
       </div>
@@ -161,7 +202,7 @@
       <div class="prose">
         <p>
           Every article above started as one of the
-          <a href="../index.html#use-cases">three stories on the homepage</a> — read
+          <a href="../index.html#use-cases">three stories on the homepage</a> &mdash; read
           those first if you want the short version, then come back here for the full
           walkthrough. The projects themselves live in this repository, so the last
           section of each article ends with the command that runs it.
@@ -180,11 +221,11 @@
 
 <footer class="site-footer">
   <div class="wrap footer-inner">
-    <p class="footer-brand">DeepAgentLabs · Agentic Evals</p>
+    <p class="footer-brand">DeepAgentLabs &middot; Agentic Evals</p>
     <p class="footer-note">
-      A static storytelling site — zero JavaScript, relative links, one stylesheet.
+      A static storytelling site &mdash; zero JavaScript, relative links, one stylesheet.
     </p>
-    <p class="footer-meta" aria-hidden="true">DL / STORIES · REV 2026.10</p>
+    <p class="footer-meta" aria-hidden="true">DL / STORIES &middot; REV 2026.10</p>
   </div>
 </footer>
 

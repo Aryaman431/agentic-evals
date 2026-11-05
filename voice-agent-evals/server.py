@@ -6,11 +6,10 @@ from datetime import datetime
 from typing import Any
 
 import uvicorn
+from dataset import VOICE_TEST_CASES
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
-from dataset import VOICE_TEST_CASES
 from scenario_runner import evaluate_scenario
 from scenarios import (
     FAULT_KEYS,
@@ -24,10 +23,10 @@ from scenarios import (
     validate_scenario,
 )
 
-
 # -----------------------------
 # Request models
 # -----------------------------
+
 
 class ScenarioCreate(BaseModel):
     name: str
@@ -92,13 +91,15 @@ _RUN_COUNTER = itertools.count(1)
 # Scenario resolution helpers
 # -----------------------------
 
+
 def _default_rules(request: EvaluateRequest) -> dict[str, bool]:
     """All rules that the provided fields can support default to enabled."""
     return {
         "transcript_accuracy": request.expected_transcript is not None,
         "intent_accuracy": request.expected_intent is not None,
         "tool_selection": request.expected_tool is not None,
-        "tool_arguments": request.expected_tool is not None and request.expected_arguments is not None,
+        "tool_arguments": request.expected_tool is not None
+        and request.expected_arguments is not None,
         "response_quality": bool(request.expected_response_criteria),
         "groundedness": True,
         "reliability": True,
@@ -114,7 +115,9 @@ def _resolve_scenario(request: EvaluateRequest) -> Scenario:
     if request.scenario_id is not None:
         stored = get_scenario(request.scenario_id)
         if stored is None:
-            raise HTTPException(status_code=404, detail=f"Scenario '{request.scenario_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Scenario '{request.scenario_id}' not found"
+            )
 
         data = stored.model_dump()
         overrides = {
@@ -138,7 +141,9 @@ def _resolve_scenario(request: EvaluateRequest) -> Scenario:
         return scenario
 
     if not (request.input or "").strip():
-        raise HTTPException(status_code=400, detail="input is required when scenario_id is not provided")
+        raise HTTPException(
+            status_code=400, detail="input is required when scenario_id is not provided"
+        )
 
     data = {
         "id": slugify(request.scenario_name or "Untitled Scenario"),
@@ -164,6 +169,7 @@ def _resolve_scenario(request: EvaluateRequest) -> Scenario:
 # -----------------------------
 # Routes
 # -----------------------------
+
 
 @app.get("/health")
 def health() -> dict[str, str]:

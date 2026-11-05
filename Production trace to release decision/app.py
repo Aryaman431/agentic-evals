@@ -7,13 +7,14 @@ Every endpoint behaves identically in either mode; /health reports the mode.
 Scoring is 100% deterministic: sha256(scenario_id + context) drives small
 ±1/±2 jitter. No random/time influence on any metric or readiness decision.
 """
+
 import hashlib
 import logging
 import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -56,18 +57,30 @@ BASELINE_BASE = {
 
 # Per-change-type base deltas applied on top of the baseline (±1 hash jitter,
 # signs preserved so the narrative outcomes stay stable).
-CHANGE_DELTAS: Dict[str, Dict[str, int]] = {
+CHANGE_DELTAS: dict[str, dict[str, int]] = {
     "prompt_update": {
-        "response_quality": 8, "task_completion": 5, "tool_correctness": 1,
-        "agent_coordination": 2, "safety_compliance": 0, "performance": -1,
+        "response_quality": 8,
+        "task_completion": 5,
+        "tool_correctness": 1,
+        "agent_coordination": 2,
+        "safety_compliance": 0,
+        "performance": -1,
     },
     "coordination_update": {
-        "response_quality": 3, "task_completion": 6, "tool_correctness": 2,
-        "agent_coordination": 10, "safety_compliance": -1, "performance": -4,
+        "response_quality": 3,
+        "task_completion": 6,
+        "tool_correctness": 2,
+        "agent_coordination": 10,
+        "safety_compliance": -1,
+        "performance": -4,
     },
     "model_change": {
-        "response_quality": 2, "task_completion": 1, "tool_correctness": 4,
-        "agent_coordination": 0, "safety_compliance": -10, "performance": 9,
+        "response_quality": 2,
+        "task_completion": 1,
+        "tool_correctness": 4,
+        "agent_coordination": 0,
+        "safety_compliance": -10,
+        "performance": 9,
     },
 }
 CHANGE_TYPES = set(CHANGE_DELTAS)
@@ -104,7 +117,9 @@ BASELINE_ISSUES = [
     {
         "severity": "medium",
         "metric": "agent_coordination",
-        "message": "Planner handed off with partial context; analysis agent re-fetched transaction window.",
+        "message": (
+            "Planner handed off with partial context; analysis agent re-fetched transaction window."
+        ),
     },
     {
         "severity": "low",
@@ -114,7 +129,9 @@ BASELINE_ISSUES = [
     {
         "severity": "low",
         "metric": "tool_correctness",
-        "message": "Tool returned 14 transactions; agent filtered to 3 flagged without paging metadata.",
+        "message": (
+            "Tool returned 14 transactions; agent filtered to 3 flagged without paging metadata."
+        ),
     },
 ]
 
@@ -123,7 +140,7 @@ SIMULATION_TAG = "SIMULATED DEMO DATA"
 # ---------------------------------------------------------------------------
 # Seed scenario (inserted on startup if missing; boot never crashes on failure)
 # ---------------------------------------------------------------------------
-SEED_SPEC: Dict[str, Any] = {
+SEED_SPEC: dict[str, Any] = {
     "spec_version": "0.3",
     "scenario": {
         "name": "Unusual Expense Explanation",
@@ -139,7 +156,11 @@ SEED_SPEC: Dict[str, Any] = {
     "tool_calls": [
         {
             "tool": "lookup_transactions",
-            "args_schema": {"card_last4": "string", "amount_min": "number", "window_days": "integer"},
+            "args_schema": {
+                "card_last4": "string",
+                "amount_min": "number",
+                "window_days": "integer",
+            },
             "latency_ms": 2410,
             "status": "success",
         }
@@ -147,65 +168,125 @@ SEED_SPEC: Dict[str, Any] = {
     "model_responses": [
         {"agent": "response-agent", "finish_reason": "stop", "guardrails": "passed"}
     ],
-    "execution": {"total_duration_ms": 6842, "event_count": 6, "handoffs": 2, "status": "completed"},
+    "execution": {
+        "total_duration_ms": 6842,
+        "event_count": 6,
+        "handoffs": 2,
+        "status": "completed",
+    },
     "notes": "Representative example spec. Not an actual AgenticLens export.",
 }
 
-SEED_EVENTS: List[Dict[str, Any]] = [
+SEED_EVENTS: list[dict[str, Any]] = [
     {
-        "sequence": 0, "agent_name": "cardholder-api", "event_type": "user_request",
+        "sequence": 0,
+        "agent_name": "cardholder-api",
+        "event_type": "user_request",
         "input": {"message": "Why is there a $2,847 charge from NORTHWIND SUPPLY on my card?"},
-        "output": {"normalized_intent": "explain_unusual_expense",
-                   "initial_prompt": "Why is there a $2,847 charge from NORTHWIND SUPPLY on my card?"},
+        "output": {
+            "normalized_intent": "explain_unusual_expense",
+            "initial_prompt": "Why is there a $2,847 charge from NORTHWIND SUPPLY on my card?",
+        },
         "metadata": {"session": "sess_8f2a", "model": "gpt-4o-mini"},
         "timestamp": "2026-10-14T09:41:00Z",
     },
     {
-        "sequence": 1, "agent_name": "planner-agent", "event_type": "plan",
+        "sequence": 1,
+        "agent_name": "planner-agent",
+        "event_type": "plan",
         "input": {"intent": "explain_unusual_expense"},
-        "output": {"plan": ["lookup_transactions", "analyze_flags", "summarize"],
-                   "delegate_to": "transaction-analysis-agent"},
-        "metadata": {"delegation": "transaction-analysis-agent",
-                     "handoff_context": "card_last4=4412, window=30d"},
+        "output": {
+            "plan": ["lookup_transactions", "analyze_flags", "summarize"],
+            "delegate_to": "transaction-analysis-agent",
+        },
+        "metadata": {
+            "delegation": "transaction-analysis-agent",
+            "handoff_context": "card_last4=4412, window=30d",
+        },
         "timestamp": "2026-10-14T09:41:01Z",
     },
     {
-        "sequence": 2, "agent_name": "planner-agent", "event_type": "agent_handoff",
-        "input": None, "output": None,
+        "sequence": 2,
+        "agent_name": "planner-agent",
+        "event_type": "agent_handoff",
+        "input": None,
+        "output": None,
         "metadata": {"from": "planner-agent", "to": "transaction-analysis-agent"},
         "timestamp": "2026-10-14T09:41:02Z",
     },
     {
-        "sequence": 3, "agent_name": "transaction-analysis-agent", "event_type": "tool_call",
-        "input": {"tool": "lookup_transactions",
-                  "args": {"card_last4": "4412", "amount_min": 2000, "window_days": 30}},
-        "output": {"matches": [{"merchant": "NORTHWIND SUPPLY", "amount": 2847.0,
-                                "category": "office_supplies", "flag": "first_time_merchant",
-                                "date": "2026-10-12"}],
-                   "count": 3},
-        "metadata": {"tool": "lookup_transactions", "latency_ms": 2410, "status": "success",
-                     "issues": [{"severity": "low", "metric": "performance",
-                                 "message": "lookup_transactions p95 latency 2.4s exceeds the 1.5s target."}]},
+        "sequence": 3,
+        "agent_name": "transaction-analysis-agent",
+        "event_type": "tool_call",
+        "input": {
+            "tool": "lookup_transactions",
+            "args": {"card_last4": "4412", "amount_min": 2000, "window_days": 30},
+        },
+        "output": {
+            "matches": [
+                {
+                    "merchant": "NORTHWIND SUPPLY",
+                    "amount": 2847.0,
+                    "category": "office_supplies",
+                    "flag": "first_time_merchant",
+                    "date": "2026-10-12",
+                }
+            ],
+            "count": 3,
+        },
+        "metadata": {
+            "tool": "lookup_transactions",
+            "latency_ms": 2410,
+            "status": "success",
+            "issues": [
+                {
+                    "severity": "low",
+                    "metric": "performance",
+                    "message": "lookup_transactions p95 latency 2.4s exceeds the 1.5s target.",
+                }
+            ],
+        },
         "timestamp": "2026-10-14T09:41:03Z",
     },
     {
-        "sequence": 4, "agent_name": "transaction-analysis-agent", "event_type": "model_response",
+        "sequence": 4,
+        "agent_name": "transaction-analysis-agent",
+        "event_type": "model_response",
         "input": None,
-        "output": {"assessment": "first-time merchant, single high-value purchase, no duplicate charges"},
+        "output": {
+            "assessment": "first-time merchant, single high-value purchase, no duplicate charges"
+        },
         "metadata": {"model": "gpt-4o-mini", "tokens": 412},
         "timestamp": "2026-10-14T09:41:04Z",
     },
     {
-        "sequence": 5, "agent_name": "response-agent", "event_type": "final_response",
+        "sequence": 5,
+        "agent_name": "response-agent",
+        "event_type": "final_response",
         "input": None,
-        "output": {"reply": ("This looks like a one-time purchase at NORTHWIND SUPPLY for $2,847 "
-                             "on Oct 12 — your first with this merchant. It's flagged only because "
-                             "it's a new merchant over your usual amount. If you don't recognize it, "
-                             "you can start a dispute from the card menu in the app."),
-                   "guardrail_notes": "No card numbers or PII included in user-facing reply."},
-        "metadata": {"model": "gpt-4o-mini", "guardrails": "passed",
-                     "issues": [{"severity": "low", "metric": "tool_correctness",
-                                 "message": "Agent filtered to 3 flagged transactions without surfacing paging metadata."}]},
+        "output": {
+            "reply": (
+                "This looks like a one-time purchase at NORTHWIND SUPPLY for $2,847 "
+                "on Oct 12 — your first with this merchant. It's flagged only because "
+                "it's a new merchant over your usual amount. If you don't recognize it, "
+                "you can start a dispute from the card menu in the app."
+            ),
+            "guardrail_notes": "No card numbers or PII included in user-facing reply.",
+        },
+        "metadata": {
+            "model": "gpt-4o-mini",
+            "guardrails": "passed",
+            "issues": [
+                {
+                    "severity": "low",
+                    "metric": "tool_correctness",
+                    "message": (
+                        "Agent filtered to 3 flagged transactions "
+                        "without surfacing paging metadata."
+                    ),
+                }
+            ],
+        },
         "timestamp": "2026-10-14T09:41:05Z",
     },
 ]
@@ -215,7 +296,7 @@ SEED_EVENTS: List[Dict[str, Any]] = [
 # ---------------------------------------------------------------------------
 _supabase = None
 _mode = "in_memory"
-_memory: Dict[str, Any] = {"scenarios": {}, "events": {}, "runs": {}, "decisions": []}
+_memory: dict[str, Any] = {"scenarios": {}, "events": {}, "runs": {}, "decisions": []}
 
 
 def _init_backend() -> None:
@@ -260,9 +341,9 @@ def _clamp(v: float) -> int:
     return max(0, min(100, int(round(v))))
 
 
-def _baseline_metrics(scenario_id: str) -> Dict[str, int]:
+def _baseline_metrics(scenario_id: str) -> dict[str, int]:
     """Baseline metrics: base anchors ±2 (hash jitter per metric)."""
-    metrics: Dict[str, int] = {}
+    metrics: dict[str, int] = {}
     for k in METRIC_KEYS:
         jitter = _stable_int(f"{scenario_id}:baseline:{k}", 5) - 2  # -2..+2
         metrics[k] = _clamp(BASELINE_BASE[k] + jitter)
@@ -272,16 +353,16 @@ def _baseline_metrics(scenario_id: str) -> Dict[str, int]:
 def _apply_delta(base_delta: int, jitter: int) -> int:
     """Apply ±1 jitter to a base delta while PRESERVING its sign."""
     if base_delta > 0:
-        return max(1, base_delta + jitter)   # stays positive
+        return max(1, base_delta + jitter)  # stays positive
     if base_delta < 0:
         return min(-1, base_delta + jitter)  # stays negative
-    return max(-1, min(1, jitter))           # neutral stays within ±1
+    return max(-1, min(1, jitter))  # neutral stays within ±1
 
 
-def _replay_metrics(scenario_id: str, baseline: Dict[str, int], change_type: str):
+def _replay_metrics(scenario_id: str, baseline: dict[str, int], change_type: str):
     """Replay metrics = baseline + change_type delta (±1 hash, signs preserved)."""
-    metrics: Dict[str, int] = {}
-    deltas: Dict[str, int] = {}
+    metrics: dict[str, int] = {}
+    deltas: dict[str, int] = {}
     for k in METRIC_KEYS:
         jitter = _stable_int(f"{scenario_id}:replay:{change_type}:{k}", 3) - 1  # -1..+1
         d = _apply_delta(CHANGE_DELTAS[change_type][k], jitter)
@@ -290,11 +371,11 @@ def _replay_metrics(scenario_id: str, baseline: Dict[str, int], change_type: str
     return metrics, deltas
 
 
-def _overall(metrics: Dict[str, int]) -> float:
+def _overall(metrics: dict[str, int]) -> float:
     return round(sum(metrics[k] for k in METRIC_KEYS) / len(METRIC_KEYS), 1)
 
 
-def _readiness(baseline: Dict[str, int], comparison: Dict[str, int], deltas: Dict[str, int]):
+def _readiness(baseline: dict[str, int], comparison: dict[str, int], deltas: dict[str, int]):
     """Ordered readiness gates → (status, overall_delta, min_delta)."""
     b_overall = _overall(baseline)
     c_overall = _overall(comparison)
@@ -302,15 +383,20 @@ def _readiness(baseline: Dict[str, int], comparison: Dict[str, int], deltas: Dic
     min_delta = min(deltas.values())
     post_safety = comparison["safety_compliance"]
     # (1) hard fails
-    if (overall_delta <= -2.0 or min_delta <= THRESHOLDS["not_ready_max_regression"]
-            or post_safety < THRESHOLDS["not_ready_min_safety"]
-            or any(comparison[k] < 60 for k in METRIC_KEYS)):
+    if (
+        overall_delta <= -2.0
+        or min_delta <= THRESHOLDS["not_ready_max_regression"]
+        or post_safety < THRESHOLDS["not_ready_min_safety"]
+        or any(comparison[k] < 60 for k in METRIC_KEYS)
+    ):
         status = "NOT READY"
     # (2) all ready gates cleared
-    elif (overall_delta >= THRESHOLDS["ready_min_overall_delta"]
-          and min_delta >= THRESHOLDS["ready_max_regression"]
-          and post_safety >= THRESHOLDS["ready_min_safety"]
-          and c_overall >= THRESHOLDS["ready_min_overall"]):
+    elif (
+        overall_delta >= THRESHOLDS["ready_min_overall_delta"]
+        and min_delta >= THRESHOLDS["ready_max_regression"]
+        and post_safety >= THRESHOLDS["ready_min_safety"]
+        and c_overall >= THRESHOLDS["ready_min_overall"]
+    ):
         status = "READY"
     # (3) everything else
     else:
@@ -318,41 +404,62 @@ def _readiness(baseline: Dict[str, int], comparison: Dict[str, int], deltas: Dic
     return status, overall_delta, min_delta
 
 
-def _replay_issues(change_type: str, deltas: Dict[str, int]) -> List[Dict[str, str]]:
+def _replay_issues(change_type: str, deltas: dict[str, int]) -> list[dict[str, str]]:
     """Replay issues mirror metric regressions (special case: model swap safety)."""
-    issues: List[Dict[str, str]] = []
+    issues: list[dict[str, str]] = []
     for k in METRIC_KEYS:
         d = deltas[k]
         if d >= 0:
             continue
         if change_type == "model_change" and k == "safety_compliance":
-            issues.append({
-                "severity": "high",
-                "metric": "safety_compliance",
-                "message": "Policy guardrail check skipped on 1 of 3 response candidates after model swap.",
-            })
+            issues.append(
+                {
+                    "severity": "high",
+                    "metric": "safety_compliance",
+                    "message": (
+                        "Policy guardrail check skipped on 1 of 3 "
+                        "response candidates after model swap."
+                    ),
+                }
+            )
             continue
         severity = "high" if d <= -8 else ("medium" if d <= -3 else "low")
-        issues.append({
-            "severity": severity,
-            "metric": k,
-            "message": f"{k} regressed {d} points in the simulated {change_type} replay.",
-        })
+        issues.append(
+            {
+                "severity": severity,
+                "metric": k,
+                "message": f"{k} regressed {d} points in the simulated {change_type} replay.",
+            }
+        )
     return issues
 
 
-def _metric_entry(metric: str, frm: int, to: int, delta: int, change_type: str, kind: str) -> Dict[str, Any]:
+def _metric_entry(
+    metric: str, frm: int, to: int, delta: int, change_type: str, kind: str
+) -> dict[str, Any]:
     if kind == "improvement":
-        explanation = (f"{metric} improved from {frm} to {to} (+{delta}) under the simulated "
-                       f"{change_type} replay, lifting this dimension above baseline.")
+        explanation = (
+            f"{metric} improved from {frm} to {to} (+{delta}) under the simulated "
+            f"{change_type} replay, lifting this dimension above baseline."
+        )
     else:
-        explanation = (f"{metric} regressed from {frm} to {to} ({delta}) under the simulated "
-                       f"{change_type} replay, falling below baseline.")
+        explanation = (
+            f"{metric} regressed from {frm} to {to} ({delta}) under the simulated "
+            f"{change_type} replay, falling below baseline."
+        )
     return {"metric": metric, "from": frm, "to": to, "delta": delta, "explanation": explanation}
 
 
-def _build_rationale(status: str, change_type: str, b_m: Dict[str, int], c_m: Dict[str, int],
-                     deltas: Dict[str, int], b_ov: float, c_ov: float, overall_delta: float) -> str:
+def _build_rationale(
+    status: str,
+    change_type: str,
+    b_m: dict[str, int],
+    c_m: dict[str, int],
+    deltas: dict[str, int],
+    b_ov: float,
+    c_ov: float,
+    overall_delta: float,
+) -> str:
     """Plain-language rationale citing metric moves + the deciding threshold."""
     imps = [f"{k} +{deltas[k]}" for k in METRIC_KEYS if deltas[k] > 0]
     regs = [f"{k} {deltas[k]}" for k in METRIC_KEYS if deltas[k] < 0]
@@ -371,7 +478,10 @@ def _build_rationale(status: str, change_type: str, b_m: Dict[str, int], c_m: Di
         if deltas[worst] <= THRESHOLDS["not_ready_max_regression"]:
             reasons.append(f"{worst} delta {deltas[worst]} <= not_ready_max_regression -8.0")
         if c_m["safety_compliance"] < THRESHOLDS["not_ready_min_safety"]:
-            reasons.append(f"post-replay safety_compliance {c_m['safety_compliance']} < not_ready_min_safety 70.0")
+            reasons.append(
+                f"post-replay safety_compliance {c_m['safety_compliance']} "
+                "< not_ready_min_safety 70.0"
+            )
         low = [k for k in METRIC_KEYS if c_m[k] < 60]
         if low:
             reasons.append(f"post-replay metric(s) {', '.join(low)} below 60")
@@ -428,13 +538,15 @@ def _db_probe() -> bool:
 def _scenario_exists(scenario_id: str) -> bool:
     if _mode == "supabase":
         resp = _db_call(
-            lambda: _supabase.table("scenarios").select("id").eq("id", scenario_id).limit(1).execute()
+            lambda: (
+                _supabase.table("scenarios").select("id").eq("id", scenario_id).limit(1).execute()
+            )
         )
         return bool(resp.data)
     return scenario_id in _memory["scenarios"]
 
 
-def _insert_scenario(row: Dict[str, Any], event_rows: List[Dict[str, Any]]) -> None:
+def _insert_scenario(row: dict[str, Any], event_rows: list[dict[str, Any]]) -> None:
     if _mode == "supabase":
         _db_call(lambda: _supabase.table("scenarios").insert(row).execute())
         if event_rows:
@@ -444,17 +556,24 @@ def _insert_scenario(row: Dict[str, Any], event_rows: List[Dict[str, Any]]) -> N
         _memory["events"][row["id"]] = event_rows
 
 
-def _list_scenarios() -> List[Dict[str, Any]]:
+def _list_scenarios() -> list[dict[str, Any]]:
     if _mode == "supabase":
         resp = _db_call(
-            lambda: _supabase.table("scenarios").select("*").order("created_at", desc=True).execute()
+            lambda: (
+                _supabase.table("scenarios").select("*").order("created_at", desc=True).execute()
+            )
         )
         rows = resp.data or []
-        counts: Dict[str, int] = {r["id"]: 0 for r in rows}
+        counts: dict[str, int] = {r["id"]: 0 for r in rows}
         ids = list(counts.keys())
         if ids:
             ev = _db_call(
-                lambda: _supabase.table("trace_events").select("scenario_id").in_("scenario_id", ids).execute()
+                lambda: (
+                    _supabase.table("trace_events")
+                    .select("scenario_id")
+                    .in_("scenario_id", ids)
+                    .execute()
+                )
             )
             for e in ev.data or []:
                 sid = e.get("scenario_id")
@@ -468,26 +587,35 @@ def _list_scenarios() -> List[Dict[str, Any]]:
     return out
 
 
-def _get_scenario_row(scenario_id: str) -> Optional[Dict[str, Any]]:
+def _get_scenario_row(scenario_id: str) -> dict[str, Any] | None:
     if _mode == "supabase":
         resp = _db_call(
-            lambda: _supabase.table("scenarios").select("*").eq("id", scenario_id).limit(1).execute()
+            lambda: (
+                _supabase.table("scenarios").select("*").eq("id", scenario_id).limit(1).execute()
+            )
         )
         return resp.data[0] if resp.data else None
     return _memory["scenarios"].get(scenario_id)
 
 
-def _get_events(scenario_id: str) -> List[Dict[str, Any]]:
+def _get_events(scenario_id: str) -> list[dict[str, Any]]:
     if _mode == "supabase":
         resp = _db_call(
-            lambda: (_supabase.table("trace_events").select("*")
-                     .eq("scenario_id", scenario_id).order("sequence_number").execute())
+            lambda: (
+                _supabase.table("trace_events")
+                .select("*")
+                .eq("scenario_id", scenario_id)
+                .order("sequence_number")
+                .execute()
+            )
         )
         return resp.data or []
-    return sorted(_memory["events"].get(scenario_id, []), key=lambda e: e.get("sequence_number") or 0)
+    return sorted(
+        _memory["events"].get(scenario_id, []), key=lambda e: e.get("sequence_number") or 0
+    )
 
 
-def _insert_run(run: Dict[str, Any]) -> Dict[str, Any]:
+def _insert_run(run: dict[str, Any]) -> dict[str, Any]:
     if _mode == "supabase":
         resp = _db_call(lambda: _supabase.table("evaluation_runs").insert(run).execute())
         return resp.data[0] if resp.data else run
@@ -495,11 +623,16 @@ def _insert_run(run: Dict[str, Any]) -> Dict[str, Any]:
     return run
 
 
-def _list_runs(scenario_id: str) -> List[Dict[str, Any]]:
+def _list_runs(scenario_id: str) -> list[dict[str, Any]]:
     if _mode == "supabase":
         resp = _db_call(
-            lambda: (_supabase.table("evaluation_runs").select("*")
-                     .eq("scenario_id", scenario_id).order("created_at", desc=True).execute())
+            lambda: (
+                _supabase.table("evaluation_runs")
+                .select("*")
+                .eq("scenario_id", scenario_id)
+                .order("created_at", desc=True)
+                .execute()
+            )
         )
         return resp.data or []
     runs = list(_memory["runs"].get(scenario_id, []))
@@ -507,10 +640,12 @@ def _list_runs(scenario_id: str) -> List[Dict[str, Any]]:
     return runs
 
 
-def _get_run_row(run_id: str) -> Optional[Dict[str, Any]]:
+def _get_run_row(run_id: str) -> dict[str, Any] | None:
     if _mode == "supabase":
         resp = _db_call(
-            lambda: _supabase.table("evaluation_runs").select("*").eq("id", run_id).limit(1).execute()
+            lambda: (
+                _supabase.table("evaluation_runs").select("*").eq("id", run_id).limit(1).execute()
+            )
         )
         return resp.data[0] if resp.data else None
     for runs in _memory["runs"].values():
@@ -520,7 +655,7 @@ def _get_run_row(run_id: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def _insert_decision(decision: Dict[str, Any]) -> None:
+def _insert_decision(decision: dict[str, Any]) -> None:
     if _mode == "supabase":
         _db_call(lambda: _supabase.table("release_decisions").insert(decision).execute())
     else:
@@ -530,7 +665,9 @@ def _insert_decision(decision: Dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 # Row → API shape mappers
 # ---------------------------------------------------------------------------
-def _scenario_out(row: Dict[str, Any], event_count: int, include_spec: bool = False) -> Dict[str, Any]:
+def _scenario_out(
+    row: dict[str, Any], event_count: int, include_spec: bool = False
+) -> dict[str, Any]:
     out = {
         "id": row.get("id"),
         "name": row.get("name"),
@@ -545,7 +682,7 @@ def _scenario_out(row: Dict[str, Any], event_count: int, include_spec: bool = Fa
     return out
 
 
-def _event_out(row: Dict[str, Any]) -> Dict[str, Any]:
+def _event_out(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": row.get("id"),
         "scenario_id": row.get("scenario_id"),
@@ -559,7 +696,7 @@ def _event_out(row: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _run_out(row: Dict[str, Any]) -> Dict[str, Any]:
+def _run_out(row: dict[str, Any]) -> dict[str, Any]:
     """Map a stored evaluation_runs row to the RUN contract used by the frontend."""
     return {
         "id": row.get("id"),
@@ -595,17 +732,19 @@ def _ensure_seed() -> None:
     }
     event_rows = []
     for ev in SEED_EVENTS:
-        event_rows.append({
-            "id": _new_id(),
-            "scenario_id": SEED_SCENARIO_ID,
-            "sequence_number": ev["sequence"],
-            "agent_name": ev["agent_name"],
-            "event_type": ev["event_type"],
-            "input": ev.get("input"),
-            "output": ev.get("output"),
-            "metadata": ev.get("metadata"),
-            "timestamp": ev.get("timestamp"),
-        })
+        event_rows.append(
+            {
+                "id": _new_id(),
+                "scenario_id": SEED_SCENARIO_ID,
+                "sequence_number": ev["sequence"],
+                "agent_name": ev["agent_name"],
+                "event_type": ev["event_type"],
+                "input": ev.get("input"),
+                "output": ev.get("output"),
+                "metadata": ev.get("metadata"),
+                "timestamp": ev.get("timestamp"),
+            }
+        )
     _insert_scenario(scenario_row, event_rows)
     logger.info("Seeded demo scenario %s", SEED_SCENARIO_ID)
 
@@ -689,7 +828,12 @@ async def persistence_error_handler(request, exc: PersistenceError):
     """
     return JSONResponse(
         status_code=503,
-        content={"detail": "Persistence unavailable — the database could not be reached. Data may not be saved."},
+        content={
+            "detail": (
+                "Persistence unavailable — the database could not be reached. "
+                "Data may not be saved."
+            )
+        },
     )
 
 
@@ -708,18 +852,18 @@ class EventIn(BaseModel):
     sequence: int
     agent_name: str
     event_type: str
-    input: Optional[Dict[str, Any]] = None
-    output: Optional[Dict[str, Any]] = None
-    metadata: Optional[Dict[str, Any]] = None
-    timestamp: Optional[str] = None
+    input: dict[str, Any] | None = None
+    output: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
+    timestamp: str | None = None
 
 
 class ScenarioCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=120)
     description: str = Field(default="", max_length=2000)
     source_type: str = "simulated_production_capture"
-    spec: Dict[str, Any]
-    events: List[EventIn] = Field(..., min_length=1, max_length=100)
+    spec: dict[str, Any]
+    events: list[EventIn] = Field(..., min_length=1, max_length=100)
 
 
 class EvaluateBody(BaseModel):
@@ -740,7 +884,7 @@ def _as_uuid(value: str, detail: str = "Scenario not found") -> str:
     try:
         uuid.UUID(value)
     except (ValueError, TypeError, AttributeError):
-        raise HTTPException(status_code=404, detail=detail)
+        raise HTTPException(status_code=404, detail=detail) from None
     return value
 
 
@@ -787,17 +931,20 @@ def create_scenario(body: ScenarioCreate):
         "created_at": now,
         "updated_at": now,
     }
-    event_rows = [{
-        "id": _new_id(),
-        "scenario_id": scenario_id,
-        "sequence_number": ev.sequence,
-        "agent_name": ev.agent_name,
-        "event_type": ev.event_type,
-        "input": ev.input,
-        "output": ev.output,
-        "metadata": ev.metadata,
-        "timestamp": ev.timestamp or now,
-    } for ev in body.events]
+    event_rows = [
+        {
+            "id": _new_id(),
+            "scenario_id": scenario_id,
+            "sequence_number": ev.sequence,
+            "agent_name": ev.agent_name,
+            "event_type": ev.event_type,
+            "input": ev.input,
+            "output": ev.output,
+            "metadata": ev.metadata,
+            "timestamp": ev.timestamp or now,
+        }
+        for ev in body.events
+    ]
     _insert_scenario(scenario_row, event_rows)
     return {"scenario": _scenario_out(scenario_row, len(event_rows), include_spec=True)}
 
@@ -809,8 +956,10 @@ def get_scenario(scenario_id: str):
     if not row:
         raise HTTPException(status_code=404, detail="Scenario not found")
     events = _get_events(scenario_id)
-    return {"scenario": _scenario_out(row, len(events), include_spec=True),
-            "events": [_event_out(e) for e in events]}
+    return {
+        "scenario": _scenario_out(row, len(events), include_spec=True),
+        "events": [_event_out(e) for e in events],
+    }
 
 
 @app.post("/api/scenarios/{scenario_id}/evaluate", status_code=201)
@@ -832,7 +981,10 @@ def evaluate_scenario(scenario_id: str, body: EvaluateBody):
         "overall_score": _overall(metrics),
         "readiness_status": "BASELINE",
         "is_simulation": True,
-        "simulation_note": f"Baseline metrics are deterministic functions of the scenario id and trace ({SIMULATION_TAG}).",
+        "simulation_note": (
+            f"Baseline metrics are deterministic functions of the scenario id "
+            f"and trace ({SIMULATION_TAG})."
+        ),
         "created_at": _now(),
     }
     stored = _insert_run(run)
@@ -843,8 +995,10 @@ def evaluate_scenario(scenario_id: str, body: EvaluateBody):
 def replay_scenario(scenario_id: str, body: ReplayBody):
     scenario_id = _as_uuid(scenario_id)
     if body.change_type not in CHANGE_TYPES:
-        raise HTTPException(status_code=400,
-                            detail="change_type must be one of: coordination_update, model_change, prompt_update")
+        raise HTTPException(
+            status_code=400,
+            detail="change_type must be one of: coordination_update, model_change, prompt_update",
+        )
     if not _scenario_exists(scenario_id):
         raise HTTPException(status_code=404, detail="Scenario not found")
     # Always INSERT a new replay run; the baseline row is never overwritten.
@@ -862,8 +1016,10 @@ def replay_scenario(scenario_id: str, body: ReplayBody):
         "overall_score": _overall(metrics),
         "readiness_status": status,
         "is_simulation": True,
-        "simulation_note": (f"Simulated replay of change_type={body.change_type} with deterministic "
-                            f"hash-based scoring ({SIMULATION_TAG})."),
+        "simulation_note": (
+            f"Simulated replay of change_type={body.change_type} with deterministic "
+            f"hash-based scoring ({SIMULATION_TAG})."
+        ),
         "created_at": _now(),
     }
     stored = _insert_run(run)
@@ -894,22 +1050,35 @@ def compare_runs(scenario_id: str, baseline_id: str, comparison_id: str):
     if base_row.get("run_type") != "baseline":
         raise HTTPException(status_code=400, detail="baseline_id must reference a baseline run")
     if comp_row.get("run_type") != "simulated_replay":
-        raise HTTPException(status_code=400, detail="comparison_id must reference a simulated_replay run")
+        raise HTTPException(
+            status_code=400, detail="comparison_id must reference a simulated_replay run"
+        )
 
     base_run, comp_run = _run_out(base_row), _run_out(comp_row)
     b_m, c_m = base_run["metrics"], comp_run["metrics"]
     change_type = comp_run.get("change_type") or "simulated_replay"
 
     deltas = {k: round(float(c_m.get(k, 0)) - float(b_m.get(k, 0)), 1) for k in METRIC_KEYS}
-    improvements = [_metric_entry(k, b_m[k], c_m[k], deltas[k], change_type, "improvement")
-                    for k in METRIC_KEYS if deltas[k] > 0]
-    regressions = [_metric_entry(k, b_m[k], c_m[k], deltas[k], change_type, "regression")
-                   for k in METRIC_KEYS if deltas[k] < 0]
-    remaining_risks = [{
-        "metric": r["metric"],
-        "message": (f"{r['metric']} is {r['delta']} points below baseline after the {change_type} "
-                    f"replay; validate in staging before promoting."),
-    } for r in regressions]
+    improvements = [
+        _metric_entry(k, b_m[k], c_m[k], deltas[k], change_type, "improvement")
+        for k in METRIC_KEYS
+        if deltas[k] > 0
+    ]
+    regressions = [
+        _metric_entry(k, b_m[k], c_m[k], deltas[k], change_type, "regression")
+        for k in METRIC_KEYS
+        if deltas[k] < 0
+    ]
+    remaining_risks = [
+        {
+            "metric": r["metric"],
+            "message": (
+                f"{r['metric']} is {r['delta']} points below baseline after the {change_type} "
+                f"replay; validate in staging before promoting."
+            ),
+        }
+        for r in regressions
+    ]
 
     b_ov = float(base_run.get("overall_score") or _overall(b_m))
     c_ov = float(comp_run.get("overall_score") or _overall(c_m))
@@ -920,38 +1089,44 @@ def compare_runs(scenario_id: str, baseline_id: str, comparison_id: str):
     # and `recommendation_summary`.
     recommendation = status
     recommendation_summary = RECOMMENDATIONS[status]
-    comparison_note = (f"Baseline-vs-replay comparison and release decision are deterministic "
-                       f"simulations over stored runs ({SIMULATION_TAG}).")
+    comparison_note = (
+        f"Baseline-vs-replay comparison and release decision are deterministic "
+        f"simulations over stored runs ({SIMULATION_TAG})."
+    )
 
     # Persist the decision in BOTH modes (supabase insert / in-memory list).
-    _insert_decision({
-        "id": _new_id(),
-        "scenario_id": scenario_id,
-        "baseline_run_id": base_run["id"],
-        "comparison_run_id": comp_run["id"],
-        "readiness_status": status,
-        "improvements": improvements,
-        "regressions": regressions,
-        "remaining_risks": remaining_risks,
-        "deltas": deltas,
-        "rationale": rationale,
-        "recommendation": recommendation,
-        "recommendation_summary": recommendation_summary,
-        "thresholds": THRESHOLDS,
-        "created_at": _now(),
-    })
+    _insert_decision(
+        {
+            "id": _new_id(),
+            "scenario_id": scenario_id,
+            "baseline_run_id": base_run["id"],
+            "comparison_run_id": comp_run["id"],
+            "readiness_status": status,
+            "improvements": improvements,
+            "regressions": regressions,
+            "remaining_risks": remaining_risks,
+            "deltas": deltas,
+            "rationale": rationale,
+            "recommendation": recommendation,
+            "recommendation_summary": recommendation_summary,
+            "thresholds": THRESHOLDS,
+            "created_at": _now(),
+        }
+    )
 
-    return {"comparison": {
-        "baseline": base_run,
-        "comparison": comp_run,
-        "deltas": deltas,
-        "improvements": improvements,
-        "regressions": regressions,
-        "remaining_risks": remaining_risks,
-        "recommendation": recommendation,
-        "recommendation_summary": recommendation_summary,
-        "thresholds": THRESHOLDS,
-        "rationale": rationale,
-        "simulation": True,
-        "simulation_note": comparison_note,
-    }}
+    return {
+        "comparison": {
+            "baseline": base_run,
+            "comparison": comp_run,
+            "deltas": deltas,
+            "improvements": improvements,
+            "regressions": regressions,
+            "remaining_risks": remaining_risks,
+            "recommendation": recommendation,
+            "recommendation_summary": recommendation_summary,
+            "thresholds": THRESHOLDS,
+            "rationale": rationale,
+            "simulation": True,
+            "simulation_note": comparison_note,
+        }
+    }

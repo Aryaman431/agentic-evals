@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ============================================================
+     BLOG ARTICLE 06 - The 100ms Budget: Latency Engineering for
+     Real-Time Agents
+     Lives in blog/: stylesheet ../styles.css, home ../index.html,
+     projects ../voice-agent-evals/index.html, siblings are the
+     other files in this folder. ZERO JavaScript, no assets.
+     ============================================================ -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="How the agentic-evals engine approaches latency for real-time agents: setting budgets, measuring honestly, and proving the latency rule fires.">
+<title>The 100ms Budget: Latency Engineering for Real-Time Agents &middot; Blog &middot; Agentic Evals</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <p class="brand">
+      <span class="brand-name">DeepAgentLabs</span>
+      <span class="brand-sep" aria-hidden="true">/</span>
+      <span class="brand-sub">Agentic Evals</span>
+    </p>
+
+    <nav class="site-nav" aria-label="Primary">
+
+      <!-- desktop navigation -->
+      <ul class="nav-list nav-list--wide">
+        <li><a class="nav-link" href="../index.html">Home</a></li>
+        <li><a class="nav-link" href="../index.html#use-cases">Use Cases</a></li>
+        <li class="nav-item--has-sub">
+          <a class="nav-link nav-link--sub" href="index.html">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <ul class="nav-sub-list">
+            <li><a class="nav-sub-link" href="index.html">All posts</a></li>
+            <li><a class="nav-sub-link" href="chatbot-evaluation.html">Chatbot Evaluation</a></li>
+            <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+            <li><a class="nav-sub-link" href="production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+            <li><a class="nav-sub-link" href="eval-engine.html">How the Evaluation Engine Was Built</a></li>
+            <li><a class="nav-sub-link" href="judge-reliability.html">Judging the Judge: Building LLM-as-a-Judge Evaluations That Stay Honest</a></li>
+            <li><a class="nav-sub-link" href="latency-engineering.html">The 100ms Budget: Latency Engineering for Real-Time Agents</a></li>
+          </ul>
+        </li>
+        <li><a class="nav-link" href="../index.html#about">About</a></li>
+        <li>
+          <a class="nav-link nav-link--ext"
+             href="https://github.com/Aryaman431/agentic-evals"
+             target="_blank"
+             rel="noopener noreferrer"
+             aria-label="Open the agentic-evals repository on GitHub from the Latency Engineering article - opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+        </li>
+      </ul>
+
+      <!-- mobile navigation: native disclosure, no JavaScript -->
+      <details class="nav-disclosure">
+        <summary class="nav-summary">Menu<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <ul class="nav-list nav-list--drawer">
+          <li><a class="nav-link" href="../index.html">Home</a></li>
+          <li><a class="nav-link" href="../index.html#use-cases">Use Cases</a></li>
+          <li class="nav-item--has-sub">
+            <a class="nav-link nav-link--sub" href="index.html">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <ul class="nav-sub-list">
+              <li><a class="nav-sub-link" href="index.html">All posts</a></li>
+              <li><a class="nav-sub-link" href="chatbot-evaluation.html">Chatbot Evaluation</a></li>
+              <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+              <li><a class="nav-sub-link" href="production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+              <li><a class="nav-sub-link" href="eval-engine.html">How the Evaluation Engine Was Built</a></li>
+              <li><a class="nav-sub-link" href="judge-reliability.html">Judging the Judge: Building LLM-as-a-Judge Evaluations That Stay Honest</a></li>
+              <li><a class="nav-sub-link" href="latency-engineering.html">The 100ms Budget: Latency Engineering for Real-Time Agents</a></li>
+            </ul>
+          </li>
+          <li><a class="nav-link" href="../index.html#about">About</a></li>
+          <li>
+            <a class="nav-link nav-link--ext"
+               href="https://github.com/Aryaman431/agentic-evals"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="Open the agentic-evals repository on GitHub from the Latency Engineering article - opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+          </li>
+        </ul>
+      </details>
+
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+
+    <a class="back-link" href="index.html">All posts</a>
+
+    <!-- ==========================================================
+         1 - ARTICLE HEADER
+         ========================================================== -->
+    <header class="article-header">
+      <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">&#167;B</span>Blog</p>
+
+      <h1>The 100ms Budget: Latency Engineering for Real-Time Agents</h1>
+
+      <p class="article-meta">
+        <span>Engineering &middot; 6 min read</span>
+        <span><code>voice-agent-evals</code></span>
+      </p>
+
+      <p class="article-lede">
+        A voice call has a clock running on it from the moment the caller speaks. This post is about
+        the discipline of latency budgets - what to measure, how to set the number, and how to prove
+        the measurement means something.
+      </p>
+    </header>
+
+    <!-- ==========================================================
+         2 - LATENCY IS A QUALITY ATTRIBUTE
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Latency is a quality attribute, not a number</h2>
+
+        <p>
+          For a chatbot, a slow answer is a annoyance. For a real-time agent, a slow answer is a
+          failed answer. The user has already waited; the context has moved on; the moment of
+          confidence is gone. Latency has to be treated as a first-class quality attribute, and the
+          only way to treat it that way is to put a number on it before the run starts.
+        </p>
+
+        <p>
+          The engine models this with a latency ceiling on the test case and a latency evaluator
+          that checks the run against it. The ceiling is not a suggestion that the runner hopes is
+          satisfied; it is a threshold that produces a score and, through the gate, a verdict.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         3 - SETTING A BUDGET
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Setting a budget</h2>
+
+        <p>
+          Budgets are written before the runs, not after them. A team that sets a latency target
+          after seeing a number will always ship to the number it saw. A team that sets a budget
+          before the agent exists has something to design against, and something to test against.
+        </p>
+
+        <p>
+          The work went up the stack: the agent, the tools, the orchestration, the transport. Each
+          layer could move, and each layer needed its own number. The budget is the forcing function
+          that keeps those conversations concrete.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         4 - MEASURING HONESTLY
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Measuring honestly</h2>
+
+        <p>
+          A latency number is only useful if it is measured where it will be used. The engine's
+          evaluation runs against a simulated agent, on local hardware, with local mocks for the
+          parts that would otherwise be external. That is the right way to test the logic of the
+          system; it is not the right way to claim anything about a production voice pipeline.
+        </p>
+
+        <p>
+          The honest version of the practice is to label what is simulated and what is real, and to
+          keep the two separate in any report. A green latency score on a simulated run is a green
+          score about the simulation, not about the phone network.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         5 - PROVING THE RULE FIRES
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Proving the rule fires</h2>
+
+        <p>
+          The latency evaluator earns its keep in one specific way: through fault injection. A
+          fault can insert a real delay into the timed section, and the evaluator then has to decide
+          whether the run met the budget. The injected delay is real, the clock is real, and the
+          judgement is mechanical. That is the whole test, and it is a good one.
+        </p>
+
+        <p>
+          The lesson is not about latency specifically. It is about the general discipline the
+          engine applies everywhere: write the expectation, run the system, break it on purpose, and
+          confirm the check catches the break. Latency was just the first place where that discipline
+          had a number that mattered.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         6 - LESSONS
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Lessons</h2>
+
+        <ul>
+          <li>Budgets are promises made before the run and checked after it.</li>
+          <li>Measurement must be honest about what it is measuring.</li>
+          <li>Fault injection is the cheapest way to prove a check is real.</li>
+          <li>Latency budgets should be set per layer, not per system.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         7 - TAKEAWAY
+         ========================================================== -->
+    <div class="takeaway">
+      <p class="takeaway-label">Takeaway</p>
+      <p>
+        A latency budget is a promise you make before the run and keep after it. Set the number,
+        measure it honestly, and prove the check fires - then a real-time agent has something to
+        ship against instead of something to hope for.
+      </p>
+    </div>
+
+    <p class="run-note">
+      Run it from the repository root: <code>python voice-agent-evals/run_evals.py</code> prints
+      the baseline scorecard, and <code>python voice-agent-evals/server.py</code> starts the
+      Evaluation API on port 8001 for the Scenario Lab.
+    </p>
+
+    <!-- ==========================================================
+         8 - PREV / NEXT / PROJECT
+         ========================================================== -->
+    <nav class="article-footer-nav" aria-label="More articles">
+      <a href="judge-reliability.html">
+        <span>Previous article</span>
+        <span>Judging the Judge: Building LLM-as-a-Judge Evaluations That Stay Honest</span>
+      </a>
+      <a href="chatbot-evaluation.html">
+        <span>Next article</span>
+        <span>Chatbot Evaluation</span>
+      </a>
+      <a href="../voice-agent-evals/index.html">
+        <span>Open the project</span>
+        <span>voice-agent-evals/</span>
+      </a>
+    </nav>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p class="footer-brand">DeepAgentLabs &middot; Agentic Evals</p>
+    <p class="footer-note">
+      A static storytelling site &mdash; zero JavaScript, relative links, one stylesheet.
+    </p>
+    <p class="footer-meta" aria-hidden="true">DL / STORIES &middot; REV 2026.10</p>
+  </div>
+</footer>
+
+</body>
+</html>

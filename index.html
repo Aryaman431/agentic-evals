@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ============================================================
+     URL MAP — single source of truth for every link on this page.
+     This page uses ZERO JavaScript: navigation is CSS anchors and
+     a native &lt;details&gt; drawer. All links are relative except GitHub.
+     ------------------------------------------------------------
+     NAV ANCHORS (same page)
+       Home       → index.html
+       Use Cases  → #use-cases   (the three stories)
+       Blog       → #blog
+       About      → #about
+       GitHub     → https://github.com/Aryaman431/agentic-evals
+                    (external · opens in a new tab · unique aria-label
+                     in the desktop list and in the mobile drawer)
+     ARTICLE LINKS (relative)
+       blog/chatbot-evaluation.html
+       blog/voice-agent-evaluation.html
+       blog/production-trace-release-decision.html
+       blog/index.html                      (blog index)
+     PROJECT LINKS (repo frontends, relative)
+       Chatbot-eval/index.html
+       voice-agent-evals/index.html
+       Production%20trace%20to%20release%20decision/index.html
+              (folder on disk: "Production trace to release decision"
+               — spaces are URL-encoded)
+     ============================================================ -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A storytelling site about testing AI agents: three beginner-friendly stories on chatbot evaluation, voice-agent evaluation, and turning a production trace into a release decision.">
+<title>Agentic Evals · Stories of Testing AI Agents</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <p class="brand">
+      <span class="brand-name">DeepAgentLabs</span>
+      <span class="brand-sep" aria-hidden="true">/</span>
+      <span class="brand-sub">Agentic Evals</span>
+    </p>
+
+    <nav class="site-nav" aria-label="Primary">
+
+      <!-- desktop navigation -->
+      <ul class="nav-list nav-list--wide">
+        <li><a class="nav-link" href="index.html" aria-current="page">Home</a></li>
+        <li><a class="nav-link" href="#use-cases">Use Cases</a></li>
+        <li class="nav-item--has-sub">
+          <a class="nav-link nav-link--sub" href="#blog">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <ul class="nav-sub-list">
+            <li><a class="nav-sub-link" href="blog/index.html">All posts</a></li>
+            <li><a class="nav-sub-link" href="blog/chatbot-evaluation.html">Chatbot Evaluation</a></li>
+            <li><a class="nav-sub-link" href="blog/voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+            <li><a class="nav-sub-link" href="blog/production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+          </ul>
+        </li>
+        <li><a class="nav-link" href="#about">About</a></li>
+        <li>
+          <a class="nav-link nav-link--ext"
+             href="https://github.com/Aryaman431/agentic-evals"
+             target="_blank"
+             rel="noopener noreferrer"
+             aria-label="Open the agentic-evals repository on GitHub — opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+        </li>
+      </ul>
+
+      <!-- mobile navigation: native disclosure, no JavaScript -->
+      <details class="nav-disclosure">
+        <summary class="nav-summary">Menu<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <ul class="nav-list nav-list--drawer">
+          <li><a class="nav-link" href="index.html" aria-current="page">Home</a></li>
+          <li><a class="nav-link" href="#use-cases">Use Cases</a></li>
+          <li class="nav-item--has-sub">
+            <a class="nav-link nav-link--sub" href="#blog">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <ul class="nav-sub-list">
+              <li><a class="nav-sub-link" href="blog/index.html">All posts</a></li>
+              <li><a class="nav-sub-link" href="blog/chatbot-evaluation.html">Chatbot Evaluation</a></li>
+              <li><a class="nav-sub-link" href="blog/voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+              <li><a class="nav-sub-link" href="blog/production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+            </ul>
+          </li>
+          <li><a class="nav-link" href="#about">About</a></li>
+          <li>
+            <a class="nav-link nav-link--ext"
+               href="https://github.com/Aryaman431/agentic-evals"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="Open the agentic-evals repository on GitHub from the menu — opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+          </li>
+        </ul>
+      </details>
+
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ==========================================================
+       HERO
+       ========================================================== -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="wrap hero-grid">
+
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">§00</span>Three use cases · one evaluation workflow</p>
+
+        <h1 id="hero-heading">Test the agent <em class="serif-em">before</em> you trust it.</h1>
+
+        <p class="hero-lede">
+          Three hands-on agent-evaluation projects from the agentic-evals repository,
+          told as stories. Each one shows how test cases plus written rules turn
+          “sounds right” into “measured right” — with the working project and a full
+          article linked along the way.
+        </p>
+
+        <p class="hero-actions">
+          <a class="btn" href="#use-cases">Explore the Stories<svg class="arrow arrow--dr" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 2 L8 8 M8 3.5 V8 H3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+          <a class="btn btn--ghost" href="#blog">Read the blog</a>
+        </p>
+      </div>
+
+      <figure class="hero-visual">
+        <span class="coord coord--tl" aria-hidden="true">0,0</span>
+        <span class="coord coord--tr" aria-hidden="true">620</span>
+        <span class="coord coord--bl" aria-hidden="true">430</span>
+        <span class="coord coord--br" aria-hidden="true">DL/EV</span>
+
+        <svg class="diagram" viewBox="0 0 620 430" role="img" aria-labelledby="hero-svg-title hero-svg-desc" focusable="false">
+          <title id="hero-svg-title">Three surfaces, one evaluation layer, one verdict</title>
+          <desc id="hero-svg-desc">Three input surfaces — a chatbot, a voice agent, and a production trace — feed a single evaluation layer of eight written rules, which emits one illustrative verdict: a pass or fail result with a rule-by-rule breakdown.</desc>
+
+          <!-- input surface 01 · chatbot -->
+          <rect class="d-panel" x="20" y="44" width="152" height="60" rx="3"/>
+          <text class="d-lbl d-lbl-mint" x="32" y="64" font-size="10">01</text>
+          <text class="d-sans" x="32" y="84" font-size="12">CHATBOT</text>
+          <text class="d-lbl" x="32" y="100" font-size="10">typed messages</text>
+          <circle class="d-dot-lime" cx="160" cy="56" r="3"/>
+
+          <!-- input surface 02 · voice -->
+          <rect class="d-panel" x="20" y="185" width="152" height="60" rx="3"/>
+          <text class="d-lbl d-lbl-mint" x="32" y="205" font-size="10">02</text>
+          <text class="d-sans" x="32" y="225" font-size="12">VOICE AGENT</text>
+          <text class="d-lbl" x="32" y="241" font-size="10">spoken calls</text>
+          <circle class="d-dot-lime" cx="160" cy="197" r="3"/>
+
+          <!-- input surface 03 · production trace -->
+          <rect class="d-panel" x="20" y="326" width="152" height="60" rx="3"/>
+          <text class="d-lbl d-lbl-mint" x="32" y="346" font-size="10">03</text>
+          <text class="d-sans" x="32" y="366" font-size="12">PROD TRACE</text>
+          <text class="d-lbl" x="32" y="382" font-size="10">recorded run</text>
+          <circle class="d-dot-lime" cx="160" cy="338" r="3"/>
+
+          <!-- central evaluation layer -->
+          <rect class="d-panel" x="232" y="170" width="168" height="90" rx="3"/>
+          <text class="d-sans" x="316" y="204" font-size="13" text-anchor="middle">EVALUATION LAYER</text>
+          <text class="d-lbl" x="316" y="226" font-size="10" text-anchor="middle">8 written rules</text>
+          <text class="d-lbl" x="316" y="244" font-size="10" text-anchor="middle">pass / fail + why</text>
+
+          <!-- edges from each surface into the layer -->
+          <path class="d-edge" d="M172 74 H202 V200 H232"/>
+          <path class="d-edge" d="M172 215 H232"/>
+          <path class="d-edge" d="M172 356 H202 V230 H232"/>
+          <circle class="d-junction" cx="202" cy="74" r="2"/>
+          <circle class="d-junction" cx="202" cy="215" r="2"/>
+          <circle class="d-junction" cx="202" cy="356" r="2"/>
+
+          <!-- layer → verdict -->
+          <path class="d-edge" d="M400 215 H452"/>
+          <circle class="d-dot-lime" cx="426" cy="215" r="3"/>
+
+          <!-- illustrative verdict with rule breakdown -->
+          <rect class="d-panel" x="452" y="126" width="148" height="224" rx="3"/>
+          <text class="d-lbl d-lbl-lime" x="464" y="148" font-size="10">ILLUSTRATIVE</text>
+          <text class="d-sans" x="464" y="174" font-size="12">VERDICT</text>
+          <text class="d-lbl d-lbl-lime" x="464" y="204" font-size="18">FAIL</text>
+          <path class="d-edge" d="M464 218 H588"/>
+          <text class="d-lbl d-lbl-mint" x="464" y="242" font-size="10">RULE BREAKDOWN</text>
+
+          <text class="d-lbl" x="464" y="266" font-size="10">Intent Accuracy</text>
+          <text class="d-lbl d-lbl-b" x="588" y="266" font-size="10" text-anchor="end">pass</text>
+          <text class="d-lbl" x="464" y="288" font-size="10">Tool Selection</text>
+          <text class="d-lbl d-lbl-b" x="588" y="288" font-size="10" text-anchor="end">pass</text>
+          <text class="d-lbl" x="464" y="310" font-size="10">Groundedness</text>
+          <text class="d-lbl d-lbl-b" x="588" y="310" font-size="10" text-anchor="end">fail</text>
+          <text class="d-lbl" x="464" y="332" font-size="10">Latency</text>
+          <text class="d-lbl d-lbl-b" x="588" y="332" font-size="10" text-anchor="end">pass</text>
+        </svg>
+
+        <figcaption class="fig-caption">Fig. 00 — three surfaces, one evaluation layer, one verdict (schematic)</figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       THREE STORIES
+       ========================================================== -->
+  <section id="use-cases" class="stories" aria-labelledby="use-cases-heading">
+    <div class="wrap">
+
+      <header class="section-head">
+        <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">§01</span>Evaluation in practice</p>
+        <h2 id="use-cases-heading">Three stories about testing AI agents</h2>
+        <p class="section-intro">
+          Each story starts with something that can go wrong in plain, everyday language,
+          then shows the test cases and rules that turn “it sounds right” into
+          “we checked it”.
+        </p>
+      </header>
+
+      <!-- ---------------- Story 01 ---------------- -->
+      <article class="story story--split" id="uc-01">
+        <div class="story-head">
+          <span class="story-index" aria-hidden="true">01</span>
+          <p class="story-cat">01 · Chatbot Evaluation</p>
+        </div>
+
+        <h3 class="story-title">Chatbot Evaluation</h3>
+
+        <p class="story-lede">
+          Maya ordered a birthday gift for her sister. The delivery date passed. She opens
+          the company’s support chat and asks, “Where is my order 1234?” — then, annoyed,
+          “I want a refund for order 1234.” The chatbot answers instantly and confidently.
+          It sounds perfect. But did it actually <em class="serif-em">check</em> her order,
+          or just invent something plausible?
+        </p>
+
+        <div class="story-split">
+        <div class="story-main">
+        <div class="story-body">
+          <p>
+            A chatbot agent does not only write sentences. It decides, then acts: it picks
+            a <strong>tool</strong> — a small program it is allowed to call, like checking
+            an order or issuing a refund — reads whatever comes back, and writes the reply.
+            Every one of those steps can go wrong.
+          </p>
+
+          <h4>What can go wrong</h4>
+          <ul>
+            <li><strong>It calls the wrong tool.</strong> Maya asks to cancel, and the agent only checks the delivery status.</li>
+            <li><strong>It misreads the order number.</strong> 1234 quietly becomes 12340.</li>
+            <li><strong>It invents a result.</strong> “Your refund was processed yesterday” — without ever checking.</li>
+            <li><strong>It appends a promise.</strong> “It will arrive tomorrow,” a claim no data supports.</li>
+            <li><strong>It takes too long.</strong> The answer lands after she has already closed the tab.</li>
+            <li><strong>It guesses.</strong> When she forgets the order number, it should ask — not invent one.</li>
+          </ul>
+
+          <h4>Why one good answer is not enough</h4>
+          <p>
+            One reply proves one path. The agent can answer her first question perfectly
+            and still mishandle the cancellation, the refund, or the message that arrives
+            with no order number at all. A single answer shows that one route works; a
+            <strong>suite</strong> of test cases covers many.
+          </p>
+
+          <h4>How test cases help</h4>
+          <p>
+            A <strong>test case</strong> is one input plus the behaviour we expect back.
+            For Maya’s refund, the expected <strong>intent</strong> — what the agent
+            concludes the user wants — is <code>refund_order</code>, the required tool is
+            <code>refund_order</code>, and the reply must contain the word “refund”. The
+            expectations are written down before the run, so the answer gets judged
+            instead of admired.
+          </p>
+          <p>
+            The project ships 10 cases: <code>stt-basic</code>, <code>stt-accent</code>,
+            <code>intent-status</code>, <code>intent-cancel</code>,
+            <code>intent-refund</code>, <code>tool-selection</code>,
+            <code>tool-arguments</code>, <code>task-completion</code>,
+            <code>missing-order</code>, <code>unknown-intent</code>.
+          </p>
+
+          <h4>How wrong behaviour gets caught</h4>
+          <p>
+            Eight rules — <strong>evaluators</strong> — judge every run: Transcript
+            Accuracy, Intent Accuracy, Tool Selection, Tool Arguments, Response Quality,
+            Groundedness, Reliability, and Latency. Each one returns pass or fail with a
+            short explanation of why. <strong>Fault injection</strong> then deliberately
+            breaks one stage of the agent on purpose, to prove that the matching rule
+            actually fires.
+          </p>
+
+          <h4>What the project actually builds</h4>
+          <p>
+            A simulated text support agent. A <strong>Chat Playground</strong> where a
+            typed message posts to <code>/chat/evaluate</code> and comes back with the
+            response, intent, tool, arguments, and latency. A <strong>Scenario Lab</strong>
+            that runs scenarios live through Evaluation API → agent → evaluation → trace
+            (a recorded timeline of the run) → metrics → dashboard, served by FastAPI
+            <code>Chatbot-eval/server.py</code> on port 8001 with history kept in memory.
+          </p>
+          <p>
+            It also ships a view of the 10-case dataset. Groundedness that compares claims
+            like “shipped”, “delivered”, or “tomorrow” against the tool’s real result. And
+            a CLI — <code>python run_evals.py</code> — that prints a scorecard and exits
+            with code 0 or 1.
+          </p>
+          <p>
+            Opened statically, the page shows an offline status until the backend is
+            running. The mock orders are 1234 (shipped, ETA September 28), 5678
+            (processing, October 2), and 9999 (delivered).
+          </p>
+        </div><!-- /.story-body -->
+
+        <div class="takeaway">
+          <p class="takeaway-label">Takeaway</p>
+          <p>
+            One good answer proves one path. A suite of cases with explicit rules turns
+            “sounds right” into “measured right” — and breaking the agent on purpose
+            proves the checks actually fire.
+          </p>
+        </div>
+
+        <p class="story-cta-row">
+          <a class="story-cta" href="blog/chatbot-evaluation.html">Read the full article →</a>
+          <a class="story-cta" href="Chatbot-eval/index.html">Open the project</a>
+        </p>
+
+        <p class="run-note">
+          Opens statically · live evals need <code>python Chatbot-eval/server.py</code>
+          (port 8001).
+        </p>
+        </div><!-- /.story-main -->
+
+        <div class="story-visual">
+        <ol class="flow" aria-label="How one chatbot evaluation run flows">
+          <li class="flow-step">
+            <span class="flow-num" aria-hidden="true">01</span>
+            <span class="flow-label">Question</span>
+            <span class="flow-desc">Maya types a message into the support chat.</span>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+          </li>
+          <li class="flow-step">
+            <span class="flow-num" aria-hidden="true">02</span>
+            <span class="flow-label">Chatbot Response</span>
+            <span class="flow-desc">The agent replies, calling a tool first if it needs data.</span>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+          </li>
+          <li class="flow-step flow-step--accent">
+            <span class="flow-num" aria-hidden="true">03</span>
+            <span class="flow-label">Evaluation</span>
+            <span class="flow-desc">Eight rules check the run against the written expectations.</span>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+          </li>
+          <li class="flow-step">
+            <span class="flow-num" aria-hidden="true">04</span>
+            <span class="flow-label">Result</span>
+            <span class="flow-desc">Pass or fail, each with a short explanation.</span>
+          </li>
+        </ol>
+
+        <aside class="story-aside">
+          <p class="story-note">
+            <strong>Honest note.</strong> Its “speech-to-text” step is simulated — it
+            returns the text unchanged — and the dataset keeps the legacy
+            <code>audio</code>/transcript field names it shares with the voice project.
+          </p>
+        </aside>
+        </div><!-- /.story-visual -->
+        </div><!-- /.story-split -->
+      </article>
+
+      <!-- ---------------- Story 02 ---------------- -->
+      <article class="story story--band" id="uc-02">
+        <div class="story-head">
+          <span class="story-index" aria-hidden="true">02</span>
+          <p class="story-cat">02 · Voice Agent Evaluation</p>
+        </div>
+
+        <h3 class="story-title">Voice Agent Evaluation</h3>
+
+        <p class="story-lede">
+          Priya calls the support line: “Where is my order 1234?” For the call to succeed
+          the system must do four things in a row — hear her words, work out what she
+          wants, pick and call the right action with the right order number, and say
+          something true back. If <em class="serif-em">any</em> link breaks, the call
+          fails.
+        </p>
+
+        <div class="flow-band">
+          <ol class="flow" aria-label="How one voice call flows through evaluation">
+            <li class="flow-step">
+              <span class="flow-num" aria-hidden="true">01</span>
+              <span class="flow-label">Caller Speaks</span>
+              <span class="flow-desc">Priya says her line into the phone.</span>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+            </li>
+            <li class="flow-step">
+              <span class="flow-num" aria-hidden="true">02</span>
+              <span class="flow-label">Speech Recognition</span>
+              <span class="flow-desc">Her words become text — accents included.</span>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+            </li>
+            <li class="flow-step">
+              <span class="flow-num" aria-hidden="true">03</span>
+              <span class="flow-label">Intent</span>
+              <span class="flow-desc">The agent decides what she is asking for.</span>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+            </li>
+            <li class="flow-step">
+              <span class="flow-num" aria-hidden="true">04</span>
+              <span class="flow-label">Action</span>
+              <span class="flow-desc">It calls the right tool with the right order number.</span>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+            </li>
+            <li class="flow-step flow-step--accent">
+              <span class="flow-num" aria-hidden="true">05</span>
+              <span class="flow-label">Evaluation</span>
+              <span class="flow-desc">Eight rules check every link in the chain.</span>
+            </li>
+          </ol>
+        </div>
+
+        <div class="story-split">
+        <div class="story-main">
+          <div class="story-body">
+            <p>
+              Every stage can fail. The words can be mis-heard, accents included. The
+              <strong>intent</strong> label — what the agent concludes the caller wants —
+              can be wrong: <code>order_status</code>, <code>cancel_order</code>, or
+              <code>refund_order</code>. The agent can pick the wrong
+              <strong>tool</strong> (a small program it is allowed to call), or corrupt the
+              order id, or invent claims. The reply can be slow.
+            </p>
+            <p>
+              An out-of-scope request — “tell me something interesting” — must be declined
+              <em class="serif-em">without</em> calling any order tool at all. And when the
+              order number is missing, the agent must ask for it instead of guessing.
+            </p>
+
+            <h4>What the project actually builds</h4>
+            <p>
+              A deterministic <strong>simulated</strong> voice support agent — no real
+              microphone, no real speech-to-text, no text-to-speech — plus 10 test cases
+              (2 STT including an accent, 3 intent, tool selection, tool arguments, task
+              completion, missing-order recovery, and unknown-intent reliability), judged by
+              the same eight rules.
+            </p>
+            <p>
+              A CLI baseline, <code>run_evals.py</code>, prints a scorecard. The project’s
+              documented baseline run reports 10/10 passing — intent 4/4, transcript 2/2,
+              latency 10/10, required tool 2/2, tool args 1/1, response checks 5/5. That is
+              a recorded run of the project’s own test suite, not a live claim about this
+              page.
+            </p>
+            <p>
+              A <strong>Scenario Lab</strong> in the dashboard calls a FastAPI Evaluation
+              API (<code>voice-agent-evals/server.py</code>, port 8001;
+              <code>/evaluate</code>, <code>/scenarios</code>, <code>/runs</code>,
+              <code>/stats</code>; history in memory, no database). The results are computed
+              by the real pipeline — nothing is faked in the browser.
+            </p>
+          </div><!-- /.story-body -->
+
+          <div class="takeaway">
+            <p class="takeaway-label">Takeaway</p>
+            <p>
+              A voice call is a chain — evaluate every link so a failed call tells you
+              <em class="serif-em">which</em> link broke, not merely that it broke.
+            </p>
+          </div>
+
+          <p class="story-cta-row">
+            <a class="story-cta" href="blog/voice-agent-evaluation.html">Read the full article →</a>
+            <a class="story-cta" href="voice-agent-evals/index.html">Open the project</a>
+          </p>
+
+          <p class="run-note">
+            Opens statically · live evals need <code>python voice-agent-evals/server.py</code>
+            (port 8001).
+          </p>
+        </div><!-- /.story-main -->
+
+        <div class="story-visual">
+          <div class="side-panel">
+            <p class="side-panel-title">Fault → evaluator</p>
+            <h4>Testing finds where it broke</h4>
+            <p>
+              Ten preset scenarios each inject one fault and name the evaluator that catches
+              it:
+            </p>
+            <ul class="side-list">
+              <li>Wrong Tool Selection → Tool Selection</li>
+              <li>Wrong Tool Arguments → Tool Arguments</li>
+              <li>Hallucinated Response → Groundedness</li>
+              <li>Unsupported Claim → Groundedness precision check</li>
+              <li>Tool Failure → Response Quality</li>
+              <li>Missing Information → Reliability</li>
+              <li>Wrong Intent → Intent Accuracy</li>
+              <li>Slow Response — a real 250 ms delay against a 100 ms budget → Latency</li>
+            </ul>
+          </div><!-- /.side-panel -->
+
+          <aside class="story-aside">
+            <p class="story-note">
+              <strong>Honest note.</strong> Speech recognition is simulated (transcription
+              just returns the input), intent detection is keyword-based and deterministic,
+              the dataset is small and synthetic, and local latency is not production
+              latency.
+            </p>
+          </aside>
+        </div><!-- /.story-visual -->
+        </div><!-- /.story-split -->
+      </article>
+
+      <!-- ---------------- Story 03 ---------------- -->
+      <article class="story story--pipeline" id="uc-03">
+        <div class="story-head">
+          <span class="story-index" aria-hidden="true">03</span>
+          <p class="story-cat">03 · Production Trace to Release</p>
+        </div>
+
+        <h3 class="story-title">From Production Trace to Release Decision</h3>
+
+        <p class="story-lede">
+          Sam maintains a financial assistant that explains people’s spending. She wants to
+          change how it reasons and ship it — but what if the change quietly makes it
+          worse? Guessing is not a decision. Here is how a recorded run, a saved baseline,
+          and a replay turn “I think this is better” into an answer she can defend.
+        </p>
+
+        <div class="flow-band">
+          <ol class="flow" aria-label="How a production trace becomes a release decision">
+            <li class="flow-step">
+              <span class="flow-num" aria-hidden="true">01</span>
+              <span class="flow-label">Trace</span>
+              <span class="flow-desc">One recorded run of the current agent.</span>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+            </li>
+            <li class="flow-step">
+              <span class="flow-num" aria-hidden="true">02</span>
+              <span class="flow-label">Baseline</span>
+              <span class="flow-desc">Today’s six metric scores, saved as the reference.</span>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+            </li>
+            <li class="flow-step">
+              <span class="flow-num" aria-hidden="true">03</span>
+              <span class="flow-label">Proposed Change</span>
+              <span class="flow-desc">Prompt, coordination, or model — pick one.</span>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+            </li>
+            <li class="flow-step">
+              <span class="flow-num" aria-hidden="true">04</span>
+              <span class="flow-label">Comparison</span>
+              <span class="flow-desc">Replay the scenario and compare metric by metric.</span>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+            </li>
+            <li class="flow-step flow-step--accent">
+              <span class="flow-num" aria-hidden="true">05</span>
+              <span class="flow-label">Release Decision</span>
+              <span class="flow-desc">READY, NEEDS REVIEW, or NOT READY — from written thresholds.</span>
+            </li>
+          </ol>
+        </div>
+
+        <div class="story-body">
+          <h4>Trace</h4>
+          <p>
+            A <strong>trace</strong> is a recorded timeline of one real run — the steps
+            the agent took, in order. In this project it is a financial assistant
+            explaining an unusual expense of about $2,847.
+          </p>
+
+          <h4>Baseline</h4>
+          <p>
+            A <strong>baseline</strong> is the current agent’s scores, saved as the
+            reference point for every later comparison. Six metrics are recorded:
+            response quality, task completion, tool correctness, agent coordination,
+            safety compliance, and performance.
+          </p>
+
+          <h4>Proposed change</h4>
+          <p>
+            The <strong>proposed change</strong> is the thing Sam wants to ship. She picks
+            one of three: <code>prompt_update</code> (new instructions),
+            <code>coordination_update</code> (new teamwork logic), or
+            <code>model_change</code> (a different model).
+          </p>
+
+          <h4>Replay and comparison</h4>
+          <p>
+            A <strong>replay</strong> runs the same scenario again with the change in
+            place, then compares the new numbers metric by metric against the baseline.
+          </p>
+
+          <h4>Release decision</h4>
+          <p>
+            The <strong>release decision</strong> is computed from written thresholds, not
+            from a feeling. READY needs an overall delta of at least +2.0
+            <strong>and</strong> a worst-metric regression no worse than −3.0
+            <strong>and</strong> post-replay safety of at least 80 <strong>and</strong>
+            post-replay overall of at least 78. NOT READY when the overall delta is −2.0
+            or worse, <strong>or</strong> any metric delta is −8.0 or worse,
+            <strong>or</strong> post-replay safety is below 70, <strong>or</strong> any
+            metric is below 60. Everything else is NEEDS REVIEW. In the demo,
+            <code>prompt_update</code> → READY, <code>coordination_update</code> → NEEDS
+            REVIEW, and <code>model_change</code> → NOT READY.
+          </p>
+          <p>
+            The walkthrough has five stages: Production Trace → AI Ops Spec (a JSON
+            export) → Baseline Evaluation → Simulated Replay → Release Decision.
+          </p>
+
+          <h4>What the project actually builds</h4>
+          <p>
+            A fully self-contained single-file frontend that works when you open it
+            directly. An optional FastAPI <code>app.py</code> with Supabase persistence
+            that is genuinely functional when the Supabase environment variables are set,
+            and in-memory demo mode otherwise. The thresholds are returned verbatim inside
+            the comparison payloads, and every verdict comes with a plain-language
+            recommendation.
+          </p>
+        </div>
+
+        <div class="takeaway">
+          <p class="takeaway-label">Takeaway</p>
+          <p>
+            Comparing a change against a saved baseline with written thresholds turns
+            “I hope this helps” into a decision you can explain — and labelling what is
+            simulated is part of the rigor.
+          </p>
+        </div>
+
+        <aside class="story-aside">
+          <p class="note note--sim">
+            <strong>SIMULATED DEMO DATA.</strong> The production capture is simulated demo
+            data, the AI Ops Spec is a representative example rather than a real export,
+            and the replay is simulated: the scores come from documented deterministic
+            demo logic, no real agent application is rerun. The scores are illustrative
+            and were not produced by the agentic-evals framework. This page makes no
+            claim of a live production integration.
+          </p>
+        </aside>
+
+        <p class="story-cta-row">
+          <a class="story-cta" href="blog/production-trace-release-decision.html">Read the full article →</a>
+          <a class="story-cta" href="Production%20trace%20to%20release%20decision/index.html">Open the project</a>
+        </p>
+
+        <p class="run-note">
+          Self-contained demo (simulated data) · optional backend <code>app.py</code> when
+          Supabase is configured.
+        </p>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       BLOG
+       ========================================================== -->
+  <section id="blog" class="blog" aria-labelledby="blog-heading">
+    <div class="wrap">
+
+      <header class="section-head">
+        <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">§02</span>Blog</p>
+        <h2 id="blog-heading">Go deeper: three full articles</h2>
+        <p class="section-intro">
+          Each story above has a longer, beginner-first article that walks through the
+          same project one step at a time.
+        </p>
+      </header>
+
+      <div class="blog-grid">
+        <article class="blog-card">
+          <span class="blog-card-index" aria-hidden="true">01</span>
+          <h3 class="blog-card-title">Chatbot Evaluation</h3>
+          <p class="blog-card-desc">
+            Maya’s refund request, and how a suite of test cases checks every reply.
+          </p>
+          <p class="blog-card-link"><a href="blog/chatbot-evaluation.html">Read the article →</a></p>
+        </article>
+
+        <article class="blog-card">
+          <span class="blog-card-index" aria-hidden="true">02</span>
+          <h3 class="blog-card-title">Voice Agent Evaluation</h3>
+          <p class="blog-card-desc">
+            A phone call is a chain of steps — here is how each link gets tested.
+          </p>
+          <p class="blog-card-link"><a href="blog/voice-agent-evaluation.html">Read the article →</a></p>
+        </article>
+
+        <article class="blog-card">
+          <span class="blog-card-index" aria-hidden="true">03</span>
+          <h3 class="blog-card-title">From Production Trace to Release Decision</h3>
+          <p class="blog-card-desc">
+            A recorded run, a saved baseline, and a replay that end in a ship-or-wait answer.
+          </p>
+          <p class="blog-card-link"><a href="blog/production-trace-release-decision.html">Read the article →</a></p>
+        </article>
+      </div>
+
+      <p class="blog-more"><a href="blog/index.html">Visit the blog index →</a></p>
+
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       ABOUT
+       ========================================================== -->
+  <section id="about" class="about" aria-labelledby="about-heading">
+    <div class="wrap">
+
+      <header class="section-head">
+        <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">§03</span>About</p>
+        <h2 id="about-heading">About these stories</h2>
+      </header>
+
+      <div class="about-grid">
+        <div class="about-body">
+          <p>
+            This site is three hands-on evaluation projects from the agentic-evals
+            repository, told as stories for people who are new to the subject — including
+            students who have never studied AI evaluation before.
+          </p>
+          <p>
+            Every story links to a full beginner article and to the working project in
+            this repository, so you can read the explanation first and then run it
+            yourself.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p class="footer-brand">DeepAgentLabs · Agentic Evals</p>
+    <p class="footer-note">
+      A static storytelling site — zero JavaScript, relative links, one stylesheet.
+    </p>
+    <p class="footer-note">
+      An independent community storytelling presentation — not an official DeepAgentLabs
+      property or official documentation.
+    </p>
+    <p class="footer-meta" aria-hidden="true">DL / STORIES · REV 2026.10</p>
+  </div>
+</footer>
+
+</body>
+</html>

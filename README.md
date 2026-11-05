@@ -1,367 +1,194 @@
-# agentic-evals
+# DeepAgentLabs · Use Case Hub
 
-[![PyPI](https://img.shields.io/pypi/v/agentic-evals)](https://pypi.org/project/agentic-evals/)
-[![Python versions](https://img.shields.io/pypi/pyversions/agentic-evals)](https://pypi.org/project/agentic-evals/)
-[![CI](https://github.com/DeepAgentLabs/agentic-evals/actions/workflows/ci.yml/badge.svg)](https://github.com/DeepAgentLabs/agentic-evals/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+A single static landing page that presents three DeepAgentLabs engineering use cases —
+chatbot evaluation, voice-agent testing, and turning a production trace into a release
+decision. Semantic HTML, one stylesheet, zero JavaScript, and no third-party resources —
+open it locally or publish it to any static host.
 
-**A standalone, framework-agnostic evaluation and scoring engine for LLM and
-agent outputs.**
+## What this is
 
-Extracted from [AgenticLens](https://github.com/DeepAgentLabs/agenticlens)'s
-proven evaluation module — the same engine, usable on its own. It scores
-whatever trace-shaped data you give it (see `EvalTrace`/`EvalSpan` below);
-it has no dependency on any specific tracing/observability tool, and no
-dependency on AgenticLens itself.
+- **A hub, not an app.** Three case panels, each linking out to a use case in a new tab.
+- **Zero-JS by design.** There is intentionally **no `script.js`** and no `<script>`
+  element anywhere in `index.html`. The mobile menu is a native `<details>/<summary>`
+  disclosure; navigation is plain anchors. The page works with JavaScript disabled.
+- **Self-contained.** No images, no web fonts, no CDN, no `@import`, and no `http(s)`
+  URLs in the stylesheet. The only graphics are four inline SVG diagrams (one in the
+  hero, one per case). The only outbound URLs are the three use-case links and the
+  header's GitHub link.
 
-## Status
+## Files
 
-**Published on PyPI.** The engine (deterministic checks, LLM-as-judge and
-custom evaluators, a release gate, live Python/HTTP targets, the `Eval()`
-quickstart API, and the `agentic-evals` CLI) is real, tested code — see the
-[changelog](CHANGELOG.md) for what shipped in each release. The API may
-still move between minor versions ahead of a 1.0; pin a version in
-production and read the changelog before upgrading.
+| File         | Purpose |
+| ------------ | ------- |
+| `index.html` | Semantic page: skip link, sticky header (desktop nav + `details/summary` drawer), two-column hero with the Fig. 00 schematic, `#use-cases` with three case panels (Figs. 01–03), footer with rev meta. Four inline SVGs total. The URL CONFIGURATION comment is the first child of `<head>`. |
+| `styles.css` | Editorial dark design system: near-black green-charcoal palette with acid-lime and mint accents, system fonts, responsive 3→2→1 case grid, reduced-motion support. |
+| `README.md`  | This file. |
 
-## Why a separate package
+There is intentionally **no `script.js`** — do not add one. If you need behavior, prefer
+progressive enhancement that degrades to the current static page.
 
-AgenticLens's evaluation module was never actually AgenticLens-specific —
-scoring an LLM/agent output against expectations doesn't need AgenticLens's
-full trace schema, CLI, or dashboards. Pulling it out means:
+## Local preview
 
-- `agentic-sidecar`, `agentic-chaos`, or any other project can score outputs
-  without depending on all of AgenticLens.
-- Anyone with *any* trace-shaped data — not just AgenticLens users — can use
-  it; scoring a string doesn't need to care what produced it.
-
-## Install
+Opening `index.html` directly via `file://` works — there are no fetches or module
+imports. For a local server, from this directory:
 
 ```bash
-pip install agentic-evals
+# Python 3
+python -m http.server 8000
+
+# Windows, if `python` is not on PATH
+py -m http.server 8000
 ```
 
-## Quickstart in under a minute
+Then open <http://localhost:8000/> in a browser.
 
-The fast path in -- no `TestSuite`, no `TestCase`, no trace object. Write a
-file, run it:
+## Deploy
 
-```python
-# capitals_eval.py
-from agentic_evals import Eval, equals
+This folder is the whole site. Publish the **contents** of `usecase-hub` (not its parent)
+to any static host:
 
+- **GitHub Pages** — publish the `usecase-hub` folder (or the branch/root that contains it).
+- **Netlify / Vercel / Cloudflare Pages** — set the publish directory to `usecase-hub`;
+  no build command is required.
+- **Any web server / S3** — copy `index.html` and `styles.css` to the web root or a
+  subpath. The stylesheet is referenced relatively (`styles.css`), so subpath hosting
+  works without edits.
 
-def my_agent(country: str) -> str:
-    return {"France": "Paris", "Japan": "Tokyo"}[country]
+No environment variables, no build step, no server-side code.
 
+## Link configuration
 
-Eval(
-    "capitals",
-    data=[
-        {"input": "France", "expected": "Paris"},
-        {"input": "Japan", "expected": "Tokyo"},
-    ],
-    task=my_agent,
-    scores=[equals],
-)
+The single source of truth for the three **card** URLs is the **URL CONFIGURATION comment
+block** at the top of `index.html` `<head>`. Current targets:
+
+| Card / Nav | Title                                     | URL                                                       | Status |
+| ---------- | ----------------------------------------- | --------------------------------------------------------- | ------ |
+| uc-01 | Chatbot Evaluation                       | `https://deepagentlabs.io/agentic-evals/`                 | VERIFIED (HTTP 200, checked 2026-10-21) |
+| uc-02 | Voice Agent Evaluation                   | `https://agentic-evals-api.onrender.com/`                 | [PLACEHOLDER — UNVERIFIED] (404; PROD_API_BASE from `agentic-evals-pr/voice-agent-evals/config.js`; likely the Evaluation API root, not the dashboard UI) |
+| uc-03 | From Production Trace to Release Decision | `https://production-trace-release-decision.onrender.com/` | [PLACEHOLDER — UNVERIFIED] (404; derived from `SERVICE` in `usecase3/app.py`) |
+| Nav   | GitHub — `DeepAgentLabs/agentic-evals`   | `https://github.com/DeepAgentLabs/agentic-evals`          | VERIFIED (public repo, checked 2026-10-21) |
+
+The GitHub link is not part of the card URL CONFIG block; it appears twice in the header
+(desktop list and drawer), each with `target="_blank" rel="noopener noreferrer"` and a
+unique `aria-label`.
+
+### Mirrored URL CONFIGURATION block
+
+Reproduced from `index.html`; the two unverified status markers are shown as
+`[UNVERIFIED]` in this copy so the literal placeholder token appears only in the
+table above.
+
+```text
+============================================================
+URL CONFIGURATION — single source of truth for outbound links.
+To re-point a card, edit the matching href in the <article>
+below. Keep target="_blank" and rel="noopener noreferrer" on
+every CTA, and give each CTA a unique aria-label.
+Verification statuses are recorded inline below.
+------------------------------------------------------------
+uc-01 · Chatbot Evaluation
+  href: https://deepagentlabs.io/agentic-evals/
+  Status: VERIFIED (HTTP 200, checked 2026-10-21)
+uc-02 · Voice Agent Evaluation
+  href: https://agentic-evals-api.onrender.com/
+  Status: [UNVERIFIED] Returns 404. Value = PROD_API_BASE in agentic-evals-pr/voice-agent-evals/config.js (Evaluation API root; the public dashboard may instead live on GitHub Pages — confirm before launch).
+uc-03 · From Production Trace to Release Decision
+  href: https://production-trace-release-decision.onrender.com/
+  Status: [UNVERIFIED] Returns 404. Derived from SERVICE = "production-trace-release-decision" in usecase3/app.py. Replace when a public URL exists.
 ```
 
-```bash
-$ python capitals_eval.py
-agentic-evals :: capitals
---------------------------
-  [PASS] France  equals=1.00
-  [PASS] Japan  equals=1.00
+### Replacing a placeholder URL
 
-  equals                       avg 1.000
+To re-point a card, edit **both** places in `index.html`:
 
-  2/2 passed  (100.0%)  in 0ms
-```
+1. The status/href line in the URL CONFIGURATION comment block at the top of `<head>`.
+2. The single matching `<a class="case-cta" href="…">` inside `<article id="uc-0N">`.
 
-Or let the CLI find every eval file in a directory and roll them into one
-CI-friendly exit code -- `0` if every case in every file passed, `1`
-otherwise, no config file required:
+Then keep this README in sync (the table above and the mirrored block). Keep
+`target="_blank"` and `rel="noopener noreferrer"` on every CTA, and keep each `aria-label`
+unique (each currently embeds the card title).
 
-```bash
-pip install agentic-evals
-agentic-evals run                 # discovers *_eval.py / eval_*.py / *.eval.py
-```
+## Placeholder warning
 
-A scorer is any function that returns a `float`/`bool` (0-1), a `Score`, or
-`{"score": ..., "name": ...}` -- called with whichever of `input`, `output`,
-`expected` it declares as parameters:
+**uc-02 and uc-03 are placeholders — both URLs currently return HTTP 404. Do not treat
+them as live.**
 
-```python
-def contains_the_total(output: str, expected: str) -> bool:
-    return expected in output
-```
+- **uc-02** — `https://agentic-evals-api.onrender.com/` is the `PROD_API_BASE` value in
+  `agentic-evals-pr/voice-agent-evals/config.js` (the Evaluation API root). The public
+  dashboard may instead live on GitHub Pages — confirm the intended destination before
+  launch.
+- **uc-03** — `https://production-trace-release-decision.onrender.com/` is derived from
+  `SERVICE = "production-trace-release-decision"` in `usecase3/app.py`. Replace it when a
+  public URL exists.
 
-Six ready-made scorers ship for this API: `equals`, `contains`,
-`icontains`, `levenshtein`, `matches` (regex), `numeric_close` (tolerance-
-based). `Eval()` also accepts `threshold=` (default
-`1.0`) -- a case passes when every one of its scores clears it -- and
-`data=` may be a zero-argument callable for data you'd rather build lazily.
+uc-01 (`https://deepagentlabs.io/agentic-evals/`) and the header's GitHub nav link
+(`https://github.com/DeepAgentLabs/agentic-evals`) are the only verified links
+(checked 2026-10-21).
 
-This is deliberately the *simple* surface. Everything below -- trace-aware
-scorers, JSON Schema/tool-call expectations, eval packs, cost/latency
-release gates -- is the same engine underneath, for when a plain
-`input`/`output`/`expected` row isn't enough.
+## Design notes
 
-## The declarative API
+- **Palette:** background `#0A0F0E`; raised `#0D1312`; surfaces `#111917` / `#15201D`;
+  borders `#283631` / `#3A4C44`; text `#F0F0E8` with muted `#9FADA5` and dim `#7B8C84`;
+  acid-lime accent `#B8F34A` (hover `#C8FF5E`) on ink `#0A0F0E`; mint secondary
+  `#5CD6B8`. Lime is rationed — the hero CTA (the only solid-lime surface on the page),
+  diagram status dots, the card hover accent line, and focus outlines.
+- **Type:** system sans (max weight 700) for headings and body copy; Georgia-class serif
+  italic for editorial emphasis (`.serif-em`, with a lime highlight bar behind the
+  emphasized words); system mono for eyebrows, labels, nav, footer meta, and diagram
+  text. No web fonts.
+- **Layout:** sticky translucent, blurred header; content capped at 1160px; two-column
+  hero (7fr / 5fr) that stacks at ≤860px; hero figure sits on a fine 32px grid with
+  corner coordinate marks (hidden at ≤480px); case panels carry mono outline index
+  numerals and sit in a 3-column grid → 2 at ≤1024px (`uc-03` spans full width) → 1 at
+  ≤640px. Anchors carry `scroll-margin-top: 76px` so jumps clear the sticky header.
+- **Interaction:** no hover lift. Case panels reveal a 2px lime top accent line that
+  scales in from the left, with a stronger border and surface; ghost CTAs turn lime;
+  the hero CTA lightens. All transitions are disabled under `prefers-reduced-motion`,
+  which also disables smooth scrolling.
+- **Diagrams:** four original inline SVGs — hero evaluation-layer schematic (Fig. 00)
+  and one per case: Fig. 01 mini conversation with four constraint chips, Fig. 02
+  speech-to-response pipeline with a fault-injection band, Fig. 03 trace timeline →
+  baseline-vs-replay → three verdicts.
+- **Constraints honored:** no images, no external assets, no `@import`, no `http` URLs in
+  CSS, no third-party resources.
 
-For trace-aware expectations (tool calls, latency/cost thresholds, JSON
-Schema) and CI release gates, use `TestSuite`/`TestCase`/`evaluate_suite`
-directly -- the engine `Eval()` above is a thin, opinionated front end for.
+## Accessibility notes
 
-### Core concepts
+- Skip link (`Skip to use cases`) is the first focusable element and targets `#use-cases`.
+- Landmarks: `header`, labelled `nav` ("Primary"), `main`, `section` labelled via
+  `aria-labelledby`, one `article` per case, `footer`.
+- The mobile menu is a native `<details>/<summary>` disclosure — keyboard-operable with
+  no script. Per native browser behavior, Escape does not close the open drawer.
+- Every card CTA has a unique `aria-label` that includes the card title and states that
+  it opens in a new tab; all CTAs use `target="_blank" rel="noopener noreferrer"`. The
+  GitHub nav link follows the same convention.
+- Each of the four SVGs is `role="img"` with a `<title>` and `<desc>` wired via
+  `aria-labelledby`; decorative marks (arrows, coordinate labels, section marks) are
+  `aria-hidden`.
+- Visible `:focus-visible` outlines use the lime accent.
+- `prefers-reduced-motion: reduce` removes transitions and smooth scrolling.
+- Light and muted text sit on dark surfaces; the hero CTA uses dark ink on the lime fill.
 
-- **`EvalTrace`/`EvalSpan`** — the minimal trace shape the engine inspects:
-  a trace id, spans (each optionally naming a `tool_name` and carrying
-  arbitrary `attributes`), total latency, estimated cost, and metadata.
-  Deliberately not tied to any specific instrumentation format — build one
-  from whatever you already have.
-- **`Score`** — a single named judgment (0-1 value, pass/fail, explanation).
-- **`Evaluator`** — anything with a `.name` and an `.evaluate(context) ->
-  list[Score]`. `CallableEvaluator` adapts a plain Python function;
-  `LLMJudgeEvaluator` and `BusinessRuleEvaluator` are named convenience
-  subclasses for readability/reporting.
-- **`TestCase`/`TestSuite`** — declarative expectations (exact match,
-  substring, JSON Schema, required fields, required/forbidden tool calls,
-  required tool arguments, latency/cost/turn-count thresholds, or a named
-  custom evaluator) plus the cases that make up a suite.
-- **`evaluate_suite`** — runs a suite against supplied `EvaluationSample`s
-  and returns an `EvaluationReport` (per-case scores plus a pass-rate/cost/
-  latency summary).
-- **`GateConfig`/`evaluate_gate`** — turn an `EvaluationReport` into a
-  pass/fail release decision on configurable thresholds.
+## Verification checklist
 
-### TestSuite quickstart
-
-```python
-from agentic_evals import (
-    EvalSpan,
-    EvalTrace,
-    EvaluationSample,
-    TestCase,
-    TestSuite,
-    evaluate_suite,
-)
-
-suite = TestSuite(
-    name="support-answers",
-    version="1",
-    cases=[
-        TestCase(
-            id="case-1",
-            name="Answer contains the right total",
-            expected_contains=["42"],
-            required_tools=["calculator"],
-            max_latency_ms=2000,
-        )
-    ],
-)
-
-sample = EvaluationSample(
-    case_id="case-1",
-    output="The combined total is 42.",
-    trace=EvalTrace(
-        trace_id="trace-1",
-        total_latency_ms=350,
-        spans=[EvalSpan(tool_name="calculator")],
-    ),
-)
-
-report = evaluate_suite(suite, [sample])
-print(report.summary.pass_rate)  # 1.0
-```
-
-## LLM-as-judge
-
-```python
-from agentic_evals import (
-    EvaluationContext,
-    EvaluatorConfig,
-    EvaluatorRegistry,
-    LLMJudgeEvaluator,
-    Score,
-    TestCase,
-)
-
-
-def judge(context: EvaluationContext) -> Score:
-    # Call whatever model/provider you like here.
-    correct = "42" in context.sample.output
-    return Score(
-        name="answer_quality",
-        value=0.95 if correct else 0.1,
-        passed=correct,
-        explanation="Judged against the rubric in context.config.config.",
-    )
-
-
-registry = EvaluatorRegistry()
-registry.register(LLMJudgeEvaluator("answer_quality_judge", judge))
-
-case = TestCase(
-    id="case-1",
-    name="Answer quality",
-    evaluators=[EvaluatorConfig(name="answer_quality_judge", threshold=0.8)],
-)
-```
-
-## Release gates
-
-```python
-from agentic_evals import GateConfig, evaluate_gate
-
-decision = evaluate_gate(
-    report,
-    GateConfig(min_pass_rate=0.95, max_average_latency_ms=1500, max_total_cost_usd=0.25),
-)
-if not decision.passed:
-    raise SystemExit(f"Release gate failed: {decision.reasons}")
-```
-
-Never fabricates a value it can't back up: `total_cost_usd` on a summary or
-gate decision stays `None` unless every case in scope has a known cost —
-an incomplete cost picture is reported as unavailable, not `$0.00`.
-
-## Built-in scorers
-
-`agentic_evals.scorers` ships ready-to-use scorers so you don't have to
-hand-write a `CallableEvaluator` for common checks:
-
-- **`scorers.text`** (deterministic, no LLM): `exact_match`, `contains_all`,
-  `contains_any`, `levenshtein_similarity`, `embedding_similarity`,
-  `valid_json`, `json_diff`, `numeric_diff`, `regex_match`, `starts_with`,
-  `ends_with`, `numeric_range`.
-- **`scorers.rubric`** (LLM-graded, provider-neutral): `RubricTemplate` +
-  `LLMRubricEvaluator`, with built-in templates `FACTUALITY`, `CLOSED_QA`,
-  `SUMMARY_QUALITY`, `BATTLE` (pairwise A/B), `MODERATION`, `TRANSLATION`,
-  `SECURITY`, `SQL_CORRECTNESS`, `POSSIBLE`, `PII_LEAKAGE`. Like
-  `LLMJudgeEvaluator`, this package never calls a model itself -- you pass
-  a `complete_fn: Callable[[str], str]`.
-- **`scorers.trajectory`** (reads the trace, not just the output text --
-  the part a plain text-scoring library has no equivalent for):
-  `tool_call_precision`, `tool_call_recall`, `no_redundant_tool_calls`,
-  `trajectory_efficiency`.
-
-```python
-from agentic_evals import (
-    EvalTrace,
-    EvaluationSample,
-    EvaluatorConfig,
-    TestCase,
-    TestSuite,
-    default_registry,
-    evaluate_suite,
-)
-
-suite = TestSuite(
-    name="support-answers",
-    version="1",
-    cases=[
-        TestCase(
-            id="case-1",
-            name="Answer is close to the reference",
-            expected_output="The combined total is 42.",
-            evaluators=[EvaluatorConfig(name="levenshtein_similarity", threshold=0.9)],
-        )
-    ],
-)
-sample = EvaluationSample(case_id="case-1", output="The combined total is 42.", trace=EvalTrace())
-
-report = evaluate_suite(suite, [sample], registry=default_registry())
-```
-
-`default_registry()` covers every `text`/`trajectory` scorer under a
-stable name. Rubric scorers need a `complete_fn`, so register an
-`LLMRubricEvaluator` instance yourself:
-
-```python
-from agentic_evals import FACTUALITY, LLMRubricEvaluator, default_registry
-
-registry = default_registry()
-registry.register(LLMRubricEvaluator("factuality", FACTUALITY, complete_fn=call_your_model))
-```
-
-## Live targets
-
-Point a suite at a real running system (a trusted Python callable, or an
-HTTP endpoint) instead of pre-recorded samples:
-
-```python
-from agentic_evals import PythonTarget, run_live_suite
-
-report = run_live_suite(suite, PythonTarget(callable_path="my_module:run_case"))
-```
-
-Live targets are intentionally powerful developer-facing integrations —
-Python targets execute local code and HTTP targets can reach arbitrary
-URLs. Only point them at trusted suite files and trusted target
-definitions.
-
-## Eval packs
-
-A pack bundles a `TestSuite` with the scorer names it needs into one
-shareable YAML/JSON file:
-
-```python
-from agentic_evals import (
-    EvalSpan,
-    EvalTrace,
-    EvaluationSample,
-    default_registry,
-    evaluate_suite,
-    load_builtin_pack,
-)
-
-pack = load_builtin_pack("tool-use-correctness")  # validates required_scorers up front
-sample = EvaluationSample(
-    case_id="refund-status-lookup",
-    output="Your refund is on its way.",
-    trace=EvalTrace(spans=[EvalSpan(tool_name="lookup_refund")]),
-)
-report = evaluate_suite(pack.to_suite(), [sample], registry=default_registry())
-```
-
-Ships 3 built-in packs (`list_builtin_packs()`): `tool-use-correctness`,
-`json-output-contract` (both runnable with `default_registry()`), and
-`factual-qa` (needs a registry with an `LLMRubricEvaluator` registered,
-since it uses the `FACTUALITY` rubric). Load your own with `load_pack(path)`.
-
-## Skills
-
-`agentic_evals/skills/` ships methodology playbooks (`SKILL.md` cards --
-Trigger/Do/Avoid/Check/Risk), not runnable code, scoped to this package's
-own API. 17 skills cover the eval lifecycle end to end:
-
-- **Frame**: `define-an-eval-objective`, `elicit-eval-criteria`
-- **Build data**: `build-an-eval-dataset`, `size-a-test-suite`
-- **Score**: `write-a-scorer`, `choose-a-rubric-template`, `validate-a-scorer`
-- **Run**: `instrument-a-trace`, `run-a-live-suite`
-- **Experiment**: `design-an-eval-experiment`, `analyze-an-eval-experiment`
-- **Investigate**: `discover-failure-modes`, `red-team-an-agent-suite`,
-  `debug-a-flaky-llm-judge`
-- **Operate**: `define-a-release-gate`, `report-eval-results`,
-  `monitor-evals-in-production`
-
-These document how to use this package well and are meant to be read
-directly, or picked up by a coding agent's own skill mechanism -- distinct
-from "packs" above, which are runnable configuration.
-
-## Using it with AgenticLens's own traces
-
-If you already have an AgenticLens `Run` (from its instrumentation API or
-OTLP ingestion), AgenticLens itself provides the adapter —
-`agenticlens.evaluation.to_eval_trace(run)` — so you don't have to hand-build
-an `EvalTrace`. This package has no dependency in the other direction.
-
-## What's deliberately not here
-
-Dataset versioning/splitting, judge calibration, and HTML report rendering
-stay in AgenticLens for now — those are product features built *on top of*
-this engine, not the engine.
+- [x] `index.html` contains zero script elements (no `script.js`, no inline scripts).
+- [x] URL CONFIGURATION comment block is the first child of `<head>`.
+- [x] Hero `h1` text reads exactly: `Evaluating AI agents takes more than a successful response.`
+- [x] `#use-cases` contains three `<article>` panels with ids `uc-01`, `uc-02`, `uc-03`;
+      each has a unique inline SVG diagram (Fig. 01–03), plus the hero Fig. 00.
+- [x] Each card CTA has `target="_blank"`, `rel="noopener noreferrer"`, and a unique
+      `aria-label`; the header GitHub link does too.
+- [x] The three card hrefs are distinct and match the Link configuration table; the
+      GitHub nav link (`https://github.com/DeepAgentLabs/agentic-evals`) is verified.
+- [x] Exactly two placeholder markers in this README (the uc-02 and uc-03 table rows);
+      uc-01 and the GitHub nav link are verified.
+- [x] `styles.css` matches the documented palette; 3→2→1 grid at 1024px / 640px; nav and
+      hero collapse at 860px; coordinate marks hidden ≤480px; lime top accent line on
+      hover (no lift); `:focus-visible` outlines; `prefers-reduced-motion` block;
+      no `@import`, no `http` URLs.
+- [x] `usecase-hub/` contains only `index.html`, `styles.css`, and `README.md`; no
+      images, no third-party resources, no build step.
 
 ## License
 
-MIT
+MIT License — free to use, copy, modify, and distribute; provided "as is", without warranty.

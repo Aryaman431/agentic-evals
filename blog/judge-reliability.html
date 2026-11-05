@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ============================================================
+     BLOG ARTICLE 05 - Judging the Judge: Building LLM-as-a-Judge
+     Evaluations That Stay Honest
+     Lives in blog/: stylesheet ../styles.css, home ../index.html,
+     projects ../Chatbot-eval/index.html, siblings are the other
+     files in this folder. ZERO JavaScript, no assets.
+     ============================================================ -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="How the agentic-evals engine keeps a large language model honest as the judge: what the judge reads, how rubrics are written, and how the judgement is tested.">
+<title>Judging the Judge: Building LLM-as-a-Judge Evaluations That Stay Honest &middot; Blog &middot; Agentic Evals</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <p class="brand">
+      <span class="brand-name">DeepAgentLabs</span>
+      <span class="brand-sep" aria-hidden="true">/</span>
+      <span class="brand-sub">Agentic Evals</span>
+    </p>
+
+    <nav class="site-nav" aria-label="Primary">
+
+      <!-- desktop navigation -->
+      <ul class="nav-list nav-list--wide">
+        <li><a class="nav-link" href="../index.html">Home</a></li>
+        <li><a class="nav-link" href="../index.html#use-cases">Use Cases</a></li>
+        <li class="nav-item--has-sub">
+          <a class="nav-link nav-link--sub" href="index.html">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <ul class="nav-sub-list">
+            <li><a class="nav-sub-link" href="index.html">All posts</a></li>
+            <li><a class="nav-sub-link" href="chatbot-evaluation.html">Chatbot Evaluation</a></li>
+            <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+            <li><a class="nav-sub-link" href="production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+            <li><a class="nav-sub-link" href="eval-engine.html">How the Evaluation Engine Was Built</a></li>
+            <li><a class="nav-sub-link" href="judge-reliability.html">Judging the Judge: Building LLM-as-a-Judge Evaluations That Stay Honest</a></li>
+          </ul>
+        </li>
+        <li><a class="nav-link" href="../index.html#about">About</a></li>
+        <li>
+          <a class="nav-link nav-link--ext"
+             href="https://github.com/Aryaman431/agentic-evals"
+             target="_blank"
+             rel="noopener noreferrer"
+             aria-label="Open the agentic-evals repository on GitHub from the Judging the Judge article - opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+        </li>
+      </ul>
+
+      <!-- mobile navigation: native disclosure, no JavaScript -->
+      <details class="nav-disclosure">
+        <summary class="nav-summary">Menu<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <ul class="nav-list nav-list--drawer">
+          <li><a class="nav-link" href="../index.html">Home</a></li>
+          <li><a class="nav-link" href="../index.html#use-cases">Use Cases</a></li>
+          <li class="nav-item--has-sub">
+            <a class="nav-link nav-link--sub" href="index.html">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <ul class="nav-sub-list">
+              <li><a class="nav-sub-link" href="index.html">All posts</a></li>
+              <li><a class="nav-sub-link" href="chatbot-evaluation.html">Chatbot Evaluation</a></li>
+              <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+              <li><a class="nav-sub-link" href="production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+              <li><a class="nav-sub-link" href="eval-engine.html">How the Evaluation Engine Was Built</a></li>
+              <li><a class="nav-sub-link" href="judge-reliability.html">Judging the Judge: Building LLM-as-a-Judge Evaluations That Stay Honest</a></li>
+            </ul>
+          </li>
+          <li><a class="nav-link" href="../index.html#about">About</a></li>
+          <li>
+            <a class="nav-link nav-link--ext"
+               href="https://github.com/Aryaman431/agentic-evals"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="Open the agentic-evals repository on GitHub from the Judging the Judge article - opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+          </li>
+        </ul>
+      </details>
+
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+
+    <a class="back-link" href="index.html">All posts</a>
+
+    <!-- ==========================================================
+         1 - ARTICLE HEADER
+         ========================================================== -->
+    <header class="article-header">
+      <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">&#167;B</span>Blog</p>
+
+      <h1>Judging the Judge: Building LLM-as-a-Judge Evaluations That Stay Honest</h1>
+
+      <p class="article-meta">
+        <span>Engineering &middot; 7 min read</span>
+        <span><code>agentic_evals</code></span>
+      </p>
+
+      <p class="article-lede">
+        Somewhere between the trace and the verdict sits the component that is hardest to get right
+        and easiest to get wrong: the judge. This post is about how the evaluation engine builds a
+        large language model judge that reads a trace, applies a written rubric, and returns a
+        defensible pass or fail.
+      </p>
+    </header>
+
+    <!-- ==========================================================
+         2 - WHY A JUDGE AT ALL
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Why a judge at all</h2>
+
+        <p>
+          Deterministic assertions are wonderful when the behaviour can be expressed as data. They
+          are also insufficient for open-ended work: did the answer help the user, was it helpful and
+          honest, did it follow the plan. Those questions are judgement questions, and judgement
+          questions need a judge.
+        </p>
+
+        <p>
+          The engine's answer is a rubric scorer: a language model that reads the trace and the
+          written expectation, then returns a pass or fail with an explanation. The judgement is
+          explicit rather than implicit, because the expectation was written down before the run.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         3 - WHAT THE JUDGE READS
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>What the judge reads</h2>
+
+        <p>
+          The judge consumes the trace - the spans, the tool calls, the outputs - together with the
+          expectation. That grounding matters. A judge that scores an answer without being able to
+          see what the tools actually returned is guessing. The engine's groundedness evaluator takes
+          the claims inside the answer and checks them against the real tool results, so the judge
+          is not scoring against memory.
+        </p>
+
+        <p>
+          This is the difference between a judge that can be wrong for a boring reason and one that
+          can be wrong for a fixable reason. Groundedness turns an unverifiable claim into a checkable
+          one.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         4 - WRITING THE RUBRIC
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Writing the rubric</h2>
+
+        <p>
+          A rubric is only as good as the criteria behind it. The engine expresses criteria as
+          checks against the trace and the expectation, and each check maps to a score with a
+          threshold and a required flag. Writing the rubric means writing down what good looks like
+          in observable terms, before any answer is judged.
+        </p>
+
+        <p>
+          The practical rule that came out of the work: one judge per failure. When a run fails, the
+          explanation should point at the specific criterion that failed, not at the answer as a
+          whole. That is what makes a failed evaluation actionable.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         5 - KEEPING THE JUDGE HONEST
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Keeping the judge honest</h2>
+
+        <p>
+          A judge is a model, so it inherits the failure modes of models: sycophancy, self
+          preference, verbosity bias, position bias. None of those are bugs in the engine, but they
+          are risks to the evaluation. The mitigation is not to stop using a judge; it is to test
+          the judgement the way you test anything else.
+        </p>
+
+        <p>
+          The engine's fault injection is the same discipline applied one level up. Break a stage of
+          the agent on purpose, watch the matching evaluator fire, and confirm the judgement holds.
+          A judge that cannot be made to fail on a known-bad run is not a judge, it is a rubber stamp.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         6 - LESSONS
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Lessons</h2>
+
+        <ul>
+          <li>Judgement should be explicit. A written rubric beats an implicit instinct.</li>
+          <li>Ground the judge. Give it the trace, not just the answer.</li>
+          <li>Test the judgement. Fault injection is how you prove the rule fires.</li>
+          <li>Separate the judge from the decision. Scoring produces evidence; gates decide.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         7 - TAKEAWAY
+         ========================================================== -->
+    <div class="takeaway">
+      <p class="takeaway-label">Takeaway</p>
+      <p>
+        A judge is a model, so treat it like one: give it a precise rubric, ground it in the trace,
+        and test it like any other component. The moment the judgement is trusted without being
+        checked, the evaluation has stopped being a measurement and started being a performance.
+      </p>
+    </div>
+
+    <p class="run-note">
+      Run it from the repository root: <code>agentic-evals run</code> discovers and runs every eval
+      file in the current directory - the rubric scorer is one of the scorer implementations behind
+      the engine, and the fault injection that proves a judgement fired lives in the use case
+      projects.
+    </p>
+
+    <!-- ==========================================================
+         8 - PREV / NEXT / PROJECT
+         ========================================================== -->
+    <nav class="article-footer-nav" aria-label="More articles">
+      <a href="eval-engine.html">
+        <span>Previous article</span>
+        <span>How the Evaluation Engine Was Built</span>
+      </a>
+      <a href="latency-engineering.html">
+        <span>Next article</span>
+        <span>The 100ms Budget: Latency Engineering for Real-Time Agents</span>
+      </a>
+      <a href="../Chatbot-eval/index.html">
+        <span>Open the project</span>
+        <span>Chatbot-eval/</span>
+      </a>
+    </nav>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p class="footer-brand">DeepAgentLabs &middot; Agentic Evals</p>
+    <p class="footer-note">
+      A static storytelling site &mdash; zero JavaScript, relative links, one stylesheet.
+    </p>
+    <p class="footer-meta" aria-hidden="true">DL / STORIES &middot; REV 2026.10</p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!-- BUTTON AFTER #openEval (topbar-right section) -->
+<button class="btn btn-primary" id="openAgenticLens" type="button">
+  <i data-lucide="search" aria-hidden="true"></i>Explore AgenticLens
+</button>
+
+<!-- AGENTICLENS WORKFLOW MODAL (after scenario editor modal, before </body>) -->
+<!-- AgenticLens Workflow Modal -->
+<div class="backdrop modal-backdrop"></div>
+<div class="modal" id="agenticLensModal" role="dialog" aria-modal="true">
+  <div class="modal-head">
+    <div>
+      <span class="kicker">AgenticLens Workflow</span>
+      <h2>Explore the AgenticLens Workflow</h2>
+    </div>
+    <button class="icon-btn" type="button" aria-label="Close">
+      <i data-lucide="x"></i>
+    </button>
+  </div>
+  <div class="modal-body">
+    <!-- 5 stages will be added later -->
+  </div>
+  <div class="modal-foot">
+    <button class="btn" type="button">Back</button>
+    <button class="btn btn-primary" type="button">Next</button>
+  </div>
+</div>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ============================================================
+     BLOG ARTICLE 04 - How the Evaluation Engine Was Built
+     Lives in blog/: stylesheet ../styles.css, home ../index.html,
+     projects ../Chatbot-eval/index.html, siblings are the other
+     files in this folder. ZERO JavaScript, no assets.
+     ============================================================ -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="How the agentic-evals evaluation engine was built: the trace contract, the scorer interface, packs, the release gate, and the CLI that turn agent behaviour into pass or fail.">
+<title>How the Evaluation Engine Was Built &middot; Blog &middot; Agentic Evals</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <p class="brand">
+      <span class="brand-name">DeepAgentLabs</span>
+      <span class="brand-sep" aria-hidden="true">/</span>
+      <span class="brand-sub">Agentic Evals</span>
+    </p>
+
+    <nav class="site-nav" aria-label="Primary">
+
+      <!-- desktop navigation -->
+      <ul class="nav-list nav-list--wide">
+        <li><a class="nav-link" href="../index.html">Home</a></li>
+        <li><a class="nav-link" href="../index.html#use-cases">Use Cases</a></li>
+        <li class="nav-item--has-sub">
+          <a class="nav-link nav-link--sub" href="index.html">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <ul class="nav-sub-list">
+            <li><a class="nav-sub-link" href="index.html">All posts</a></li>
+            <li><a class="nav-sub-link" href="chatbot-evaluation.html">Chatbot Evaluation</a></li>
+            <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+            <li><a class="nav-sub-link" href="production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+            <li><a class="nav-sub-link" href="eval-engine.html">How the Evaluation Engine Was Built</a></li>
+          </ul>
+        </li>
+        <li><a class="nav-link" href="../index.html#about">About</a></li>
+        <li>
+          <a class="nav-link nav-link--ext"
+             href="https://github.com/Aryaman431/agentic-evals"
+             target="_blank"
+             rel="noopener noreferrer"
+             aria-label="Open the agentic-evals repository on GitHub from the Evaluation Engine article - opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+        </li>
+      </ul>
+
+      <!-- mobile navigation: native disclosure, no JavaScript -->
+      <details class="nav-disclosure">
+        <summary class="nav-summary">Menu<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <ul class="nav-list nav-list--drawer">
+          <li><a class="nav-link" href="../index.html">Home</a></li>
+          <li><a class="nav-link" href="../index.html#use-cases">Use Cases</a></li>
+          <li class="nav-item--has-sub">
+            <a class="nav-link nav-link--sub" href="index.html">Blog<svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <ul class="nav-sub-list">
+              <li><a class="nav-sub-link" href="index.html">All posts</a></li>
+              <li><a class="nav-sub-link" href="chatbot-evaluation.html">Chatbot Evaluation</a></li>
+              <li><a class="nav-sub-link" href="voice-agent-evaluation.html">Voice Agent Evaluation</a></li>
+              <li><a class="nav-sub-link" href="production-trace-release-decision.html">From Production Trace to Release Decision</a></li>
+              <li><a class="nav-sub-link" href="eval-engine.html">How the Evaluation Engine Was Built</a></li>
+            </ul>
+          </li>
+          <li><a class="nav-link" href="../index.html#about">About</a></li>
+          <li>
+            <a class="nav-link nav-link--ext"
+               href="https://github.com/Aryaman431/agentic-evals"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="Open the agentic-evals repository on GitHub from the Evaluation Engine article - opens in a new tab">GitHub<svg class="arrow arrow--ur" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2 8 L8 2 M3.5 2 H8 V6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></a>
+          </li>
+        </ul>
+      </details>
+
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+
+    <a class="back-link" href="index.html">All posts</a>
+
+    <!-- ==========================================================
+         1 - ARTICLE HEADER
+         ========================================================== -->
+    <header class="article-header">
+      <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">&#167;B</span>Blog</p>
+
+      <h1>How the Evaluation Engine Was Built</h1>
+
+      <p class="article-meta">
+        <span>Engineering &middot; 8 min read</span>
+        <span><code>agentic_evals</code></span>
+      </p>
+
+      <p class="article-lede">
+        Every use case on this site - the chatbot, the voice agent, the release gate - eventually
+        bottoms out in the same place: a small evaluation engine that turns a recorded trace into a
+        score, a score into a verdict, and a verdict into a pass or fail. This post opens that
+        engine and describes the pieces that make testing an agent feel like testing software.
+      </p>
+    </header>
+
+    <!-- ==========================================================
+         2 - THE PROBLEM
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Why an agent is not a function</h2>
+
+        <p>
+          The instinct when teams start evaluating agents is to reach for the tooling they already
+          have for ordinary software: call the thing, assert on the output, move on. Agents resist
+          this framing because they do not have an output you can assert on. What they produce is
+          behaviour - a plan, a tool call, a sentence, a decision - and the behaviour is shaped by
+          reasoning that never appears in any single place you can point at.
+        </p>
+
+        <p>
+          That is why the failures hide in the seams. The reasoning step is fine but the tool call
+          is wrong. The tool call is right but the argument is corrupted. The answer is fluent but
+          the claim is unsupported. A single assertion cannot see any of that, because none of it is
+          a property of the final answer alone. The evaluation has to observe the <strong>run</strong>,
+          not just the <strong>result</strong>.
+        </p>
+
+        <p>
+          The consequence is that evaluation has to be built as a small system of its own: capture
+          a trace, score the trace, and turn the score into a verdict. Everything else on this site
+          is an instance of that pattern.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         3 - THE TRACE CONTRACT
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>The trace is the contract</h2>
+
+        <p>
+          The engine core data model is deliberately small. An <code>EvalTrace</code> holds a
+          trace identifier, the <code>EvalSpan</code>s that make it up, total latency, an
+          estimated cost, and metadata. An <code>EvalSpan</code> holds a tool name and a bag of
+          attributes. That is the whole shape the engine inspects.
+        </p>
+
+        <p>
+          The design note worth reading closely: the engine does not adopt any vendor trace schema.
+          It does not inherit AgenticLens's richer <code>Span</code>, with agent names, retries,
+          timestamps, and everything else. The engine only needs the pieces it actually uses, and by
+          keeping the contract narrow it can consume any trace-shaped data a team already has. You
+          can produce an <code>EvalTrace</code> without depending on a specific tracing tool schema
+          at all.
+        </p>
+
+        <p>
+          A narrow contract is a decision, and it is the kind of decision that ages well. Tracing
+          vendors will keep adding fields. The evaluation engine should not care.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         4 - SCORERS AND PACKS
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>One interface, many scorers</h2>
+
+        <p>
+          Scoring is expressed through a single interface with multiple implementations: text
+          scorers, trajectory scorers, and rubric scorers that use a language model as the judge.
+          Every score carries a value between zero and one, a pass flag, whether it is required, and
+          a human-readable explanation of why it passed or failed. That last field is not
+          decoration; it is what turns a number into something an engineer can act on.
+        </p>
+
+        <p>
+          Scorers are then bundled into <strong>packs</strong> through test cases. A test case
+          declares what the behaviour was expected to be: an expected output, a set of substrings
+          that must appear, a JSON schema for structured output, required or forbidden tools, the
+          arguments a tool call should carry, latency and cost ceilings, turn limits, and the
+          evaluators that judge it. A test case that declares no expectation at all is rejected, so
+          an empty case cannot silently become an unchecked case.
+        </p>
+
+        <p>
+          The pack model is what keeps evaluation honest as the surface area grows. Instead of one
+          monolithic rubric written once, expectations are expressed per behaviour, and evaluators
+          are attached to the cases that need them.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         5 - THE GATE
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>From scores to a decision: the gate</h2>
+
+        <p>
+          A score is not a verdict. The engine gate takes a full evaluation report and turns it
+          into a decision with reasons. The gate configuration carries the thresholds a team cares
+          about: minimum pass rate, minimum average score, maximum failed cases, maximum average
+          latency, and maximum total cost. The decision returns a pass flag plus a list of reasons
+          explaining what failed, plus the observed numbers it decided against.
+        </p>
+
+        <p>
+          That separation matters. Keeping the thresholds in configuration, and keeping the
+          decision's reasoning alongside the observed values, means the verdict can be reproduced
+          and audited later. A pass flag without reasons is a dashboard. A pass flag with reasons is
+          a decision.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         6 - RUNNING IN CI
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Running evals in CI</h2>
+
+        <p>
+          The command line entry point discovers evaluation files by convention, runs them, and
+          exits non-zero if any case failed. The conventions mirror what teams already know from
+          testing: files named to match, a runner that collects results, and an exit code that a CI
+          pipeline can act on without parsing prose.
+        </p>
+
+        <p>
+          That last point is the quiet hero of the design. Every evaluation on this site can be run
+          headlessly, printed to a scorecard, and gated behind a threshold. The same engine that
+          powers the interactive playgrounds also powers the automated verdicts.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         7 - LESSONS
+         ========================================================== -->
+    <section class="article-section">
+      <div class="prose">
+        <h2>Lessons</h2>
+
+        <ul>
+          <li>Contracts beat cleverness. The narrow trace contract did more work than any abstraction.</li>
+          <li>Separate scoring from deciding. A score is data; a gate is policy.</li>
+          <li>Require expectations. An evaluation without one is not an evaluation.</li>
+          <li>Make reasons first-class. A verdict without a why is a feeling.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         8 - TAKEAWAY
+         ========================================================== -->
+    <div class="takeaway">
+      <p class="takeaway-label">Takeaway</p>
+      <p>
+        The engine is deliberately boring. Small contracts, one scorer interface, explicit gates,
+        and an exit code for CI. Boring is exactly what you want in something that runs on every
+        release and has to be trusted by the people shipping the agent.
+      </p>
+    </div>
+
+    <p class="run-note">
+      Run it from the repository root: <code>agentic-evals run</code> discovers and runs every eval
+      file in the current directory - <code>agentic-evals run evals/</code> scopes it to a folder -
+      the CLI exits 0 when all cases passed and 1 when any failed, which is what makes it CI-ready.
+    </p>
+
+    <!-- ==========================================================
+         9 - PREV / NEXT / PROJECT
+         ========================================================== -->
+    <nav class="article-footer-nav" aria-label="More articles">
+      <a href="production-trace-release-decision.html">
+        <span>Previous article</span>
+        <span>From Production Trace to Release Decision</span>
+      </a>
+      <a href="judge-reliability.html">
+        <span>Next article</span>
+        <span>Judging the Judge: Building LLM-as-a-Judge Evaluations That Stay Honest</span>
+      </a>
+      <a href="../Chatbot-eval/index.html">
+        <span>Open the project</span>
+        <span>Chatbot-eval/</span>
+      </a>
+    </nav>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p class="footer-brand">DeepAgentLabs &middot; Agentic Evals</p>
+    <p class="footer-note">
+      A static storytelling site - zero JavaScript, relative links, one stylesheet.
+    </p>
+    <p class="footer-meta" aria-hidden="true">DL / STORIES &middot; REV 2026.10</p>
+  </div>
+</footer>
+
+</body>
+</html>

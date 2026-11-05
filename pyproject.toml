@@ -43,6 +43,10 @@ dev = [
   "build>=1.2",
   "twine>=5.1",
 ]
+voice = [
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+]
 
 [project.scripts]
 agentic-evals = "agentic_evals.cli:main"

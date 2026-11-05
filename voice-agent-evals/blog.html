@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="A smooth voice conversation can hide serious problems. Structured evaluation reveals whether an AI voice agent truly understood — the Voice Agent Evaluation use case explained.">
+<title>Your AI Voice Agent Understood You. Are You Sure? · Blog · Agentic Evals</title>
+<style>
+  :root{
+    --bg:#05080a;
+    --surface:#0a0e12;
+    --surface-2:#0c1218;
+    --border:rgba(255,255,255,.07);
+    --border-strong:rgba(255,255,255,.11);
+    --text:#e7eef4;
+    --text-2:#b9c4cd;
+    --muted:#8b97a3;
+    --dim:#5c6773;
+    --green:#00ff88;
+    --cyan:#00d4ff;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,'Helvetica Neue',sans-serif;
+    --r:6px;
+    --wrap:700px;
+  }
+  *,*:before,*:after{box-sizing:border-box}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:var(--sans);font-size:15px;line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none}
+  h1,h2,h3,p,ul{margin:0;padding:0}
+  ul{list-style:none;padding-left:0}
+  ::selection{background:rgba(0,255,136,.24);color:#eafff5}
+  :focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:3px}
+  .shell{display:flex;flex-direction:column;min-height:100vh}
+  .wrap{width:100%;max-width:var(--wrap);margin:0 auto;padding:0 20px}
+  .article-head{padding:48px 0 32px;border-bottom:1px solid var(--border)}
+  .back-link{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .15s}
+  .back-link:hover{color:var(--green)}
+  .eyebrow{margin:20px 0 12px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)}
+  h1{margin:0 0 14px;font-size:clamp(1.9rem,1.4rem+2.2vw,2.6rem);font-weight:700;line-height:1.12;letter-spacing:-.02em;color:var(--text);text-wrap:balance}
+  .subtitle{margin:0 0 16px;font-size:clamp(1.05rem,.95rem+.4vw,1.25rem);line-height:1.5;color:var(--text-2);max-width:62ch}
+  .article-meta{display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .meta-item{padding-left:12px;border-left:1px solid var(--border)}
+  .article-body{padding:40px 0 60px}
+  .prose{max-width:66ch;color:var(--text-2);line-height:1.75}
+  .prose p{margin:0 0 22px}
+  .prose p:last-child{margin-bottom:0}
+  .prose strong{color:var(--text)}
+  .prose a{color:var(--text);text-decoration:underline;text-decoration-color:var(--border-strong);text-underline-offset:3px;transition:color .15s,text-decoration-color .15s}
+  .prose a:hover{color:var(--green);text-decoration-color:var(--green)}
+  .prose code{font-family:var(--mono);font-size:.88em;color:var(--cyan);background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.22);border-radius:4px;padding:1px 6px}
+  .prose h2{margin:44px 0 14px;font-size:1.25rem;font-weight:600;letter-spacing:-.01em;color:var(--text)}
+  .prose h2::before{content:"";display:block;width:26px;height:2px;margin-bottom:10px;background:var(--green)}
+  .prose h3{margin:30px 0 10px;font-size:1.05rem;font-weight:600;color:var(--text-2)}
+  .prose ul{margin:14px 0 22px;padding-left:18px;list-style:disc;color:var(--text-2)}
+  .prose ul li{margin-bottom:8px;line-height:1.7}
+  .prose ul li::marker{color:var(--green)}
+  .callout{margin:30px 0;padding:18px 22px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:14px;line-height:1.7}
+  .callout p{margin:0}
+  .article-footer{padding:40px 0 60px;border-top:1px solid var(--border)}
+  .footer-back{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;margin-bottom:26px}
+  .footer-back:hover{color:var(--green)}
+  .footer-note{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;border-top:1px solid var(--border);padding-top:16px}
+  @media (max-width:640px){
+    .wrap{padding:0 16px}
+    .article-head{padding:36px 0 24px}
+    .article-body{padding:32px 0 52px}
+    .article-footer{padding:32px 0 52px}
+    h1{font-size:1.9rem}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="wrap">
+    <header class="article-head">
+      <a class="back-link" href="./index.html">? Back to Voice Agent Evaluation</a>
+      <p class="eyebrow">Blog · Use Case 02</p>
+      <h1>Your AI Voice Agent Understood You. Are You Sure?</h1>
+      <p class="subtitle">A smooth voice conversation can hide serious problems — did the agent identify the right intent, choose the right action, and handle incomplete information? Structured evaluation reveals what listening cannot.</p>
+      <div class="article-meta">
+        <span>Reading time · 6 min</span>
+        <span class="meta-item">Voice Agent Evaluation</span>
+        <span class="meta-item">Blog</span>
+      </div>
+    </header>
+    <div class="article-body">
+      <div class="prose">
+        <p>Voice agents are becoming an increasingly common way to interact with AI. From customer support to automated assistants, they promise conversations that feel natural and effortless. But a smooth conversation can hide serious problems.</p>
+        <p>Did the agent understand the user's request? Did it identify the correct intent? Did it choose the right action? And what happens when the information it receives is incomplete or misleading? These are questions that cannot be answered simply by listening to a conversation.</p>
+        <h2>The challenge of evaluating voice agents</h2>
+        <p>Voice-based interactions introduce additional complexity. A voice agent must interpret what a user says, understand the underlying intent, and produce an appropriate response. Even a small misunderstanding can lead to an incorrect action.</p>
+        <p>For example, a customer asking about an order cancellation might be incorrectly understood as requesting a refund. The conversation may continue naturally, but the task has already gone wrong. The caller hears a polite reply and assumes everything is fine — while the agent has already committed to the wrong outcome.</p>
+        <h2>A structured evaluation approach</h2>
+        <p>The Voice Agent Evaluation project demonstrates how voice-agent behaviour can be assessed through repeatable test scenarios. It uses ten synthetic customer-support cases and evaluates eight dimensions:</p>
+        <ul>
+          <li>Transcript accuracy</li>
+          <li>Intent accuracy</li>
+          <li>Tool selection</li>
+          <li>Tool arguments</li>
+          <li>Response quality</li>
+          <li>Groundedness</li>
+          <li>Reliability</li>
+          <li>Latency</li>
+        </ul>
+        <p>Together, these checks provide a broader picture of agent performance than simply judging whether a response sounds natural. A voice agent can sound perfectly human while still cancelling the wrong order or promising a refund it cannot deliver.</p>
+        <h2>Deliberately testing failure</h2>
+        <p>A reliable evaluation system must also test situations where the agent is expected to struggle. The project includes fault scenarios involving incorrect intent, wrong tool selection, invalid arguments, hallucinated responses, unsupported claims, tool failures, missing information, and delayed responses. These scenarios help reveal weaknesses that might otherwise remain hidden during normal demonstrations.</p>
+        <h2>Exploring the evaluation dashboard</h2>
+        <p>The project provides a Scenario Lab and evaluation dashboard for running test cases and reviewing results. Users can inspect evaluation outcomes, identify failed scenarios, and understand which aspects of the agent require attention. The goal is to make evaluation repeatable and easier to interpret.</p>
+        <div class="callout"><p>The current implementation is a simulated voice-support environment. It does not perform actual microphone recording, speech-to-text recognition, or text-to-speech generation. Its transcription behaviour is simulated, and intent detection uses deterministic logic. Latency measurements are local evaluation measurements, not production voice-service benchmarks. These limitations are important when interpreting the results.</p></div>
+        <h2>Conclusion</h2>
+        <p>A voice agent should do more than sound human. It should understand requests accurately, select appropriate actions, and remain reliable even when conversations become difficult.</p>
+        <p><strong>Explore Voice Agent Evaluation to see how structured testing can uncover problems behind seemingly successful conversations.</strong></p>
+      </div>
+    </div>
+    <footer class="article-footer">
+      <a class="footer-back" href="./index.html">? Back to Voice Agent Evaluation</a>
+      <p class="footer-note">Agentic Evals · Blog · Not Stories</p>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

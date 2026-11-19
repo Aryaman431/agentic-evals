@@ -620,15 +620,9 @@ function renderHeader() {
   const db = $("hd-db");
   if (!h) { db.className = "chip"; db.textContent = "DB: …"; return; }
   const d = h.database || {};
-  if (d.mode === "in_memory") {
-    db.className = "chip warn";
-    db.textContent = "DB: IN-MEMORY (no Supabase)";
-  } else if (d.mode === "supabase" && d.connected === false) {
-    db.className = "chip bad";
-    db.textContent = "DB: DISCONNECTED";
-  } else if (d.mode === "supabase") {
+  if (d.mode === "sample_data" || d.mode === "in_memory") {
     db.className = "chip ok";
-    db.textContent = "DB: SUPABASE";
+    db.textContent = "DB: SAMPLE DATA";
   } else {
     db.className = "chip";
     db.textContent = "DB: …";

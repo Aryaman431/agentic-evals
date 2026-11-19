@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Documentation for Agentic Evals: fuller quickstart variants, release-gate thresholds, live targets, eval packs and LLM judge notes.">
+  <meta name="theme-color" content="#07110e">
+  <meta property="og:title" content="Agentic Evals docs — DeepAgentLabs">
+  <meta property="og:description" content="Documentation for Agentic Evals: fuller quickstart variants, release-gate thresholds, live targets, eval packs and LLM judge notes.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>Agentic Evals docs — DeepAgentLabs</title>
+  <link rel="icon" href="https://deepagentlabs.io/assets/img/dal-logo.png">
+  <link rel="stylesheet" href="https://deepagentlabs.github.io/assets/css/styles.css">
+  <link rel="stylesheet" href="https://deepagentlabs.github.io/assets/css/enhance.css">
+  <link rel="stylesheet" href="https://deepagentlabs.github.io/assets/css/nav.css">
+  <link rel="stylesheet" href="https://deepagentlabs.github.io/assets/css/theme.css">
+  <link rel="stylesheet" href="https://deepagentlabs.github.io/assets/css/background.css">
+  <link rel="stylesheet" href="https://deepagentlabs.github.io/assets/css/copy.css">
+  <link rel="stylesheet" href="https://deepagentlabs.github.io/assets/css/polish.css">
+  <link rel="stylesheet" href="https://deepagentlabs.github.io/assets/css/product.css">
+  <link rel="stylesheet" href="https://deepagentlabs.github.io/assets/css/footer.css">
+  <link rel="stylesheet" href="https://deepagentlabs.github.io/assets/css/beam.css">
+  <link rel="stylesheet" href="https://deepagentlabs.github.io/assets/css/product-uniform.css">
+  <link rel="stylesheet" href="https://deepagentlabs.github.io/assets/css/simulations.css">
+  <script src="https://deepagentlabs.github.io/assets/js/site.js" defer></script>
+  <script src="https://deepagentlabs.github.io/assets/js/nav.js" defer></script>
+  <script src="https://deepagentlabs.github.io/assets/js/background.js" defer></script>
+  <script src="https://deepagentlabs.github.io/assets/js/copy.js" defer></script>
+  <script src="https://deepagentlabs.github.io/assets/js/product.js" defer></script>
+</head>
+<body class="product-page uniform-product" data-product="evals">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="https://deepagentlabs.io/" aria-label="DeepAgentLabs home">
+      <span class="brand-logo" aria-hidden="true"></span>
+      <span>DeepAgentLabs</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav id="site-nav" aria-label="Primary navigation">
+      <a href="../index.html">Back to home</a>
+      <a href="../index.html#use-cases">Use cases</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://deepagentlabs.io/roadmap.html">Roadmap</a>
+      <a class="nav-cta" href="https://github.com/DeepAgentLabs/agentic-evals" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="pp-hero pp-enter" id="top">
+      <div class="pp-hero-copy">
+        <p class="pp-crumbs"><a href="../index.html">Home</a><span aria-hidden="true">/</span><span>Agentic Evals</span><span aria-hidden="true">/</span><b>Docs</b></p>
+        <p class="section-label">Agentic Evals · Docs</p>
+        <h1>The longer quickstarts and the <span class="hl">details behind them</span>.</h1>
+        <p class="pp-lede">The home page shows the shortest path to a first eval. This page has the fuller variants — a declarative suite with a release gate, and an LLM judge — plus notes on how each capability behaves.</p>
+        <div class="hero-actions"><a class="button button-primary" href="../index.html">Back to home <span aria-hidden="true">→</span></a></div>
+        <code class="tl-pip pp-pip">pip install agentic-evals</code>
+      </div>
+    </section>
+
+    <div class="product-content">
+
+    <section id="suite">
+      <div class="shell">
+        <div class="section-heading">
+          <div>
+            <p class="section-label mono">Quickstart · Suites</p>
+            <h2>Declarative suites with a <span class="hl">release gate</span>.</h2>
+          </div>
+          <p>Expectations cover tool calls, output fields, JSON Schema, latency and cost. Run the suite against a live target, then gate the release on the report.</p>
+        </div>
+
+        <div class="code-panel">
+<pre><code><span class="tok-k">from</span> agentic_evals <span class="tok-k">import</span> (
+    GateConfig, PythonTarget, TestCase, TestSuite,
+    evaluate_gate, run_live_suite,
+)
+
+suite = TestSuite(
+    name=<span class="tok-s">"refunds"</span>,
+    version=<span class="tok-s">"3"</span>,
+    cases=[
+        TestCase(
+            id=<span class="tok-s">"refund-status"</span>,
+            name=<span class="tok-s">"Looks up the order before answering"</span>,
+            input={<span class="tok-s">"message"</span>: <span class="tok-s">"Where is my refund for ORD-1042?"</span>},
+            required_tools=[<span class="tok-s">"lookup_order"</span>],
+            forbidden_tools=[<span class="tok-s">"issue_refund"</span>],
+            required_output_fields=[<span class="tok-s">"status"</span>],
+            max_latency_ms=<span class="tok-s">2000</span>,
+            max_cost_usd=<span class="tok-s">0.02</span>,
+            tags=[<span class="tok-s">"refunds"</span>],
+        ),
+    ],
+)
+
+report = run_live_suite(suite, PythonTarget(callable_path=<span class="tok-s">"my_app:run_case"</span>))
+<span class="tok-k">print</span>(<span class="tok-s">f"</span>{report.summary.passed_cases}<span class="tok-s">/</span>{report.summary.total_cases}<span class="tok-s"> cases passed"</span>)
+
+decision = evaluate_gate(report, GateConfig(
+    min_pass_rate=<span class="tok-s">0.95</span>,
+    max_failed_cases=<span class="tok-s">0</span>,
+    max_average_latency_ms=<span class="tok-s">1500</span>,
+    max_total_cost_usd=<span class="tok-s">0.25</span>,
+))
+<span class="tok-k">if not</span> decision.passed:
+    <span class="tok-k">raise</span> SystemExit(<span class="tok-s">f"Release gate failed: </span>{decision.reasons}<span class="tok-s">"</span>)</code></pre>
+        </div>
+
+        <p>The gate returns a decision plus the reasons it failed, so CI can print exactly what went over budget.</p>
+      </div>
+    </section>
+
+    <section id="judge">
+      <div class="shell">
+        <div class="section-heading">
+          <div>
+            <p class="section-label mono">Quickstart · Judges</p>
+            <h2>Bringing your own <span class="hl">LLM judge</span>.</h2>
+          </div>
+          <p>The package never calls a model itself. Pass a <code>complete_fn</code> and mix rubric judges with deterministic and trajectory scorers on the same case.</p>
+        </div>
+
+        <div class="code-panel">
+<pre><code><span class="tok-k">from</span> agentic_evals <span class="tok-k">import</span> (
+    FACTUALITY, SECURITY, EvaluatorConfig, LLMRubricEvaluator,
+    TestCase, default_registry, evaluate_suite,
+)
+<span class="tok-k">from</span> my_app.llm <span class="tok-k">import</span> complete  <span class="tok-c"># (prompt: str) -&gt; str</span>
+
+registry = default_registry()
+registry.register(LLMRubricEvaluator(<span class="tok-s">"factuality"</span>, FACTUALITY, complete_fn=complete))
+registry.register(LLMRubricEvaluator(<span class="tok-s">"security"</span>, SECURITY, complete_fn=complete))
+
+case = TestCase(
+    id=<span class="tok-s">"policy-answer"</span>,
+    name=<span class="tok-s">"Answers from the policy without leaking internals"</span>,
+    evaluators=[
+        EvaluatorConfig(name=<span class="tok-s">"factuality"</span>, threshold=<span class="tok-s">0.8</span>),
+        EvaluatorConfig(name=<span class="tok-s">"security"</span>, threshold=<span class="tok-s">0.9</span>),
+        EvaluatorConfig(name=<span class="tok-s">"tool_call_recall"</span>, threshold=<span class="tok-s">1.0</span>),
+    ],
+)
+
+<span class="tok-c"># suite and samples come from your own eval data</span>
+report = evaluate_suite(suite, samples, registry=registry)</code></pre>
+        </div>
+
+        <p>Any provider works, as long as it can turn a prompt into text.</p>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="shell">
+        <div class="section-heading">
+          <div>
+            <p class="section-label mono">Capability notes</p>
+            <h2>Details behind each <span class="hl">capability</span>.</h2>
+          </div>
+          <p>What the code actually does, written from the source rather than the pitch.</p>
+        </div>
+
+        <div class="grid">
+          <article class="cell">
+            <span class="index">01</span>
+            <h3>What the judge records <span class="hl">per score</span>.</h3>
+            <p><code>LLMRubricEvaluator</code> takes your <code>complete_fn: (prompt) -&gt; str</code> and grades with a <code>RubricTemplate</code> — ten are built in, from factuality to SQL correctness. Each score records the rubric name, the parsed verdict and the raw completion in <code>Score.metadata</code>. There are no built-in retries, repeated sampling or agreement metrics: if you need retry-and-vote, wrap it in your own <code>complete_fn</code> where you can see the logic.</p>
+          </article>
+          <article class="cell">
+            <span class="index">02</span>
+            <h3>Every gate <span class="hl">threshold</span>.</h3>
+            <p><code>GateConfig</code> sets <code>min_pass_rate</code>, <code>min_average_score</code>, <code>max_failed_cases</code>, <code>max_average_latency_ms</code> and <code>max_total_cost_usd</code>. <code>evaluate_gate</code> compares them against the report summary and returns a <code>GateDecision</code> with <code>passed</code>, <code>reasons</code> and the <code>observed</code> values. If a cost limit is set but cost data is missing or incomplete, the gate fails with “Total cost is unavailable or incomplete.” instead of passing.</p>
+          </article>
+          <article class="cell">
+            <span class="index">03</span>
+            <h3>Live targets and their <span class="hl">timeouts</span>.</h3>
+            <p><code>PythonTarget</code> resolves a trusted <code>module:function</code> and calls it once per case. <code>HTTPTarget</code> POSTs JSON <code>{input, case_id}</code> to a URL. Both carry <code>timeout_seconds</code> (default 30), and the HTTP request uses it as its socket timeout. Live targets execute trusted code by design — only point them at suites and targets you trust.</p>
+          </article>
+          <article class="cell">
+            <span class="index">04</span>
+            <h3>Eval packs on <span class="hl">disk</span>.</h3>
+            <p>An <code>EvalPack</code> is a <code>TestSuite</code> plus the scorer names it needs, stored as YAML or JSON. <code>load_pack</code> fails fast when a required scorer is missing from the registry. Three packs ship built in: <code>factual-qa</code>, <code>json-output-contract</code> and <code>tool-use-correctness</code>.</p>
+          </article>
+          <article class="cell">
+            <span class="index">05</span>
+            <h3>How the CLI finds <span class="hl">eval files</span>.</h3>
+            <p><code>agentic-evals run</code> looks for <code>*_eval.py</code>, <code>eval_*.py</code> and <code>*.eval.py</code>, imports each file, and exits 1 if any <code>Eval(...)</code> case failed — 0 when everything passes. No config file and no project setup needed.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="next">
+      <div class="shell">
+        <div class="section-heading">
+          <div>
+            <p class="section-label mono">Next steps</p>
+            <h2>Where to go <span class="hl">next</span>.</h2>
+          </div>
+          <p>Three long-form articles, three working projects, and the home page for the overview.</p>
+        </div>
+
+        <div class="grid">
+          <article class="cell">
+            <span class="index">Articles</span>
+            <h3>Read the <span class="hl">articles</span>.</h3>
+            <p>
+              <a href="../blog/chatbot-evaluation.html">Chatbot Evaluation</a> ·
+              <a href="../blog/voice-agent-evaluation.html">Voice Agent Evaluation</a> ·
+              <a href="../blog/production-trace-release-decision.html">Production Trace to Release Decision</a>
+            </p>
+          </article>
+          <article class="cell">
+            <span class="index">Projects</span>
+            <h3>Open the <span class="hl">projects</span>.</h3>
+            <p>
+              <a href="../Chatbot-eval/index.html">Chatbot-eval</a> ·
+              <a href="../voice-agent-evals/index.html">voice-agent-evals</a> ·
+              <a href="../Production%20trace%20to%20release%20decision/index.html">Production trace to release decision</a>
+            </p>
+          </article>
+          <article class="cell">
+            <span class="index">Home</span>
+            <h3>Back to the <span class="hl">home page</span>.</h3>
+            <p>
+              <a href="../index.html">Agentic Evals overview</a> ·
+              <a href="../index.html#use-cases">Use cases</a> ·
+              <a href="../blog/index.html">Blog index</a>
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="ft-inner">
+      <div class="ft-about">
+        <p class="ft-statement">Open infrastructure for <em>observable, efficient and resilient</em> AI agents, built in the open.</p>
+        <ul class="ft-values" aria-label="Principles"><li>Spec comes first</li><li>Works with any framework</li><li>Runs on your machine</li><li>Free and open source</li></ul>
+      </div>
+      <nav class="ft-col" aria-label="Products"><p class="ft-title">Products</p><ul><li><a href="https://github.com/DeepAgentLabs/agenticlens" target="_blank" rel="noopener noreferrer">AgenticLens</a></li><li><a href="https://github.com/DeepAgentLabs/agentic-evals" target="_blank" rel="noopener noreferrer">Agentic Evals</a></li><li><a href="https://github.com/DeepAgentLabs/agentic-sidecar" target="_blank" rel="noopener noreferrer">Agentic Sidecar</a></li><li><a href="https://github.com/DeepAgentLabs/agentic-chaos" target="_blank" rel="noopener noreferrer">Agentic Chaos</a></li><li><a href="https://github.com/DeepAgentLabs/mcp-server" target="_blank" rel="noopener noreferrer">MCP Server</a></li><li><a href="https://github.com/DeepAgentLabs/agenticops-control-tower" target="_blank" rel="noopener noreferrer">Control Tower</a></li></ul></nav>
+      <nav class="ft-col" aria-label="Explore"><p class="ft-title">Explore</p><ul><li><a href="https://github.com/DeepAgentLabs/ai-operations-spec" target="_blank" rel="noopener noreferrer">Specification</a></li><li><a href="https://deepagentlabs.io/roadmap.html">Roadmap</a></li><li><a href="https://deepagentlabs.io/#architecture">Capability map</a></li><li><a href="https://deepagentlabs.io/#dashboards">Frameworks</a></li><li><a href="https://deepagentlabs.io/#faq">FAQ</a></li></ul></nav>
+      <nav class="ft-col" aria-label="Community"><p class="ft-title">Community</p><ul><li><a href="https://discord.gg/fEqPFWgcDG" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord" aria-hidden="true"></i> Discord</a></li><li><a href="https://www.linkedin.com/company/deepagentlabs" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i> LinkedIn</a></li><li><a href="https://www.instagram.com/deepagentlabs.io" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-instagram" aria-hidden="true"></i> Instagram</a></li><li><a href="https://github.com/DeepAgentLabs" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github" aria-hidden="true"></i> GitHub</a></li></ul></nav>
+    </div>
+    <div class="ft-word" aria-hidden="true"><span class="ft-word-text"><span class="ft-w1">DeepAgent</span><span class="ft-w2">Labs</span></span></div>
+    <div class="ft-bottom">
+      <p>© <span id="year">2026</span> DeepAgentLabs</p>
+      <p class="ft-status"><i aria-hidden="true"></i>Free and open source</p>
+      <a class="ft-top" href="#main">Back to top <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,11 +1,10 @@
 """Automated test suite for the Production Trace → Release Decision FastAPI app.
 
-Covers: the five-stage workflow contract (in-memory mode), error honesty
-(404/400/503 with no secret leaks), determinism of scoring, and config
-consistency across schema.sql / render.yaml / requirements.txt.
+Covers: the five-stage workflow contract over the hardcoded sample data,
+error honesty (404/400), determinism of scoring, and config consistency
+across render.yaml / requirements.txt. No environment variables needed.
 """
 
-import os
 import re
 from pathlib import Path
 
@@ -13,16 +12,11 @@ import pytest
 import yaml
 from fastapi.testclient import TestClient
 
-# Ensure import-time backend selection is in_memory: clear any ambient
-# SUPABASE_* env vars BEFORE importing the app module (app.py picks the
-# storage mode at import).
-os.environ.pop("SUPABASE_URL", None)
-os.environ.pop("SUPABASE_SERVICE_ROLE_KEY", None)
-
-import app as app_module  # noqa: E402
+import app as app_module
 
 BASE = "http://testserver"
 SEED_ID = "00000000-0000-4000-8000-000000000001"
+SAMPLE2_ID = "00000000-0000-4000-8000-000000000002"
 METRIC_KEYS = {
     "response_quality",
     "task_completion",
@@ -37,7 +31,7 @@ ROOT = Path(__file__).parent
 
 @pytest.fixture(scope="module")
 def client():
-    # Context manager triggers the startup hook (seeds the demo scenario).
+    # Context manager triggers the startup hook (seeds sample_data.py records).
     with TestClient(app_module.app) as c:
         yield c
 
@@ -53,17 +47,15 @@ def seed_workflow(client):
 
 
 # ---------------------------------------------------------------------------
-# A. Five-stage workflow contract (in-memory mode)
+# A. Five-stage workflow contract (sample data, no env vars)
 # ---------------------------------------------------------------------------
-def test_health_shape(client):
+def test_health_reports_sample_data_mode(client):
+    """Always 200 + mode sample_data; works with zero configuration."""
     resp = client.get(f"{BASE}/health")
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
-    assert body["database"]["mode"] == "in_memory"
-    assert isinstance(body["database"]["connected"], bool)
-    # In-memory mode: the supabase probe is False by design.
-    assert body["database"]["connected"] is False
+    assert body["database"]["mode"] == "sample_data"
     assert body["simulation"]
 
 
@@ -76,12 +68,29 @@ def test_root_serves_real_ui(client):
     assert "<script" in html
 
 
+def test_scenarios_list_non_empty(client):
+    resp = client.get(f"{BASE}/api/scenarios")
+    assert resp.status_code == 200
+    scenarios = resp.json()["scenarios"]
+    assert len(scenarios) >= 2  # both seeded sample scenarios
+
+
 def test_scenarios_contains_seeded_scenario(client):
     resp = client.get(f"{BASE}/api/scenarios")
     assert resp.status_code == 200
     scenarios = resp.json()["scenarios"]
     seed = next(s for s in scenarios if s["id"] == SEED_ID)
     assert seed["event_count"] == 6
+
+
+def test_get_seeded_scenario_with_events(client):
+    resp = client.get(f"{BASE}/api/scenarios/{SEED_ID}")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["scenario"]["id"] == SEED_ID
+    assert body["scenario"]["ai_ops_spec"]["spec_version"] == "0.3"
+    assert len(body["events"]) == 6
+    assert body["events"][0]["sequence_number"] == 0
 
 
 def test_create_scenario_and_retrieve(client):
@@ -130,12 +139,39 @@ def test_replay_contract(client):
     assert set(run["metrics"].keys()) == METRIC_KEYS
 
 
+def test_seeded_runs_out_of_the_box(client):
+    """Seeded sample runs exist before any evaluate/replay call is made.
+
+    SAMPLE2_ID is never written to by this suite, so its runs prove the
+    startup seed ships a baseline AND a simulated-replay run per scenario.
+    """
+    resp = client.get(f"{BASE}/api/scenarios/{SAMPLE2_ID}/runs")
+    assert resp.status_code == 200
+    runs = resp.json()["runs"]
+    assert {r["run_type"] for r in runs} >= {"baseline", "simulated_replay"}
+
+
 def test_runs_list_has_both_runs(client, seed_workflow):
     resp = client.get(f"{BASE}/api/scenarios/{SEED_ID}/runs")
     assert resp.status_code == 200
     runs = resp.json()["runs"]
     assert len(runs) >= 2
     assert {r["run_type"] for r in runs} >= {"baseline", "simulated_replay"}
+
+
+def test_seeded_compare_returns_payload(client):
+    """Compare works out of the box on the seeded runs of SAMPLE2_ID."""
+    runs = client.get(f"{BASE}/api/scenarios/{SAMPLE2_ID}/runs").json()["runs"]
+    baseline = next(r for r in runs if r["run_type"] == "baseline")
+    replay = next(r for r in runs if r["run_type"] == "simulated_replay")
+    resp = client.get(
+        f"{BASE}/api/scenarios/{SAMPLE2_ID}/compare/{baseline['id']}/{replay['id']}"
+    )
+    assert resp.status_code == 200
+    cmp = resp.json()["comparison"]
+    assert cmp["recommendation"] in READINESS
+    assert set(cmp["deltas"].keys()) == METRIC_KEYS
+    assert cmp["rationale"].strip()
 
 
 def test_compare_contract(client, seed_workflow):
@@ -182,98 +218,9 @@ def test_unknown_change_type_is_400(client):
     assert resp.status_code == 400
 
 
-_LEAKY_EXC = (
-    "connection refused to https://abcdefg.supabase.co/rest/v1 "
-    "with key eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.leak"
-)
-
-
-class _BoomClient:
-    """Fake supabase client: every DB call raises a leaky exception."""
-
-    def table(self, *args, **kwargs):
-        raise RuntimeError(_LEAKY_EXC)
-
-
-@pytest.fixture
-def forced_supabase_mode():
-    """Force supabase mode with an exploding client; always restore in-memory."""
-    orig_mode, orig_client = app_module._mode, app_module._supabase
-    app_module._mode = "supabase"
-    app_module._supabase = _BoomClient()
-    yield
-    app_module._mode, app_module._supabase = orig_mode, orig_client
-
-
-def _assert_503_no_leak(resp):
-    assert resp.status_code == 503
-    detail = resp.json()["detail"]
-    assert "Persistence unavailable" in detail
-    assert "supabase.co" not in detail
-    assert "eyJ" not in detail
-    assert "Traceback" not in detail
-    assert "connection refused" not in detail.lower()
-    assert _LEAKY_EXC not in detail
-
-
-def test_persistence_errors_are_honest_503s(client, forced_supabase_mode):
-    _assert_503_no_leak(client.get(f"{BASE}/api/scenarios"))
-    _assert_503_no_leak(client.get(f"{BASE}/api/scenarios/{SEED_ID}"))
-    _assert_503_no_leak(
-        client.post(
-            f"{BASE}/api/scenarios",
-            json={
-                "name": "x",
-                "spec": {},
-                "events": [{"sequence": 0, "agent_name": "a", "event_type": "e"}],
-            },
-        )
-    )
-    _assert_503_no_leak(
-        client.post(f"{BASE}/api/scenarios/{SEED_ID}/evaluate", json={"run_type": "baseline"})
-    )
-    _assert_503_no_leak(client.get(f"{BASE}/api/scenarios/{SEED_ID}/runs"))
-
-
-def test_health_survives_persistence_outage(client, forced_supabase_mode):
-    resp = client.get(f"{BASE}/health")
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body["database"]["mode"] == "supabase"
-    assert body["database"]["connected"] is False
-
-
-def test_in_memory_unaffected_after_outage_fixture(client):
-    """Fixture teardown restored in-memory mode; the API still works."""
-    resp = client.get(f"{BASE}/health")
-    assert resp.status_code == 200
-    assert resp.json()["database"]["mode"] == "in_memory"
-    resp = client.get(f"{BASE}/api/scenarios")
-    assert resp.status_code == 200
-
-
 # ---------------------------------------------------------------------------
 # C. Config consistency
 # ---------------------------------------------------------------------------
-def _schema_tables():
-    sql = (ROOT / "schema.sql").read_text(encoding="utf-8")
-    tables = {}
-    for name, block in re.findall(
-        r"create table if not exists\s+(\w+)\s*\((.*?)\);", sql, re.S | re.I
-    ):
-        cols = set(re.findall(r"^\s*([a-z_][a-z0-9_]*)\s+\w", block, re.M | re.I))
-        tables[name.lower()] = cols
-    return tables
-
-
-def test_schema_has_all_columns_the_app_writes():
-    tables = _schema_tables()
-    assert {"recommendation_summary"} <= tables["release_decisions"]
-    assert {"ai_ops_spec"} <= tables["scenarios"]
-    assert {"is_simulation", "simulation_note", "overall_score"} <= tables["evaluation_runs"]
-    assert {"sequence_number"} <= tables["trace_events"]
-
-
 def test_render_yaml_structure():
     cfg = yaml.safe_load((ROOT / "render.yaml").read_text(encoding="utf-8"))
     assert set(cfg.keys()) == {"services"}  # no stray root-level runtime etc.
@@ -283,10 +230,8 @@ def test_render_yaml_structure():
     assert "--host 0.0.0.0" in svc["startCommand"]
     assert "$PORT" in svc["startCommand"]
     assert svc["healthCheckPath"] == "/health"
-    env = {e["key"]: e for e in svc["envVars"]}
-    for key in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"):
-        assert env[key]["sync"] is False
-        assert "value" not in env[key]
+    # No database credentials — the service runs on hardcoded sample data.
+    assert not (svc.get("envVars") or [])
 
 
 def test_requirements_excludes_pytest():
@@ -294,8 +239,20 @@ def test_requirements_excludes_pytest():
     assert "pytest" not in req
 
 
+def test_sample_data_covers_required_records():
+    """sample_data.py ships ≥2 scenarios, events, runs, and decisions."""
+    import sample_data
+
+    assert len(sample_data.SCENARIOS) >= 2
+    for sc in sample_data.SCENARIOS:
+        assert sample_data.EVENTS.get(sc["id"]), f"no events for {sc['id']}"
+        run_types = {r["run_type"] for r in sample_data.RUNS.get(sc["id"], [])}
+        assert run_types >= {"baseline", "simulated_replay"}
+    assert len(sample_data.DECISIONS) >= 1
+
+
 def test_no_secret_looking_strings_in_sources():
     pat = re.compile(r"eyJ[A-Za-z0-9_-]{20,}")
-    for fname in ("app.py", "index.html", "render.yaml"):
+    for fname in ("app.py", "index.html", "render.yaml", "sample_data.py"):
         text = (ROOT / fname).read_text(encoding="utf-8", errors="ignore")
         assert pat.search(text) is None, f"secret-looking string in {fname}"

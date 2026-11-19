@@ -191,7 +191,9 @@ EVENTS: dict[str, list[dict]] = {
             "event_type": "model_response",
             "input": None,
             "output": {
-                "assessment": "first-time merchant, single high-value purchase, no duplicate charges"
+                "assessment": (
+                    "first-time merchant, single high-value purchase, no duplicate charges"
+                )
             },
             "metadata": {"model": "gpt-4o-mini", "tokens": 412},
             "timestamp": "2026-10-14T09:41:04Z",
@@ -246,7 +248,10 @@ EVENTS: dict[str, list[dict]] = {
             "agent_name": "planner-agent",
             "event_type": "plan",
             "input": {"intent": "check_refund_status"},
-            "output": {"plan": ["lookup_refund", "summarize"], "delegate_to": "refund-lookup-agent"},
+            "output": {
+                "plan": ["lookup_refund", "summarize"],
+                "delegate_to": "refund-lookup-agent",
+            },
             "metadata": {"delegation": "refund-lookup-agent"},
             "timestamp": "2026-09-28T14:20:01Z",
         },

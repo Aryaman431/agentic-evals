@@ -15,11 +15,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import sample_data
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
-
-import sample_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("production-trace-release-decision")

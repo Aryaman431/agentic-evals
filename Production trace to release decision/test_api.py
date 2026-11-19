@@ -8,11 +8,10 @@ across render.yaml / requirements.txt. No environment variables needed.
 import re
 from pathlib import Path
 
+import app as app_module
 import pytest
 import yaml
 from fastapi.testclient import TestClient
-
-import app as app_module
 
 BASE = "http://testserver"
 SEED_ID = "00000000-0000-4000-8000-000000000001"
@@ -164,9 +163,7 @@ def test_seeded_compare_returns_payload(client):
     runs = client.get(f"{BASE}/api/scenarios/{SAMPLE2_ID}/runs").json()["runs"]
     baseline = next(r for r in runs if r["run_type"] == "baseline")
     replay = next(r for r in runs if r["run_type"] == "simulated_replay")
-    resp = client.get(
-        f"{BASE}/api/scenarios/{SAMPLE2_ID}/compare/{baseline['id']}/{replay['id']}"
-    )
+    resp = client.get(f"{BASE}/api/scenarios/{SAMPLE2_ID}/compare/{baseline['id']}/{replay['id']}")
     assert resp.status_code == 200
     cmp = resp.json()["comparison"]
     assert cmp["recommendation"] in READINESS

@@ -1,0 +1,15 @@
+/* ponytail: ceiling: page-specific tweaks only; upgrade path: push upstream to shared product.css if this grows */
+
+/* inline SVG line icons inside grid cells: block layout + breathing room */
+.cell > svg {
+  display: block;
+  margin-bottom: 14px;
+}
+
+/* use-case cards carry two links (project + article) */
+.uc-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 14px;
+}

@@ -130,7 +130,7 @@
           <li><strong>NOT READY:</strong> The change does not meet the configured requirements.</li>
         </ul>
         <p>These outcomes are based on explicit evaluation thresholds rather than subjective impressions.</p>
-        <div class="callout"><p>The current implementation uses deterministic demo scores with small simulated variations. It does not automatically rerun a real production agent application. The system demonstrates the decision-making workflow rather than providing a live production deployment integration. An optional FastAPI backend supports the application, with Supabase persistence when configured and in-memory demo mode otherwise.</p></div>
+        <div class="callout"><p>The current implementation uses deterministic demo scores with small simulated variations. It does not automatically rerun a real production agent application. The system demonstrates the decision-making workflow rather than providing a live production deployment integration. An optional FastAPI backend supports the application, with hardcoded sample data served from the backend itself.</p></div>
         <h2>Conclusion</h2>
         <p>Releasing an AI-agent update should involve more than checking whether it works once. Teams need evidence that a change improves the system without introducing unacceptable regressions.</p>
         <p><strong>Explore the Production Trace to Release Decision Use Case to see the evaluation workflow in action.</strong></p>

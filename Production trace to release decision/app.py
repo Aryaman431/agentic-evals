@@ -1,8 +1,8 @@
 """Production Trace → Release Decision — FastAPI backend (single flat file).
 
-Persistence: Supabase (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY via env/dotenv)
-with a fully compatible in-memory fallback when BOTH env vars are absent.
-Every endpoint behaves identically in either mode; /health reports the mode.
+Persistence: hardcoded sample records (sample_data.py) loaded into an
+in-process dict store; no external database and no configuration needed.
+/health reports mode "sample_data".
 
 Scoring is 100% deterministic: sha256(scenario_id + context) drives small
 ±1/±2 jitter. No random/time influence on any metric or readiness decision.
@@ -10,23 +10,15 @@ Scoring is 100% deterministic: sha256(scenario_id + context) drives small
 
 import hashlib
 import logging
-import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from dotenv import load_dotenv
+import sample_data
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
-
-try:  # supabase is in requirements, but degrade gracefully if missing
-    from supabase import create_client
-except Exception:  # pragma: no cover
-    create_client = None  # type: ignore
-
-load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("production-trace-release-decision")
@@ -34,7 +26,6 @@ logger = logging.getLogger("production-trace-release-decision")
 SERVICE = "production-trace-release-decision"
 VERSION = "1.0.0"
 MAX_BODY_BYTES = 1024 * 1024  # 1 MB request body cap
-SEED_SCENARIO_ID = "00000000-0000-4000-8000-000000000001"
 
 METRIC_KEYS = [
     "response_quality",
@@ -138,186 +129,13 @@ BASELINE_ISSUES = [
 SIMULATION_TAG = "SIMULATED DEMO DATA"
 
 # ---------------------------------------------------------------------------
-# Seed scenario (inserted on startup if missing; boot never crashes on failure)
+# In-process store seeded from sample_data.py — the app's single persistence
+# path (hardcoded sample records; no external database, no configuration).
+# ponytail: ceiling: no pluggable persistence; upgrade path: re-add a storage
+# interface when a second backend is real.
 # ---------------------------------------------------------------------------
-SEED_SPEC: dict[str, Any] = {
-    "spec_version": "0.3",
-    "scenario": {
-        "name": "Unusual Expense Explanation",
-        "source": "AgenticLens-style capture (SIMULATED)",
-        "captured_at": "2026-10-14T09:41:22Z",
-        "environment": "production-simulated",
-    },
-    "agents": [
-        {"name": "planner-agent", "role": "planner", "model": "gpt-4o-mini"},
-        {"name": "transaction-analysis-agent", "role": "analyst", "model": "gpt-4o-mini"},
-        {"name": "response-agent", "role": "responder", "model": "gpt-4o-mini"},
-    ],
-    "tool_calls": [
-        {
-            "tool": "lookup_transactions",
-            "args_schema": {
-                "card_last4": "string",
-                "amount_min": "number",
-                "window_days": "integer",
-            },
-            "latency_ms": 2410,
-            "status": "success",
-        }
-    ],
-    "model_responses": [
-        {"agent": "response-agent", "finish_reason": "stop", "guardrails": "passed"}
-    ],
-    "execution": {
-        "total_duration_ms": 6842,
-        "event_count": 6,
-        "handoffs": 2,
-        "status": "completed",
-    },
-    "notes": "Representative example spec. Not an actual AgenticLens export.",
-}
-
-SEED_EVENTS: list[dict[str, Any]] = [
-    {
-        "sequence": 0,
-        "agent_name": "cardholder-api",
-        "event_type": "user_request",
-        "input": {"message": "Why is there a $2,847 charge from NORTHWIND SUPPLY on my card?"},
-        "output": {
-            "normalized_intent": "explain_unusual_expense",
-            "initial_prompt": "Why is there a $2,847 charge from NORTHWIND SUPPLY on my card?",
-        },
-        "metadata": {"session": "sess_8f2a", "model": "gpt-4o-mini"},
-        "timestamp": "2026-10-14T09:41:00Z",
-    },
-    {
-        "sequence": 1,
-        "agent_name": "planner-agent",
-        "event_type": "plan",
-        "input": {"intent": "explain_unusual_expense"},
-        "output": {
-            "plan": ["lookup_transactions", "analyze_flags", "summarize"],
-            "delegate_to": "transaction-analysis-agent",
-        },
-        "metadata": {
-            "delegation": "transaction-analysis-agent",
-            "handoff_context": "card_last4=4412, window=30d",
-        },
-        "timestamp": "2026-10-14T09:41:01Z",
-    },
-    {
-        "sequence": 2,
-        "agent_name": "planner-agent",
-        "event_type": "agent_handoff",
-        "input": None,
-        "output": None,
-        "metadata": {"from": "planner-agent", "to": "transaction-analysis-agent"},
-        "timestamp": "2026-10-14T09:41:02Z",
-    },
-    {
-        "sequence": 3,
-        "agent_name": "transaction-analysis-agent",
-        "event_type": "tool_call",
-        "input": {
-            "tool": "lookup_transactions",
-            "args": {"card_last4": "4412", "amount_min": 2000, "window_days": 30},
-        },
-        "output": {
-            "matches": [
-                {
-                    "merchant": "NORTHWIND SUPPLY",
-                    "amount": 2847.0,
-                    "category": "office_supplies",
-                    "flag": "first_time_merchant",
-                    "date": "2026-10-12",
-                }
-            ],
-            "count": 3,
-        },
-        "metadata": {
-            "tool": "lookup_transactions",
-            "latency_ms": 2410,
-            "status": "success",
-            "issues": [
-                {
-                    "severity": "low",
-                    "metric": "performance",
-                    "message": "lookup_transactions p95 latency 2.4s exceeds the 1.5s target.",
-                }
-            ],
-        },
-        "timestamp": "2026-10-14T09:41:03Z",
-    },
-    {
-        "sequence": 4,
-        "agent_name": "transaction-analysis-agent",
-        "event_type": "model_response",
-        "input": None,
-        "output": {
-            "assessment": "first-time merchant, single high-value purchase, no duplicate charges"
-        },
-        "metadata": {"model": "gpt-4o-mini", "tokens": 412},
-        "timestamp": "2026-10-14T09:41:04Z",
-    },
-    {
-        "sequence": 5,
-        "agent_name": "response-agent",
-        "event_type": "final_response",
-        "input": None,
-        "output": {
-            "reply": (
-                "This looks like a one-time purchase at NORTHWIND SUPPLY for $2,847 "
-                "on Oct 12 — your first with this merchant. It's flagged only because "
-                "it's a new merchant over your usual amount. If you don't recognize it, "
-                "you can start a dispute from the card menu in the app."
-            ),
-            "guardrail_notes": "No card numbers or PII included in user-facing reply.",
-        },
-        "metadata": {
-            "model": "gpt-4o-mini",
-            "guardrails": "passed",
-            "issues": [
-                {
-                    "severity": "low",
-                    "metric": "tool_correctness",
-                    "message": (
-                        "Agent filtered to 3 flagged transactions "
-                        "without surfacing paging metadata."
-                    ),
-                }
-            ],
-        },
-        "timestamp": "2026-10-14T09:41:05Z",
-    },
-]
-
-# ---------------------------------------------------------------------------
-# Backend init: Supabase client if configured, else in-memory store.
-# ---------------------------------------------------------------------------
-_supabase = None
-_mode = "in_memory"
+_mode = "sample_data"
 _memory: dict[str, Any] = {"scenarios": {}, "events": {}, "runs": {}, "decisions": []}
-
-
-def _init_backend() -> None:
-    """Select storage mode from env. Never raises; falls back to in-memory."""
-    global _supabase, _mode
-    url = (os.environ.get("SUPABASE_URL") or "").strip()
-    key = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
-    if url and key and create_client is not None:
-        try:
-            _supabase = create_client(url, key)
-            _mode = "supabase"
-            logger.info("Storage backend: supabase")
-            return
-        except Exception:
-            logger.exception("Supabase client init failed; using in-memory store")
-    _supabase = None
-    _mode = "in_memory"
-    logger.info("Storage backend: in_memory")
-
-
-_init_backend()
 
 
 def _now() -> str:
@@ -504,82 +322,18 @@ def _build_rationale(
 
 
 # ---------------------------------------------------------------------------
-# Storage layer — Supabase tables and in-memory dicts share these helpers.
+# Storage layer — in-memory dicts only (single persistence path).
 # ---------------------------------------------------------------------------
-class PersistenceError(Exception):
-    """A Supabase/PostgREST call failed; the API surfaces an honest 503."""
-
-
-def _db_call(fn, *args, **kwargs):
-    """Run a Supabase call; ANY exception → log full traceback + PersistenceError.
-
-    Genuine "row not found" is NOT a persistence error — only exceptions from
-    the call itself are. A query that succeeds and returns no rows must still
-    be interpreted by the caller as not-found.
-    """
-    try:
-        return fn(*args, **kwargs)
-    except Exception:
-        logger.exception("Persistence call failed")
-        raise PersistenceError("database call failed") from None
-
-
-def _db_probe() -> bool:
-    """Cheap read to confirm connectivity. Never raises."""
-    if _mode != "supabase" or _supabase is None:
-        return False
-    try:
-        _supabase.table("scenarios").select("id").limit(1).execute()
-        return True
-    except Exception:
-        return False
-
-
 def _scenario_exists(scenario_id: str) -> bool:
-    if _mode == "supabase":
-        resp = _db_call(
-            lambda: (
-                _supabase.table("scenarios").select("id").eq("id", scenario_id).limit(1).execute()
-            )
-        )
-        return bool(resp.data)
     return scenario_id in _memory["scenarios"]
 
 
 def _insert_scenario(row: dict[str, Any], event_rows: list[dict[str, Any]]) -> None:
-    if _mode == "supabase":
-        _db_call(lambda: _supabase.table("scenarios").insert(row).execute())
-        if event_rows:
-            _db_call(lambda: _supabase.table("trace_events").insert(event_rows).execute())
-    else:
-        _memory["scenarios"][row["id"]] = row
-        _memory["events"][row["id"]] = event_rows
+    _memory["scenarios"][row["id"]] = row
+    _memory["events"][row["id"]] = event_rows
 
 
 def _list_scenarios() -> list[dict[str, Any]]:
-    if _mode == "supabase":
-        resp = _db_call(
-            lambda: (
-                _supabase.table("scenarios").select("*").order("created_at", desc=True).execute()
-            )
-        )
-        rows = resp.data or []
-        counts: dict[str, int] = {r["id"]: 0 for r in rows}
-        ids = list(counts.keys())
-        if ids:
-            ev = _db_call(
-                lambda: (
-                    _supabase.table("trace_events")
-                    .select("scenario_id")
-                    .in_("scenario_id", ids)
-                    .execute()
-                )
-            )
-            for e in ev.data or []:
-                sid = e.get("scenario_id")
-                if sid in counts:
-                    counts[sid] += 1
-        return [dict(r, event_count=counts.get(r["id"], 0)) for r in rows]
     out = []
     for sid, row in _memory["scenarios"].items():
         out.append(dict(row, event_count=len(_memory["events"].get(sid, []))))
@@ -588,66 +342,27 @@ def _list_scenarios() -> list[dict[str, Any]]:
 
 
 def _get_scenario_row(scenario_id: str) -> dict[str, Any] | None:
-    if _mode == "supabase":
-        resp = _db_call(
-            lambda: (
-                _supabase.table("scenarios").select("*").eq("id", scenario_id).limit(1).execute()
-            )
-        )
-        return resp.data[0] if resp.data else None
     return _memory["scenarios"].get(scenario_id)
 
 
 def _get_events(scenario_id: str) -> list[dict[str, Any]]:
-    if _mode == "supabase":
-        resp = _db_call(
-            lambda: (
-                _supabase.table("trace_events")
-                .select("*")
-                .eq("scenario_id", scenario_id)
-                .order("sequence_number")
-                .execute()
-            )
-        )
-        return resp.data or []
     return sorted(
         _memory["events"].get(scenario_id, []), key=lambda e: e.get("sequence_number") or 0
     )
 
 
 def _insert_run(run: dict[str, Any]) -> dict[str, Any]:
-    if _mode == "supabase":
-        resp = _db_call(lambda: _supabase.table("evaluation_runs").insert(run).execute())
-        return resp.data[0] if resp.data else run
     _memory["runs"].setdefault(run["scenario_id"], []).append(run)
     return run
 
 
 def _list_runs(scenario_id: str) -> list[dict[str, Any]]:
-    if _mode == "supabase":
-        resp = _db_call(
-            lambda: (
-                _supabase.table("evaluation_runs")
-                .select("*")
-                .eq("scenario_id", scenario_id)
-                .order("created_at", desc=True)
-                .execute()
-            )
-        )
-        return resp.data or []
     runs = list(_memory["runs"].get(scenario_id, []))
     runs.sort(key=lambda r: r.get("created_at") or "", reverse=True)
     return runs
 
 
 def _get_run_row(run_id: str) -> dict[str, Any] | None:
-    if _mode == "supabase":
-        resp = _db_call(
-            lambda: (
-                _supabase.table("evaluation_runs").select("*").eq("id", run_id).limit(1).execute()
-            )
-        )
-        return resp.data[0] if resp.data else None
     for runs in _memory["runs"].values():
         for r in runs:
             if r["id"] == run_id:
@@ -656,10 +371,7 @@ def _get_run_row(run_id: str) -> dict[str, Any] | None:
 
 
 def _insert_decision(decision: dict[str, Any]) -> None:
-    if _mode == "supabase":
-        _db_call(lambda: _supabase.table("release_decisions").insert(decision).execute())
-    else:
-        _memory["decisions"].append(decision)
+    _memory["decisions"].append(decision)
 
 
 # ---------------------------------------------------------------------------
@@ -715,27 +427,17 @@ def _run_out(row: dict[str, Any]) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Seed on startup (best-effort; boot never fails because of it)
+# Seed on startup from sample_data.py (best-effort; boot never fails)
 # ---------------------------------------------------------------------------
-def _ensure_seed() -> None:
-    if _scenario_exists(SEED_SCENARIO_ID):
-        return
-    now = _now()
-    scenario_row = {
-        "id": SEED_SCENARIO_ID,
-        "name": "Unusual Expense Explanation",
-        "description": "Financial assistant explains an unusual $2,847 expense to a cardholder.",
-        "source_type": "simulated_production_capture",
-        "ai_ops_spec": SEED_SPEC,
-        "created_at": now,
-        "updated_at": now,
-    }
-    event_rows = []
-    for ev in SEED_EVENTS:
-        event_rows.append(
+def _seed_all() -> None:
+    """Load the hardcoded sample records into the in-memory store (idempotent)."""
+    for sc in sample_data.SCENARIOS:
+        if _scenario_exists(sc["id"]):
+            continue
+        event_rows = [
             {
                 "id": _new_id(),
-                "scenario_id": SEED_SCENARIO_ID,
+                "scenario_id": sc["id"],
                 "sequence_number": ev["sequence"],
                 "agent_name": ev["agent_name"],
                 "event_type": ev["event_type"],
@@ -744,9 +446,23 @@ def _ensure_seed() -> None:
                 "metadata": ev.get("metadata"),
                 "timestamp": ev.get("timestamp"),
             }
-        )
-    _insert_scenario(scenario_row, event_rows)
-    logger.info("Seeded demo scenario %s", SEED_SCENARIO_ID)
+            for ev in sample_data.EVENTS.get(sc["id"], [])
+        ]
+        _insert_scenario(dict(sc), event_rows)
+        logger.info("Seeded sample scenario %s", sc["id"])
+
+    for sid, runs in sample_data.RUNS.items():
+        known = {r["id"] for r in _list_runs(sid)}
+        for run in runs:
+            if run["id"] not in known:
+                _insert_run(dict(run))
+    logger.info("Seeded %d sample runs", sum(len(v) for v in sample_data.RUNS.values()))
+
+    known_decisions = {d["id"] for d in _memory["decisions"]}
+    for decision in sample_data.DECISIONS:
+        if decision["id"] not in known_decisions:
+            _insert_decision(dict(decision))
+    logger.info("Seeded %d sample release decisions", len(sample_data.DECISIONS))
 
 
 # ---------------------------------------------------------------------------
@@ -819,28 +535,16 @@ async def unhandled_exception_handler(request, exc: Exception):
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
-@app.exception_handler(PersistenceError)
-async def persistence_error_handler(request, exc: PersistenceError):
-    """Honest 503 when the database cannot be reached (details stay server-side).
-
-    Full traceback was already logged by _db_call; the response body must not
-    leak exception text, stack traces, URLs, or keys.
-    """
-    return JSONResponse(
-        status_code=503,
-        content={
-            "detail": (
-                "Persistence unavailable — the database could not be reached. "
-                "Data may not be saved."
-            )
-        },
-    )
+# ponytail: ceiling: no pluggable persistence — the 503/persistence-error
+# handler was deleted with the database backend (it existed only for outages
+# of a remote store); upgrade path: re-add a storage interface and a 503
+# handler when a second backend is real.
 
 
 @app.on_event("startup")
 def startup_seed() -> None:
     try:
-        _ensure_seed()
+        _seed_all()
     except Exception:
         logger.exception("Seed step failed (continuing without seed)")
 
@@ -899,13 +603,11 @@ def root():
 
 @app.get("/health")
 def health():
-    """Liveness + storage mode. Always 200; supabase connectivity is a cheap probe."""
-    configured = _mode == "supabase"
-    connected = _db_probe()
+    """Liveness + storage mode. Always 200; data comes from sample_data.py."""
     return {
         "status": "ok",
         "service": SERVICE,
-        "database": {"configured": configured, "connected": connected, "mode": _mode},
+        "database": {"mode": _mode},
         "simulation": SIMULATION_TAG,
         "version": VERSION,
     }
@@ -1094,7 +796,7 @@ def compare_runs(scenario_id: str, baseline_id: str, comparison_id: str):
         f"simulations over stored runs ({SIMULATION_TAG})."
     )
 
-    # Persist the decision in BOTH modes (supabase insert / in-memory list).
+    # Persist the decision in the in-memory store.
     _insert_decision(
         {
             "id": _new_id(),

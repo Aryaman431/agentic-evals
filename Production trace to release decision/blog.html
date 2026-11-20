@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="A successful demo is not enough evidence to release an AI agent. Structured evaluation turns production traces into release decisions &mdash; the Production Trace to Release Decision use case explained.">
+<title>Your AI Passed the Demo. Is It Ready to Ship? &middot; Blog &middot; Agentic Evals</title>
+<style>
+  /* Agentic Evals - blog. Same design system as the trace console:
+     restrained neutral surfaces, hairline borders, one accent,
+     4-6px radii, tabular numerics, flat surfaces only. */
+  :root{
+    --bg:#0b0d10;
+    --panel:#101317;
+    --panel-2:#15191e;
+    --panel-3:#1a1f26;
+    --line:#232830;
+    --line-2:#333b45;
+    --text:#e8ebf0;
+    --text-2:#c6cdd7;
+    --muted:#98a1ad;
+    --dim:#69737f;
+    --accent:#3d7bea;
+    --accent-text:#8fb6ff;
+    --accent-soft:rgba(61,123,234,.12);
+    --accent-line:rgba(61,123,234,.45);
+    --green:#56d364;
+    --mono:ui-monospace,"Cascadia Code","Cascadia Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --r:6px;
+    --r-sm:4px;
+    --r-xs:3px;
+    --wrap:720px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:var(--sans);font-size:15px;line-height:1.7;
+    font-variant-numeric:tabular-nums;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  }
+  a{color:inherit;text-decoration:none}
+  h1,h2,h3,p,ul{margin:0;padding:0}
+  ul{list-style:none;padding-left:0}
+  ::selection{background:rgba(61,123,234,.35);color:#fff}
+  :focus-visible{outline:2px solid var(--accent-text);outline-offset:2px;border-radius:2px}
+  .shell{display:flex;flex-direction:column;min-height:100vh}
+  .wrap{width:100%;max-width:var(--wrap,720px);margin:0 auto;padding:0 24px}
+
+  /* Product bar - matches the console header */
+  .site-head{border-bottom:1px solid var(--line);background:var(--panel)}
+  .site-head .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand-mark{width:26px;height:26px;display:grid;place-items:center;border-radius:var(--r-sm);
+    background:var(--accent);color:#fff;font:700 12px/1 var(--mono)}
+  .brand-name{display:block;font-size:13px;font-weight:650;letter-spacing:-.01em;color:var(--text)}
+  .brand-sub{display:block;font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:1px}
+  .console-link{display:inline-flex;align-items:center;height:34px;padding:0 14px;
+    border:1px solid var(--accent-line);border-radius:var(--r-sm);background:var(--accent-soft);
+    color:var(--accent-text);font-size:13px;font-weight:600;
+    transition:background .15s,border-color .15s,color .15s}
+  .console-link:hover{background:rgba(61,123,234,.18);border-color:var(--accent);color:#b3cdff}
+
+  .article-head{padding:56px 0 32px;border-bottom:1px solid var(--line)}
+  .back-link{display:inline-flex;align-items:center;height:34px;padding:0 14px;
+    border:1px solid var(--line-2);border-radius:var(--r-sm);background:var(--panel-2);
+    color:var(--text-2);font-size:13px;font-weight:600;
+    transition:background .15s,color .15s,border-color .15s}
+  .back-link:hover{color:var(--text);background:var(--panel-3);border-color:#3d4550}
+  .eyebrow{margin:24px 0 12px;font-family:var(--mono);font-size:11px;font-weight:700;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--accent-text)}
+  h1{margin:0 0 16px;font-size:clamp(1.75rem,1.3rem+2vw,2.4rem);font-weight:650;
+    line-height:1.15;letter-spacing:-.02em;color:var(--text);text-wrap:balance}
+  .subtitle{margin:0 0 20px;font-size:clamp(1rem,.95rem+.3vw,1.15rem);line-height:1.6;
+    color:var(--text-2);max-width:64ch}
+  .article-meta{display:flex;flex-wrap:wrap;align-items:center;gap:12px;
+    font-size:12.5px;color:var(--muted)}
+  .meta-item{padding-left:12px;border-left:1px solid var(--line)}
+  .article-body{padding:40px 0 64px}
+  .prose{max-width:68ch;color:var(--text-2);line-height:1.8;font-size:16px}
+  .prose p{margin:0 0 22px}
+  .prose p:last-child{margin-bottom:0}
+  .prose strong{color:var(--text);font-weight:650}
+  .prose a{color:var(--accent-text);text-decoration:underline;
+    text-decoration-color:rgba(143,182,255,.4);text-underline-offset:3px;
+    transition:color .15s,text-decoration-color .15s}
+  .prose a:hover{color:#b3cdff;text-decoration-color:#b3cdff}
+  .prose code{font-family:var(--mono);font-size:.86em;color:var(--accent-text);
+    background:var(--accent-soft);border:1px solid var(--accent-line);
+    border-radius:var(--r-xs);padding:1px 6px}
+  .prose h2{margin:44px 0 14px;font-size:1.3rem;font-weight:650;letter-spacing:-.01em;color:var(--text)}
+  .prose h2::before{content:"";display:block;width:28px;height:2px;margin-bottom:12px;background:var(--accent)}
+  .prose h3{margin:30px 0 10px;font-size:1.05rem;font-weight:650;color:var(--text)}
+  .prose ul{margin:14px 0 24px;padding-left:20px;list-style:disc;color:var(--text-2)}
+  .prose ul li{margin-bottom:8px;line-height:1.7}
+  .prose ul li::marker{color:var(--accent-text)}
+  .callout{margin:32px 0;padding:18px 20px;border-radius:var(--r);
+    border:1px solid var(--line);border-left:3px solid var(--accent);
+    background:var(--panel);color:var(--text-2);font-size:14.5px;line-height:1.7}
+  .callout p{margin:0}
+  .article-footer{padding:40px 0 64px;border-top:1px solid var(--line)}
+  .footer-back{display:inline-flex;align-items:center;height:34px;padding:0 14px;margin-bottom:26px;
+    border:1px solid var(--line-2);border-radius:var(--r-sm);background:var(--panel-2);
+    color:var(--text-2);font-size:13px;font-weight:600;
+    transition:background .15s,color .15s,border-color .15s}
+  .footer-back:hover{background:var(--panel-3);color:var(--text);border-color:#3d4550}
+  .footer-note{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.1em;
+    text-transform:uppercase;border-top:1px solid var(--line);padding-top:16px}
+  @media (max-width:640px){
+    .wrap{padding:0 16px}
+    .site-head .wrap{min-height:56px}
+    .brand-sub{display:none}
+    .article-head{padding:36px 0 24px}
+    .article-body{padding:32px 0 52px}
+    .article-footer{padding:32px 0 52px}
+    h1{font-size:1.75rem}
+    .prose{font-size:15.5px}
+    .console-link{height:32px;padding:0 11px;font-size:12.5px}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="site-head">
+    <div class="wrap">
+      <a class="brand" href="./index.html">
+        <span class="brand-mark" aria-hidden="true">TR</span>
+        <span>
+          <span class="brand-name">Trace to Release</span>
+          <span class="brand-sub">Agentic Evals</span>
+        </span>
+      </a>
+      <a class="console-link" href="./index.html">Open Console</a>
+    </div>
+  </header>
+  <div class="wrap">
+    <header class="article-head">
+      <a class="back-link" href="./index.html">Back to Production Trace to Release Decision</a>
+      <p class="eyebrow">Blog &middot; Use Case 03</p>
+      <h1>Your AI Passed the Demo. Is It Ready to Ship?</h1>
+      <p class="subtitle">A successful demo is not enough evidence to release. Structured evaluation turns recorded production traces into a ship-or-wait decision you can defend.</p>
+      <div class="article-meta">
+        <span>Reading time &middot; 6 min</span>
+        <span class="meta-item">Production Trace to Release</span>
+        <span class="meta-item">Blog</span>
+      </div>
+    </header>
+    <div class="article-body">
+      <div class="prose">
+        <p>An AI agent works perfectly during a demonstration. Its responses look good, its tools appear to function, and the workflow reaches the expected result. Then comes the important question: should it be released?</p>
+        <p>A successful demo is not enough evidence to make that decision. Changes to prompts, models, or agent coordination can introduce unexpected behaviour. Without structured testing, teams risk releasing updates that perform worse than the systems they replace.</p>
+        <h2>From production traces to release decisions</h2>
+        <p>The Production Trace to Release Decision project explores a structured approach to evaluating proposed AI-agent changes before release. Rather than relying on intuition, it organizes the evaluation process into five stages:</p>
+        <ul>
+          <li>Production trace</li>
+          <li>AI Ops Spec generation</li>
+          <li>Baseline evaluation</li>
+          <li>Simulated replay</li>
+          <li>Release decision</li>
+        </ul>
+        <p>Each stage contributes evidence that helps determine whether a proposed change is ready.</p>
+        <h2>What gets evaluated?</h2>
+        <p>The project examines six dimensions of agent performance:</p>
+        <ul>
+          <li>Response quality</li>
+          <li>Task completion</li>
+          <li>Tool correctness</li>
+          <li>Agent coordination</li>
+          <li>Safety compliance</li>
+          <li>Performance</li>
+        </ul>
+        <p>This broader evaluation matters because an agent can produce good responses while still failing to complete tasks or coordinate tools correctly.</p>
+        <h2>Comparing proposed changes</h2>
+        <p>The system supports three types of proposed changes:</p>
+        <ul>
+          <li>Prompt updates</li>
+          <li>Coordination updates</li>
+          <li>Model changes</li>
+        </ul>
+        <p>A baseline is compared against a simulated replay of the proposed change. The aim is to identify whether the change improves performance, introduces regressions, or requires further review.</p>
+        <h2>Making the release decision</h2>
+        <p>The evaluation produces one of three outcomes:</p>
+        <ul>
+          <li><strong>READY:</strong> The change satisfies the configured release requirements.</li>
+          <li><strong>NEEDS REVIEW:</strong> The evidence requires further inspection.</li>
+          <li><strong>NOT READY:</strong> The change does not meet the configured requirements.</li>
+        </ul>
+        <p>These outcomes are based on explicit evaluation thresholds rather than subjective impressions.</p>
+        <div class="callout"><p>The current implementation uses deterministic demo scores with small simulated variations. It does not automatically rerun a real production agent application. The system demonstrates the decision-making workflow rather than providing a live production deployment integration. An optional FastAPI backend supports the application, with hardcoded sample data served from the backend itself.</p></div>
+        <h2>Conclusion</h2>
+        <p>Releasing an AI-agent update should involve more than checking whether it works once. Teams need evidence that a change improves the system without introducing unacceptable regressions.</p>
+        <p><strong>Explore the Production Trace to Release Decision Use Case to see the evaluation workflow in action.</strong></p>
+      </div>
+    </div>
+    <footer class="article-footer">
+      <a class="footer-back" href="./index.html">Back to Production Trace to Release Decision</a>
+      <p class="footer-note">Agentic Evals &middot; Blog &middot; Not Stories</p>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

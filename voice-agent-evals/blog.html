@@ -8,70 +8,90 @@
 <title>Your AI Voice Agent Understood You. Are You Sure? · Blog · Agentic Evals</title>
 <style>
   :root{
-    --bg:#05080a;
-    --surface:#0a0e12;
-    --surface-2:#0c1218;
-    --border:rgba(255,255,255,.07);
-    --border-strong:rgba(255,255,255,.11);
-    --text:#e7eef4;
-    --text-2:#b9c4cd;
-    --muted:#8b97a3;
-    --dim:#5c6773;
-    --green:#00ff88;
-    --cyan:#00d4ff;
+    color-scheme:dark;
+    --bg:#0b0c0e;
+    --chrome:#0e0f11;
+    --surface:#121417;
+    --surface-2:#16181c;
+    --border:#24272c;
+    --border-strong:#31353b;
+    --text:#e9eaec;
+    --text-2:#b4b8bd;
+    --muted:#878c93;
+    --dim:#5f646b;
+    --green:#3fb950;
+    --red:#f85149;
+    --cyan:#8b949e;
     --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
     --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,'Helvetica Neue',sans-serif;
-    --r:6px;
-    --wrap:700px;
+    --r:5px;
+    --r-lg:6px;
+    --wrap:720px;
   }
   *,*:before,*:after{box-sizing:border-box}
   html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
   body{
     margin:0;background:var(--bg);color:var(--text);
     font-family:var(--sans);font-size:15px;line-height:1.7;
-    -webkit-font-smoothing:antialiased;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   }
   a{color:inherit;text-decoration:none}
   h1,h2,h3,p,ul{margin:0;padding:0}
   ul{list-style:none;padding-left:0}
-  ::selection{background:rgba(0,255,136,.24);color:#eafff5}
-  :focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:3px}
+  ::selection{background:rgba(139,148,158,.32);color:#fff}
+  :focus-visible{outline:2px solid #8b949e;outline-offset:2px;border-radius:3px}
   .shell{display:flex;flex-direction:column;min-height:100vh}
-  .wrap{width:100%;max-width:var(--wrap);margin:0 auto;padding:0 20px}
-  .article-head{padding:48px 0 32px;border-bottom:1px solid var(--border)}
-  .back-link{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .15s}
-  .back-link:hover{color:var(--green)}
-  .eyebrow{margin:20px 0 12px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)}
-  h1{margin:0 0 14px;font-size:clamp(1.9rem,1.4rem+2.2vw,2.6rem);font-weight:700;line-height:1.12;letter-spacing:-.02em;color:var(--text);text-wrap:balance}
-  .subtitle{margin:0 0 16px;font-size:clamp(1.05rem,.95rem+.4vw,1.25rem);line-height:1.5;color:var(--text-2);max-width:62ch}
-  .article-meta{display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-  .meta-item{padding-left:12px;border-left:1px solid var(--border)}
-  .article-body{padding:40px 0 60px}
-  .prose{max-width:66ch;color:var(--text-2);line-height:1.75}
+  .wrap{width:100%;max-width:var(--wrap);margin:0 auto;padding:0 24px}
+  .article-head{padding:56px 0 36px;border-bottom:1px solid var(--border)}
+  .back-link{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
+    font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+    border:1px solid var(--border);border-radius:var(--r);padding:8px 13px;background:var(--surface);
+    transition:background .15s,color .15s,border-color .15s}
+  .back-link:hover{color:var(--text);background:var(--surface-2);border-color:var(--border-strong)}
+  .eyebrow{margin:26px 0 14px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--muted)}
+  h1{margin:0 0 16px;font-size:clamp(1.75rem,1.3rem+2vw,2.35rem);font-weight:600;line-height:1.18;
+    letter-spacing:-.025em;color:var(--text);text-wrap:balance}
+  .subtitle{margin:0 0 20px;font-size:clamp(1rem,.95rem+.3vw,1.15rem);line-height:1.6;color:var(--text-2);
+    max-width:62ch}
+  .article-meta{display:flex;flex-wrap:wrap;align-items:center;gap:14px;font-family:var(--mono);font-size:11px;
+    font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+  .meta-item{padding-left:14px;border-left:1px solid var(--border)}
+  .article-body{padding:44px 0 64px}
+  .prose{max-width:68ch;color:var(--text-2);line-height:1.78;font-size:15px}
   .prose p{margin:0 0 22px}
   .prose p:last-child{margin-bottom:0}
-  .prose strong{color:var(--text)}
-  .prose a{color:var(--text);text-decoration:underline;text-decoration-color:var(--border-strong);text-underline-offset:3px;transition:color .15s,text-decoration-color .15s}
+  .prose strong{color:var(--text);font-weight:600}
+  .prose a{color:var(--text);text-decoration:underline;text-decoration-color:var(--border-strong);
+    text-underline-offset:3px;transition:color .15s,text-decoration-color .15s}
   .prose a:hover{color:var(--green);text-decoration-color:var(--green)}
-  .prose code{font-family:var(--mono);font-size:.88em;color:var(--cyan);background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.22);border-radius:4px;padding:1px 6px}
-  .prose h2{margin:44px 0 14px;font-size:1.25rem;font-weight:600;letter-spacing:-.01em;color:var(--text)}
-  .prose h2::before{content:"";display:block;width:26px;height:2px;margin-bottom:10px;background:var(--green)}
-  .prose h3{margin:30px 0 10px;font-size:1.05rem;font-weight:600;color:var(--text-2)}
-  .prose ul{margin:14px 0 22px;padding-left:18px;list-style:disc;color:var(--text-2)}
+  .prose code{font-family:var(--mono);font-size:.86em;color:var(--text);background:var(--surface-2);
+    border:1px solid var(--border);border-radius:4px;padding:2px 6px}
+  .prose h2{margin:48px 0 16px;font-size:1.2rem;font-weight:600;letter-spacing:-.01em;color:var(--text);
+    line-height:1.4}
+  .prose h2::before{content:"";display:block;width:24px;height:2px;margin-bottom:12px;background:var(--green)}
+  .prose h3{margin:32px 0 10px;font-size:1.02rem;font-weight:600;color:var(--text)}
+  .prose ul{margin:16px 0 24px;padding-left:18px;list-style:disc;color:var(--text-2)}
   .prose ul li{margin-bottom:8px;line-height:1.7}
   .prose ul li::marker{color:var(--green)}
-  .callout{margin:30px 0;padding:18px 22px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:14px;line-height:1.7}
+  .callout{margin:32px 0;padding:20px 22px;border-radius:var(--r-lg);border:1px solid var(--border);
+    background:var(--surface);color:var(--text-2);font-size:14px;line-height:1.72;box-shadow:0 1px 2px rgba(0,0,0,.28)}
   .callout p{margin:0}
-  .article-footer{padding:40px 0 60px;border-top:1px solid var(--border)}
-  .footer-back{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;margin-bottom:26px}
-  .footer-back:hover{color:var(--green)}
-  .footer-note{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;border-top:1px solid var(--border);padding-top:16px}
+  .article-footer{padding:44px 0 64px;border-top:1px solid var(--border)}
+  .footer-back{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
+    font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+    border:1px solid var(--border);border-radius:var(--r);padding:8px 13px;background:var(--surface);
+    margin-bottom:28px;transition:background .15s,color .15s,border-color .15s}
+  .footer-back:hover{color:var(--text);background:var(--surface-2);border-color:var(--border-strong)}
+  .footer-note{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.12em;
+    text-transform:uppercase;border-top:1px solid var(--border);padding-top:18px}
   @media (max-width:640px){
     .wrap{padding:0 16px}
-    .article-head{padding:36px 0 24px}
-    .article-body{padding:32px 0 52px}
-    .article-footer{padding:32px 0 52px}
-    h1{font-size:1.9rem}
+    .article-head{padding:40px 0 28px}
+    .article-body{padding:36px 0 56px}
+    .article-footer{padding:36px 0 56px}
+    h1{font-size:1.7rem}
+    .meta-item{padding-left:0;border-left:none}
   }
 </style>
 </head>
@@ -79,7 +99,7 @@
 <div class="shell">
   <div class="wrap">
     <header class="article-head">
-      <a class="back-link" href="./index.html">? Back to Voice Agent Evaluation</a>
+      <a class="back-link" href="./index.html">&larr; Back to Voice Agent Evaluation</a>
       <p class="eyebrow">Blog · Use Case 02</p>
       <h1>Your AI Voice Agent Understood You. Are You Sure?</h1>
       <p class="subtitle">A smooth voice conversation can hide serious problems — did the agent identify the right intent, choose the right action, and handle incomplete information? Structured evaluation reveals what listening cannot.</p>
@@ -120,7 +140,7 @@
       </div>
     </div>
     <footer class="article-footer">
-      <a class="footer-back" href="./index.html">? Back to Voice Agent Evaluation</a>
+      <a class="footer-back" href="./index.html">&larr; Back to Voice Agent Evaluation</a>
       <p class="footer-note">Agentic Evals · Blog · Not Stories</p>
     </footer>
   </div>

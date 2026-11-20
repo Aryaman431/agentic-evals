@@ -4,87 +4,138 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
-<meta name="description" content="A chatbot can sound confident and still be wrong. Structured evaluation turns "sounds right" into "measured right" — the Chatbot Evaluation use case explained.">
-<title>Your Chatbot Sounds Smart. But Is It Actually Right? · Blog · Agentic Evals</title>
+<meta name="description" content="A chatbot can sound confident and still be wrong. Structured evaluation turns &ldquo;sounds right&rdquo; into &ldquo;measured right&rdquo; &mdash; the Chatbot Evaluation use case explained.">
+<title>Your Chatbot Sounds Smart. But Is It Actually Right? &middot; Blog &middot; Agentic Evals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* Agentic Evals - blog. Same design system as the evaluation console. */
   :root{
-    --bg:#05080a;
-    --surface:#0a0e12;
-    --surface-2:#0c1218;
-    --border:rgba(255,255,255,.07);
-    --border-strong:rgba(255,255,255,.11);
-    --text:#e7eef4;
-    --text-2:#b9c4cd;
-    --muted:#8b97a3;
-    --dim:#5c6773;
-    --green:#00ff88;
-    --cyan:#00d4ff;
+    --bg:#0b0d10;
+    --surface:#0f1216;
+    --surface-2:#14181d;
+    --border:#1f252d;
+    --border-strong:#2b333d;
+    --text:#e8ecf1;
+    --text-2:#c4ccd5;
+    --muted:#909aa8;
+    --dim:#67717e;
+    --accent:#3d7bea;
+    --accent-text:#8fb6ff;
+    --green:#56d364;
     --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
     --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,'Helvetica Neue',sans-serif;
-    --r:6px;
-    --wrap:700px;
+    --r:4px;
+    --r-lg:6px;
+    --wrap:720px;
   }
   *,*:before,*:after{box-sizing:border-box}
   html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
   body{
     margin:0;background:var(--bg);color:var(--text);
-    font-family:var(--sans);font-size:15px;line-height:1.7;
+    font-family:var(--sans);font-size:16px;line-height:1.7;
+    font-variant-numeric:tabular-nums;
     -webkit-font-smoothing:antialiased;
   }
   a{color:inherit;text-decoration:none}
   h1,h2,h3,p,ul{margin:0;padding:0}
   ul{list-style:none;padding-left:0}
-  ::selection{background:rgba(0,255,136,.24);color:#eafff5}
-  :focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:3px}
+  ::selection{background:rgba(61,123,234,.35);color:#fff}
+  :focus-visible{outline:2px solid var(--accent-text);outline-offset:2px;border-radius:3px}
   .shell{display:flex;flex-direction:column;min-height:100vh}
-  .wrap{width:100%;max-width:var(--wrap);margin:0 auto;padding:0 20px}
-  .article-head{padding:48px 0 32px;border-bottom:1px solid var(--border)}
-  .back-link{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .15s}
-  .back-link:hover{color:var(--green)}
-  .eyebrow{margin:20px 0 12px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)}
-  h1{margin:0 0 14px;font-size:clamp(1.9rem,1.4rem+2.2vw,2.6rem);font-weight:700;line-height:1.12;letter-spacing:-.02em;color:var(--text);text-wrap:balance}
-  .subtitle{margin:0 0 16px;font-size:clamp(1.05rem,.95rem+.4vw,1.25rem);line-height:1.5;color:var(--text-2);max-width:62ch}
-  .article-meta{display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .wrap{width:100%;max-width:var(--wrap);margin:0 auto;padding:0 24px}
+
+  /* product bar - matches the console header */
+  .site-head{border-bottom:1px solid var(--border);background:var(--surface)}
+  .site-head .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;
+    min-height:60px;max-width:1120px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand-mark{width:26px;height:26px;display:grid;place-items:center;border-radius:var(--r);
+    background:var(--accent);color:#fff;font:600 12px/1 var(--mono);letter-spacing:.02em}
+  .brand-name{font:600 11.5px/1.2 var(--mono);letter-spacing:.1em;color:var(--text)}
+  .brand-sub{display:block;font-size:11.5px;color:var(--dim);margin-top:2px}
+  .console-link{display:inline-flex;align-items:center;height:32px;padding:0 12px;
+    border:1px solid var(--border-strong);border-radius:var(--r);background:var(--surface-2);
+    color:var(--text-2);font-size:13px;font-weight:600;transition:background .15s,border-color .15s,color .15s}
+  .console-link:hover{background:#191e24;color:var(--text);border-color:#39424d}
+
+  .article-head{padding:56px 0 32px;border-bottom:1px solid var(--border)}
+  .back-link{display:inline-flex;align-items:center;height:32px;padding:0 12px;
+    border:1px solid var(--border-strong);border-radius:var(--r);background:var(--surface-2);
+    font-size:13px;font-weight:600;color:var(--text-2);transition:background .15s,color .15s,border-color .15s}
+  .back-link:hover{color:var(--text);background:#191e24;border-color:#39424d}
+  .eyebrow{margin:24px 0 12px;font-size:11.5px;font-weight:600;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--accent-text)}
+  h1{margin:0 0 16px;font-size:clamp(1.75rem,1.3rem+2vw,2.5rem);font-weight:650;line-height:1.15;
+    letter-spacing:-.02em;color:var(--text);text-wrap:balance}
+  .subtitle{margin:0 0 20px;font-size:clamp(1rem,.95rem+.3vw,1.15rem);line-height:1.6;
+    color:var(--text-2);max-width:64ch}
+  .article-meta{display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-size:12.5px;
+    color:var(--muted)}
   .meta-item{padding-left:12px;border-left:1px solid var(--border)}
-  .article-body{padding:40px 0 60px}
-  .prose{max-width:66ch;color:var(--text-2);line-height:1.75}
+  .article-body{padding:40px 0 64px}
+  .prose{max-width:68ch;color:var(--text-2);line-height:1.8;font-size:16px}
   .prose p{margin:0 0 22px}
   .prose p:last-child{margin-bottom:0}
-  .prose strong{color:var(--text)}
-  .prose a{color:var(--text);text-decoration:underline;text-decoration-color:var(--border-strong);text-underline-offset:3px;transition:color .15s,text-decoration-color .15s}
-  .prose a:hover{color:var(--green);text-decoration-color:var(--green)}
-  .prose code{font-family:var(--mono);font-size:.88em;color:var(--cyan);background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.22);border-radius:4px;padding:1px 6px}
-  .prose h2{margin:44px 0 14px;font-size:1.25rem;font-weight:600;letter-spacing:-.01em;color:var(--text)}
-  .prose h2::before{content:"";display:block;width:26px;height:2px;margin-bottom:10px;background:var(--green)}
-  .prose h3{margin:30px 0 10px;font-size:1.05rem;font-weight:600;color:var(--text-2)}
-  .prose ul{margin:14px 0 22px;padding-left:18px;list-style:disc;color:var(--text-2)}
+  .prose strong{color:var(--text);font-weight:600}
+  .prose a{color:var(--accent-text);text-decoration:underline;text-decoration-color:rgba(143,182,255,.4);
+    text-underline-offset:3px;transition:color .15s,text-decoration-color .15s}
+  .prose a:hover{color:#b3cdff;text-decoration-color:#b3cdff}
+  .prose code{font-family:var(--mono);font-size:.86em;color:var(--accent-text);
+    background:rgba(61,123,234,.12);border:1px solid rgba(61,123,234,.35);
+    border-radius:var(--r);padding:1px 6px}
+  .prose h2{margin:44px 0 14px;font-size:1.3rem;font-weight:600;letter-spacing:-.01em;color:var(--text)}
+  .prose h2::before{content:"";display:block;width:28px;height:2px;margin-bottom:12px;background:var(--accent)}
+  .prose h3{margin:30px 0 10px;font-size:1.05rem;font-weight:600;color:var(--text)}
+  .prose ul{margin:14px 0 24px;padding-left:20px;list-style:disc;color:var(--text-2)}
   .prose ul li{margin-bottom:8px;line-height:1.7}
-  .prose ul li::marker{color:var(--green)}
-  .callout{margin:30px 0;padding:18px 22px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:14px;line-height:1.7}
+  .prose ul li::marker{color:var(--accent-text)}
+  .callout{margin:32px 0;padding:18px 20px;border-radius:var(--r-lg);
+    border:1px solid var(--border);background:var(--surface);color:var(--text-2);
+    font-size:14.5px;line-height:1.7}
   .callout p{margin:0}
-  .article-footer{padding:40px 0 60px;border-top:1px solid var(--border)}
-  .footer-back{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;margin-bottom:26px}
-  .footer-back:hover{color:var(--green)}
-  .footer-note{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;border-top:1px solid var(--border);padding-top:16px}
+  .article-footer{padding:40px 0 64px;border-top:1px solid var(--border)}
+  .footer-back{display:inline-flex;align-items:center;height:32px;padding:0 12px;margin-bottom:26px;
+    border:1px solid var(--border-strong);border-radius:var(--r);background:var(--surface-2);
+    font-size:13px;font-weight:600;color:var(--text-2);transition:background .15s,color .15s}
+  .footer-back:hover{background:#191e24;color:var(--text)}
+  .footer-note{font-family:var(--mono);font-size:11.5px;color:var(--dim);letter-spacing:.1em;
+    text-transform:uppercase;border-top:1px solid var(--border);padding-top:16px}
   @media (max-width:640px){
     .wrap{padding:0 16px}
+    .site-head .wrap{min-height:56px}
+    .brand-sub{display:none}
     .article-head{padding:36px 0 24px}
     .article-body{padding:32px 0 52px}
     .article-footer{padding:32px 0 52px}
-    h1{font-size:1.9rem}
+    h1{font-size:1.75rem}
+    .prose{font-size:15.5px}
   }
 </style>
 </head>
 <body>
 <div class="shell">
+  <header class="site-head">
+    <div class="wrap">
+      <a class="brand" href="./index.html">
+        <span class="brand-mark" aria-hidden="true">AE</span>
+        <span>
+          <span class="brand-name">AGENTIC EVALS</span>
+          <span class="brand-sub">Agent Observatory</span>
+        </span>
+      </a>
+      <a class="console-link" href="./index.html">Open Console</a>
+    </div>
+  </header>
   <div class="wrap">
     <header class="article-head">
-      <a class="back-link" href="./index.html">? Back to Chatbot Evaluation</a>
-      <p class="eyebrow">Blog · Use Case 01</p>
+      <a class="back-link" href="./index.html">Back to Chatbot Evaluation</a>
+      <p class="eyebrow">Blog &middot; Use Case 01</p>
       <h1>Your Chatbot Sounds Smart. But Is It Actually Right?</h1>
-      <p class="subtitle">Confidence is not correctness. A chatbot can answer instantly and still get the facts wrong — which is why structured evaluation, not a single good demo, is the only way to trust an AI agent.</p>
+      <p class="subtitle">Confidence is not correctness. A chatbot can answer instantly and still get the facts wrong &mdash; which is why structured evaluation, not a single good demo, is the only way to trust an AI agent.</p>
       <div class="article-meta">
-        <span>Reading time · 6 min</span>
+        <span>Reading time &middot; 6 min</span>
         <span class="meta-item">Chatbot Evaluation</span>
         <span class="meta-item">Blog</span>
       </div>
@@ -109,7 +160,7 @@
         </ul>
         <p>Each dimension examines a different part of the interaction. A chatbot might correctly understand that a customer wants a refund but still select the wrong tool. Evaluating only the final response would miss that failure entirely.</p>
         <h2>Testing what can go wrong</h2>
-        <p>An important part of evaluation is deliberately introducing failures. The project supports fault scenarios such as incorrect intent detection, wrong tool selection, invalid arguments, hallucinated responses, unsupported claims, tool failures, missing information, and slow responses. This makes it possible to observe how the chatbot behaves when things do not go according to plan — not just when everything goes right.</p>
+        <p>An important part of evaluation is deliberately introducing failures. The project supports fault scenarios such as incorrect intent detection, wrong tool selection, invalid arguments, hallucinated responses, unsupported claims, tool failures, missing information, and slow responses. This makes it possible to observe how the chatbot behaves when things do not go according to plan &mdash; not just when everything goes right.</p>
         <h2>From evaluation to improvement</h2>
         <p>The project includes a Chat Playground and a Scenario Lab for exploring interactions and running evaluations. Instead of relying on a single successful demonstration, users can examine test results, identify weaknesses, and understand exactly where an agent needs improvement.</p>
         <div class="callout"><p>This is a simulated customer-support environment using synthetic test cases and mock order data. It does not process real payments, connect to an actual customer-support platform, or perform real-world transactions. Its purpose is to demonstrate a structured approach to evaluating chatbot behaviour.</p></div>
@@ -119,8 +170,8 @@
       </div>
     </div>
     <footer class="article-footer">
-      <a class="footer-back" href="./index.html">? Back to Chatbot Evaluation</a>
-      <p class="footer-note">Agentic Evals · Blog · Not Stories</p>
+      <a class="footer-back" href="./index.html">Back to Chatbot Evaluation</a>
+      <p class="footer-note">Agentic Evals &middot; Blog &middot; Not Stories</p>
     </footer>
   </div>
 </div>

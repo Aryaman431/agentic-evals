@@ -83,7 +83,11 @@ app = FastAPI(title="Voice Agent Evaluation API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        origin.strip()
+        for origin in os.getenv("EVAL_CORS_ORIGINS", "*").split(",")
+        if origin.strip()
+    ] or ["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

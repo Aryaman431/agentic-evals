@@ -1,7 +1,9 @@
-# Render blueprint for the Agentic Evals API service.
-# The backend uses in-memory state, so a single instance is required.
+# Render blueprint for the Agentic Evals demo backends.
+# Each service uses in-memory state, so a single instance per service is required.
+# The Production trace service is a separate app with its own requirements.txt.
 
 services:
+  # Voice-agent evaluation API (voice-agent-evals/server.py).
   - type: web
     name: agentic-evals-api
     runtime: python
@@ -11,6 +13,34 @@ services:
     numInstances: 1
     envVars:
       - key: EVAL_CORS_ORIGINS
-        value: https://deepagentlabs.github.io,https://deepagentlabs.io
+        value: https://deepagentlabs.github.io,https://deepagentlabs.io,http://localhost:8000,http://127.0.0.1:8000
       - key: PYTHON_VERSION
         value: 3.11.0
+
+  # Chatbot evaluation API (Chatbot-eval/server.py). This is the backend the
+  # chatbot frontend points at; it adds POST /chat/evaluate to the shared routes.
+  - type: web
+    name: agentic-evals-chatbot-api
+    runtime: python
+    buildCommand: uv sync --extra voice --frozen
+    startCommand: cd Chatbot-eval && uv run uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    numInstances: 1
+    envVars:
+      - key: EVAL_CORS_ORIGINS
+        value: https://deepagentlabs.github.io,https://deepagentlabs.io,http://localhost:8000,http://127.0.0.1:8000
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+  # Production Trace -> Release Decision API (standalone FastAPI app).
+  - type: web
+    name: production-trace-release-decision
+    runtime: python
+    plan: free
+    rootDir: "Production trace to release decision"
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: EVAL_CORS_ORIGINS
+        value: https://deepagentlabs.github.io,https://deepagentlabs.io,http://localhost:8000,http://127.0.0.1:8000

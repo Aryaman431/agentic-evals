@@ -504,11 +504,12 @@
           </li>
           <li>
             <strong>An optional backend that really works.</strong>
-            <code>app.py</code> is a FastAPI service with Supabase persistence. When
-            <code>SUPABASE_URL</code> and <code>SUPABASE_SERVICE_ROLE_KEY</code> are
-            set it genuinely stores and serves runs; without them it falls back to
-            in-memory demo mode with identical endpoints. The service-role key stays
-            server-side — it is never sent to the browser.
+            <code>app.py</code> is a FastAPI service with no external database: it
+            seeds hardcoded sample records from <code>sample_data.py</code> into an
+            in-process store at startup, then genuinely stores and serves the runs
+            you create through the API. Everything lives in memory for the process
+            lifetime, so a restart resets it — and the deployment needs no database
+            credentials.
           </li>
         </ul>
 
@@ -569,8 +570,8 @@
       Run it locally: open <code>Production trace to release decision/index.html</code>
       directly — it is fully self-contained · optional backend:
       <code>cd "Production trace to release decision"</code> then
-      <code>uvicorn app:app --reload</code> (port 8000, in-memory demo mode until
-      <code>SUPABASE_URL</code> and <code>SUPABASE_SERVICE_ROLE_KEY</code> are set).
+      <code>uvicorn app:app --reload</code> (port 8000, sample data seeded from
+      <code>sample_data.py</code>, no configuration needed).
     </p>
 
     <!-- ==========================================================

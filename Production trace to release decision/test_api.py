@@ -224,11 +224,18 @@ def test_render_yaml_structure():
     svc = cfg["services"][0]
     assert svc["type"] == "web"
     assert svc["runtime"] == "python"
+    assert svc["rootDir"] == "Production trace to release decision"
     assert "--host 0.0.0.0" in svc["startCommand"]
     assert "$PORT" in svc["startCommand"]
     assert svc["healthCheckPath"] == "/health"
-    # No database credentials — the service runs on hardcoded sample data.
-    assert not (svc.get("envVars") or [])
+    # CORS is configured through the allowed-origins env var; no DB credentials.
+    env = {item["key"]: item["value"] for item in (svc.get("envVars") or [])}
+    assert "EVAL_CORS_ORIGINS" in env
+    assert not any(
+        marker in key.upper()
+        for key in env
+        for marker in ("DATABASE", "SUPABASE", "SECRET", "PASSWORD", "TOKEN")
+    )
 
 
 def test_requirements_excludes_pytest():

@@ -67,6 +67,14 @@ No build step and no environment variables for the static site. The use-case
 projects may also ship optional Python backends with their own requirements;
 those are separate from the static site.
 
+Optional backends (defined in `render.yaml`):
+
+- `agentic-evals-api` — voice-agent API (`voice-agent-evals/server.py`).
+- `agentic-evals-chatbot-api` — chatbot API (`Chatbot-eval/server.py`, which adds `POST /chat/evaluate`).
+- `production-trace-release-decision` — standalone Production Trace API (`Production trace to release decision/app.py`, with `rootDir` set to that folder).
+
+Each use-case `config.js` selects the deployed backend automatically when served over HTTPS; override it with the `?api=` query param or `localStorage('evalApiBase')`.
+
 ## Links
 
 The use-case cards on `index.html` use **relative** URLs:

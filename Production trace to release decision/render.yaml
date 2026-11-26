@@ -1,8 +1,17 @@
+# Render blueprint for the Production Trace -> Release Decision backend.
+# This is a separate Python service from the Agentic Evals voice/chatbot APIs.
+# The repo-root render.yaml also defines this service; use one or the other,
+# not both, when applying blueprints.
+
 services:
   - type: web
     name: production-trace-release-decision
     runtime: python
     plan: free
+    rootDir: "Production trace to release decision"
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
+    envVars:
+      - key: EVAL_CORS_ORIGINS
+        value: https://deepagentlabs.github.io,https://deepagentlabs.io,http://localhost:8000,http://127.0.0.1:8000

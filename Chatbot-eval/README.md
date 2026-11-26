@@ -128,7 +128,7 @@ FastAPI evaluation API (default `http://localhost:8001`).
 
 **`config.js`**
 
-Frontend API base URL. Override order: `?api=` query param > `localStorage('evalApiBase')` > default `http://localhost:8001`.
+Frontend API base URL. Override order: `?api=` query param > `localStorage('evalApiBase')` > environment default. Local/`file://` previews use `http://127.0.0.1:8001`; HTTPS deployments use the dedicated chatbot API (`https://agentic-evals-chatbot-api.onrender.com`).
 
 **`index.html`**
 
@@ -480,8 +480,9 @@ With the API running, open `index.html` in a browser (or serve it statically, e.
 
 ## Deployment Notes
 
-* **Frontend:** deploy `index.html` on Vercel and point `config.js` `apiBase` (or the `?api=` query param / `localStorage('evalApiBase')` override) at your deployed API URL.
-* **Backend:** deploy `server.py` anywhere Python runs.
+* **Frontend:** deploy `index.html` and `config.js` together on any static host (GitHub Pages, Vercel, Netlify). On HTTPS the config points at `https://agentic-evals-chatbot-api.onrender.com`; override with the `?api=` query param or `localStorage('evalApiBase')` if the API lives elsewhere.
+* **Backend:** deploy from the repository root so `uv sync --extra voice --frozen` installs the `agentic_evals` package, then start with `cd Chatbot-eval && uv run uvicorn server:app --host 0.0.0.0 --port $PORT`. The repo-root `render.yaml` defines the `agentic-evals-chatbot-api` service.
+* Set `EVAL_CORS_ORIGINS` to a comma-separated allowlist of frontend origins (the root blueprint sets the public site origins by default).
 * Never put API keys in `index.html` or `config.js`; use environment variables for backend configuration.
 
 ---

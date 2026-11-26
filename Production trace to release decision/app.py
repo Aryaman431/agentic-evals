@@ -10,6 +10,7 @@ Scoring is 100% deterministic: sha256(scenario_id + context) drives small
 
 import hashlib
 import logging
+import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +18,7 @@ from typing import Any
 
 import sample_data
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
@@ -470,6 +472,27 @@ def _seed_all() -> None:
 # ---------------------------------------------------------------------------
 app = FastAPI(title=SERVICE, version=VERSION)
 
+# The frontend can be served either by this backend (same origin) or as a
+# static site (GitHub Pages / Vercel) that calls this service cross-origin.
+# Allow the public site origins by default; override with a comma-separated
+# EVAL_CORS_ORIGINS value (no database credentials are involved).
+DEFAULT_CORS_ORIGINS = (
+    "https://deepagentlabs.github.io,https://deepagentlabs.io,"
+    "http://localhost:8000,http://127.0.0.1:8000"
+)
+_cors_origins = [
+    origin.strip()
+    for origin in os.getenv("EVAL_CORS_ORIGINS", DEFAULT_CORS_ORIGINS).split(",")
+    if origin.strip()
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins or ["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
+
 
 @app.middleware("http")
 async def limit_body_size(request, call_next):
@@ -514,7 +537,8 @@ SECURITY_HEADERS = {
     "Referrer-Policy": "no-referrer",
     "Content-Security-Policy": (
         "default-src 'self'; style-src 'self' 'unsafe-inline'; "
-        "script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"
+        "script-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+        "connect-src 'self' https://*.onrender.com"
     ),
 }
 
@@ -599,6 +623,14 @@ def _as_uuid(value: str, detail: str = "Scenario not found") -> str:
 def root():
     """Serve the frontend (built in parallel) from the same directory."""
     return FileResponse(Path(__file__).parent / "index.html")
+
+
+@app.get("/config.js")
+def config_js():
+    """Serve the frontend API-base config when this backend hosts the UI."""
+    return FileResponse(
+        Path(__file__).parent / "config.js", media_type="application/javascript"
+    )
 
 
 @app.get("/health")

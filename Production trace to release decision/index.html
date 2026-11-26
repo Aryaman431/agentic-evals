@@ -16,28 +16,28 @@
    scorecards, stage 4 release comparison, stage 5 decision.
    ============================================================ */
 :root {
-  --bg: #0b0d10;
-  --panel: #101317;
-  --panel-2: #15191e;
-  --panel-3: #1a1f26;
-  --chrome: #0d0f13;
-  --line: #232830;
-  --line-2: #333b45;
-  --text: #e8ebf0;
-  --text-2: #c6cdd7;
-  --muted: #98a1ad;
-  --dim: #69737f;
+  --bg: #0A0F0E;
+  --panel: #111917;
+  --panel-2: #15201D;
+  --panel-3: #1B2623;
+  --chrome: #0D1312;
+  --line: #283631;
+  --line-2: #3A4C44;
+  --text: #F0F0E8;
+  --text-2: #C9D3CD;
+  --muted: #9FADA5;
+  --dim: #7B8C84;
 
-  --accent: #3d7bea;
-  --accent-hover: #4f8bef;
-  --accent-text: #8fb6ff;
-  --accent-soft: rgba(61, 123, 234, 0.12);
-  --accent-line: rgba(61, 123, 234, 0.45);
+  --accent: #B8F34A;
+  --accent-hover: #C8FF5E;
+  --accent-text: #C8FF5E;
+  --accent-soft: rgba(184, 243, 74, 0.12);
+  --accent-line: rgba(184, 243, 74, 0.45);
 
-  --green: #56d364;
-  --green-text: #7ee2a8;
-  --green-soft: rgba(86, 211, 100, 0.10);
-  --green-line: rgba(86, 211, 100, 0.38);
+  --green: #5CD6B8;
+  --green-text: #8FE8D2;
+  --green-soft: rgba(92, 214, 184, 0.10);
+  --green-line: rgba(92, 214, 184, 0.38);
 
   --red: #f86974;
   --red-text: #ff9ba4;
@@ -50,10 +50,10 @@
   --amber-line: rgba(227, 179, 65, 0.38);
 
   /* aliases referenced by script-generated inline styles */
-  --cyan: #8fb6ff;
-  --faint: #69737f;
-  --border: #232830;
-  --nested: #15191e;
+  --cyan: #5CD6B8;
+  --faint: #7B8C84;
+  --border: #283631;
+  --nested: #15201D;
 
   --mono: ui-monospace, "Cascadia Code", "Cascadia Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -77,14 +77,14 @@ body {
 }
 button, input, select, textarea { font: inherit; color: inherit; }
 a { color: inherit; text-decoration: none; }
-::selection { background: rgba(61, 123, 234, 0.35); }
+::selection { background: rgba(184, 243, 74, 0.35); }
 :focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; border-radius: 2px; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2a313a; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #39414c; }
+::-webkit-scrollbar-thumb { background: #283631; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3A4C44; }
 
 /* ---------- Shell layout ---------- */
 .shell {
@@ -109,7 +109,7 @@ a { color: inherit; text-decoration: none; }
 .sb-mark { display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 650; letter-spacing: -0.01em; color: var(--text); }
 .sb-logo {
   width: 24px; height: 24px; border-radius: var(--r-sm);
-  background: var(--accent); color: #fff;
+  background: var(--accent); color: var(--accent-ink);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--mono); font-size: 12px; font-weight: 700; flex-shrink: 0;
 }
@@ -215,17 +215,17 @@ a { color: inherit; text-decoration: none; }
   transition: background var(--t), border-color var(--t), color var(--t);
 }
 .btn:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .btn.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
 .btn.ghost { background: var(--panel-2); border-color: var(--line-2); color: var(--text-2); }
-.btn.ghost:hover:not(:disabled) { background: var(--panel-3); border-color: #3d4550; color: var(--text); }
+.btn.ghost:hover:not(:disabled) { background: var(--panel-3); border-color: #3A4C44; color: var(--text); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn.sm { height: 30px; padding: 0 11px; font-size: 12.5px; }
 .btn-blog {
   white-space: nowrap; color: var(--accent-text);
   border: 1px solid var(--accent-line); background: var(--accent-soft);
 }
-.btn-blog:hover:not(:disabled) { background: rgba(61, 123, 234, 0.18); border-color: var(--accent); color: #b3cdff; }
+.btn-blog:hover:not(:disabled) { background: rgba(184, 243, 74, 0.18); border-color: var(--accent); color: #C8FF5E; }
 
 /* ---------- Main column ---------- */
 .main-col { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); min-width: 0; }
@@ -334,7 +334,7 @@ a { color: inherit; text-decoration: none; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 .spinner {
   width: 13px; height: 13px;
-  border: 2px solid rgba(152, 161, 173, 0.35);
+  border: 2px solid rgba(159, 173, 165, 0.35);
   border-top-color: currentColor;
   border-radius: 50%; animation: spin 0.65s linear infinite; display: inline-block;
 }
@@ -724,8 +724,12 @@ a { color: inherit; text-decoration: none; }
 
 <div class="toasts" id="toasts"></div>
 
+<script src="config.js"></script>
 <script>
 "use strict";
+/* API base URL (see config.js): absolute Render URL when this page is served
+   statically, same-origin when the FastAPI backend serves it, localhost in dev. */
+const API_BASE = (window.EVAL_CONFIG && window.EVAL_CONFIG.apiBase) || "";
 /* ============================================================
    STATE — single source of truth
    ============================================================ */
@@ -927,7 +931,8 @@ async function api(path, opts = {}) {
   const t0 = performance.now();
   let res;
   try {
-    res = await fetch(path, Object.assign({ headers: { "Content-Type": "application/json" } }, opts));
+    const url = /^https?:\/\//i.test(path) ? path : API_BASE + path;
+    res = await fetch(url, Object.assign({ headers: { "Content-Type": "application/json" } }, opts));
   } catch (e) {
     const ms = Math.round(performance.now() - t0);
     state.lastLatency = ms; renderHeaderLatency();
@@ -1319,7 +1324,7 @@ function renderStage3() {
     ${hero}`;
 
   if (state.loadingStage) {
-    area.insertAdjacentHTML("beforeend", `<div class="note-strip" style="border-color:rgba(34,211,238,0.2);background:rgba(34,211,238,0.05);color:var(--cyan);"><span class="spinner"></span> Running baseline evaluation…</div>`);
+    area.insertAdjacentHTML("beforeend", `<div class="note-strip" style="border-color:rgba(92,214,184,0.2);background:rgba(92,214,184,0.05);color:var(--cyan);"><span class="spinner"></span> Running baseline evaluation…</div>`);
   }
 }
 
@@ -1393,7 +1398,7 @@ function renderStage4() {
         </button>`).join("")}
     </div>
     <input class="desc-input" id="change-desc" placeholder="Optional: describe the change for the run record…" value="${esc(r ? (r.change_description || "") : "")}" ${state.loadingStage ? "disabled" : ""}>
-    ${state.loadingStage ? `<div class="note-strip" style="border-color:rgba(34,211,238,0.2);background:rgba(34,211,238,0.05);color:var(--cyan);"><span class="spinner"></span> Running simulated replay…</div>` : ""}
+    ${state.loadingStage ? `<div class="note-strip" style="border-color:rgba(92,214,184,0.2);background:rgba(92,214,184,0.05);color:var(--cyan);"><span class="spinner"></span> Running simulated replay…</div>` : ""}
     ${compareHtml}`;
 
   area.querySelectorAll(".change-card").forEach((card) => {

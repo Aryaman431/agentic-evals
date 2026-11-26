@@ -22,12 +22,13 @@ Flat single-service layout — no build step, no microservices, no database:
 | `sample_data.py` | **Hardcoded sample records** (scenarios, trace events, runs, decisions) |
 | `index.html` | Complete interactive frontend |
 | `requirements.txt` | Python dependencies (FastAPI, uvicorn, pydantic) |
+| `config.js` | Frontend API base URL (same-origin on Render, absolute URL when hosted statically) |
 | `render.yaml` | Render blueprint (build/start/health check) |
 | `README.md` | This document |
 
 Notes:
 
-- FastAPI serves `index.html` at `/` and the API under `/api/` — same origin, so no CORS setup is needed.
+- FastAPI serves `index.html` at `/` and the API under `/api/` — same origin. When the UI is hosted statically, `config.js` points it at the Render URL and `EVAL_CORS_ORIGINS` allows that origin.
 - No React/Next/Node build, no Docker — plain Python + one HTML file.
 
 ## Sample data
@@ -79,9 +80,9 @@ Demo change types: `prompt_update` → READY, `coordination_update` → NEEDS RE
 
 ## Deploy to Render
 
-Push to GitHub → Render → New Web Service → connect repo → Runtime: Python → Build Command `pip install -r requirements.txt` → Start Command `uvicorn app:app --host 0.0.0.0 --port $PORT` (or use the included `render.yaml` blueprint) → health check path `/health`.
+Push to GitHub → Render → New Web Service → connect repo → Runtime: Python → Build Command `pip install -r requirements.txt` → Start Command `uvicorn app:app --host 0.0.0.0 --port $PORT` (or use the included `render.yaml` blueprint) → health check path `/health`. Set the service root directory to `Production trace to release decision` (or apply the repo-root `render.yaml`, which does this for you).
 
-**Render needs no database credentials** — there is no database and no environment variables to configure. The backend ships the sample data and serves the frontend itself (same origin).
+**Render needs no database credentials** — there is no database. `EVAL_CORS_ORIGINS` is optional and defaults to the public site origins. The backend ships the sample data and serves the frontend itself (same origin).
 
 ## Verification
 
